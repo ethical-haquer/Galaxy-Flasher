@@ -1,2 +1,2 @@
-# Thor_GUI
-A GUI for the Thor Flash Utility
+# Thor GUI
+A GUI for [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
