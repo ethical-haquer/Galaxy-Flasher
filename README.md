@@ -7,7 +7,7 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 After witnessing a new Linux user, who had just switched over from Windows, struggle with using Thor's CLI, I decided to try and make a GUI for it. If you aren't comfortable with the command line, or just prefer a GUI, then this could be helpful for you. On the other hand, if you are comfortable using the command line, then you may just want to use Thor in the terminal. And yes, this is my first GitHub project, so please let me know if you have any suggestions. :slightly_smiling_face:
 
 ## Disclaimer
-Currently, the latest release of Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are some known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are some known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 + Some lines of output text are not colored. For example 'Successfully began an Odin session!'.
