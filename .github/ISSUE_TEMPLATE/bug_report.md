@@ -28,5 +28,11 @@ If applicable, add screenshots to help explain your problem.
  - Thor version: [e.g 1.0.4]
  - Thor GUI version: [e.g. Alpha 2.0]
 
+**Thor's output, as displayed in Log tab:
+<Copy/Paste output here>
+
+**Thor GUI's output, as displayed in terminal:
+<Copy/Paste output here>
+
 **Additional context**
 Add any other context about the problem here.
