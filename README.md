@@ -44,7 +44,7 @@ Now we can install Thor GUI:
 + Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from "Linux.zip").
 + Save your changes to the file, and run:
   ```
-  python3 PATH/TO/Thor_GUI_Alpha.py
+  python3 PATH/TO/Thor_GUI.py
   ```
 + If you see a sweet GUI pop up, then you've finished installing Thor GUI!
 
