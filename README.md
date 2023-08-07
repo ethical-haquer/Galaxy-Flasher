@@ -10,7 +10,8 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 Currently, the latest release of Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are some known (and probably unknown) bugs. A list of missing features and know bugs can be found below.
 
 ## Known Bugs (In latest release)
-
++ Some lines of output text are not colored. For example 'Successfully began an Odin session!'.
++ The 'Begin Odin protocol' button does not change after a session is running. Should read: 'End Odin protocol' and send command "end", when session is already running. 
 
 ## Implemented Thor features
 - [x] Connecting/Disconnecting devices
