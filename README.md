@@ -1,6 +1,7 @@
 # Thor GUI
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
-![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/e6f5571f-803c-49c9-ae9e-a3abd40000dc)
+![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/bf4e2fb2-ada4-45f1-a192-109e6deb1b92)
+
 
 ## Intro
 After witnessing a new Linux user, who had just switched over from Windows, struggle with using Thor's CLI, I decided to try and make a GUI for it. If you aren't comfortable with the command line, or just prefer a GUI, then this could be helpful for you. On the other hand, if you are comfortable using the command line, then you may just want to use Thor in the terminal.
