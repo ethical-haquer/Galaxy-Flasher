@@ -1,5 +1,5 @@
 # Name: Thor Flash Utility GUI
-# Version: Alpha v1.0
+# Version: Alpha v0.0
 # By: ethical_haquer
 # Released: 8-7-23
 # Known issues: Numerous :)
@@ -14,7 +14,7 @@ import re
 import webbrowser
 from time import sleep
 
-version = 'Alpha v1.0'
+version = 'Alpha v0.0'
 
 currently_running = False
 odin_running = False
@@ -349,7 +349,7 @@ def bind_button_events(button):
 
 # Creates the Tkinter window
 window = tk.Tk()
-window.title("Thor Flash Utility GUI - Alpha v1.0")
+window.title("Thor Flash Utility GUI - Alpha v0.0")
 
 # Sets the window size
 window.geometry("985x600")
