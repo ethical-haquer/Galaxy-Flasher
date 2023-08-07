@@ -1,5 +1,5 @@
 # Name: Thor Flash Utility GUI
-# Version: Alpha 2.0
+# Version: Alpha
 # By: ethical_haquer
 # Released: 8-7-23
 # Known issues: Numerous :)
@@ -14,7 +14,7 @@ import re
 import webbrowser
 from time import sleep
 
-version = 'Alpha 2.0'
+version = 'Alpha'
 
 currently_running = False
 odin_running = False
@@ -40,7 +40,7 @@ def start_thor():
                 print('Stopped Thor')
                 window.destroy()
         elif not currently_running:
-            Thor = pexpect.spawn('dotnet /home/nah/Thor/TheAirBlow.Thor.Shell.dll', timeout=None, encoding='utf-8')
+            Thor = pexpect.spawn('dotnet PATH/TO/TheAirBlow.Thor.Shell.dll', timeout=None, encoding='utf-8')
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
@@ -112,10 +112,21 @@ def determine_tag(line):
         tag = 'green'
     elif line.startswith('exit - Closes the shell, quit also works'):
         tag = 'blue'
-
+    elif line.startswith('Cancel operation'):
+        tag = 'orange'
+    elif line.startswith('Choose a device to connect to:'):
+        tag = 'green'
+    elif line.startswith('Successfully connected to the device!'):
+        tag = 'green'
+    elif line.startswith('Successfully disconnected the device!'):
+        tag = 'green'
+    elif 'Phone [' in line:
+        tag = 'dark_blue'
+    
 # Perhaps the most important part of the program - Handles displaying the output from Thor
 def update_output():
     global tag
+    global connection
     while True:
         try:
             chunk = Thor.read_nonblocking(4096, timeout=0)
@@ -131,10 +142,21 @@ def update_output():
                     Output_Text.see(tk.END)
                     if 'shell>' in cleaned_line2:
                         run('on')
-                    if 'Successfully disconnected the device!' in cleaned_line:
-                        connected_to_device('off')
                     if 'Successfully began an Odin session!' in cleaned_line2:
                         session('on')
+                    if 'Now run "begin" with the protocol you need.' in cleaned_line2:
+                        set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
+                        connect('on')
+                        connection = True
+                    if 'Successfully disconnected the device!' in cleaned_line2:
+                        set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
+                        connect('off')
+                        connection = False
+                    if 'Cancel operation' in Output_Text.get('end-6l linestart', 'end-6l lineend') and 'Choose a device to connect to:' in Output_Text.get('end-5l linestart', 'end-5l lineend'):
+                        device()
+                    if 'No Samsung devices were found!' in cleaned_line2:
+                        print('Couldn\'t find a Samsung device!')
+                        
         except pexpect.exceptions.TIMEOUT as e:
             pass
         except Exception as e:
@@ -150,7 +172,6 @@ def toggle_connection():
         if currently_running:
             if connection == False:
                 send_command('connect')
-                window.after(200, check_connection)
             
             elif connection == True:
                 send_command('disconnect')
@@ -159,29 +180,10 @@ def toggle_connection():
     except Exception as e:
         print(f"An exception occurred in toggle_connection: {e}")
 
-def check_connection():
-    global connect
-    try:
-        print(Output_Text.get('end-2l linestart', 'end-2l lineend'))
-        print(Output_Text.get('end-3l linestart', 'end-3l lineend'))
-        if 'Cancel operation' in Output_Text.get('end-2l linestart', 'end-2l lineend'):
-            device()
-
-        elif 'shell>' in Output_Text.get('end-2l linestart', 'end-2l lineend') and 'No Samsung devices were found!' in Output_Text.get('end-3l linestart', 'end-3l lineend'):
-            print('Couldn\'t find a Samsung device!')
-
-    except Exception as e:
-        print(f"An exception occurred in check_connection: {e}")
-
 def check_disconnection():
     global connect
     try:
-        print(Output_Text.get('end-2l linestart', 'end-2l lineend'))
-        if 'Successfully disconnected the device!' in Output_Text.get('end-2l linestart', 'end-2l lineend'):
-            connect('off')
-            connection = False
-
-        elif 'Not connected to a device!' in Output_Text.get('end-2l linestart', 'end-2l lineend'):
+        if 'Not connected to a device!' in Output_Text.get('end-2l linestart', 'end-2l lineend'):
             print('Something needs worked on...')
 
     except Exception as e:
@@ -254,6 +256,7 @@ def connect(which):
     if which == 'on':
         set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
         Begin_Button.configure(state='normal')
+        session('on')
         
     elif which == 'off':
         Connect_Button.configure(text='Connect device', fg='#26A269')
@@ -272,13 +275,14 @@ def session(which):
 def device():
     global connect
     KEY_DOWN = '\x1b[B'
-    Connect_Device_Box = tk.messagebox.askquestion("Connect?", "Do you want to connect to this device?", icon='question')
+    Connect_Device_Box = tk.messagebox.askquestion("Connect?", "Do you want to connect to this device?", icon='question') 
     try:
         if Connect_Device_Box == 'yes':
-            print(Output_Text.get('end-3l linestart', 'end-2l lineend'))
             if 'Cancel operation' in Output_Text.get('end-2l linestart', 'end-2l lineend'):
                 Thor.send('\n')
-                if 'Now run "begin" with the protocol you need.' in Output_Text.get('end-3l linestart', 'end-3l lineend'):
+                print(Output_Text.get('end-1l linestart', 'end-1l lineend'))
+                print('TEST')
+                if 'Now run "begin" with the protocol you need.' in Output_Text.get('end-1l linestart', 'end-1l lineend'):
                     set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
                     connect('on')
                     connection = True
@@ -291,7 +295,7 @@ def device():
                     connect('off')
                     connection = False
                 else:
-                    print('An error occurred in device')
+                    print('An error occurred in device')          
     except Exception as e:
         print(f"An exception occurred in device: {e}")
 
@@ -345,7 +349,7 @@ def bind_button_events(button):
 
 # Creates the Tkinter window
 window = tk.Tk()
-window.title("Thor Flash Utility GUI - Alpha 2.0")
+window.title("Thor Flash Utility GUI - Alpha")
 
 # Sets the window size
 window.geometry("985x600")
@@ -515,6 +519,8 @@ Output_Text.tag_configure('yellow', foreground='#E9AD0C')
 Output_Text.tag_configure('red', foreground='#F66151')
 Output_Text.tag_configure('blue', foreground='#33C7DE')
 Output_Text.tag_configure('green_italic', foreground='#26A269', font=('Monospace', 9, 'italic'))
+Output_Text.tag_configure('orange', foreground='#E9AD0C')
+Output_Text.tag_configure('dark_blue', foreground='#2A7BDE')
 
 # Raises the "Log" frame to top on start-up
 toggle_log()
