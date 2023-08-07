@@ -42,7 +42,7 @@ Now we can install Thor GUI:
 + This will install pexpect, which Thor GUI uses.
 + Then download the latest "Thor_GUI.py" file from [here]().
 + Once it's downloaded, open it with a text editor.
-+ You need to edit line NUMBER of the file.
++ You need to edit line 43 of the file.
 + Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from "Linux.zip").
 + Save your changes to the file, and run:
   ```
