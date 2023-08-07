@@ -68,6 +68,6 @@ Here are some ways you can help me improve/finish Thor GUI:
 
 Myself, [ethical_haquer](https://github.com/ethical-haquer), for Thor GUI
 
-## This project is licenced under
+## This program is licenced under
 [GNU General Public License v3.0](https://github.com/ethical-haquer/Thor_GUI/blob/main/LICENSE)
 
