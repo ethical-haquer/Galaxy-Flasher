@@ -13,6 +13,7 @@ Currently, the latest release of Thor GUI is in an Alpha stage. Not all of Thor'
 + Some lines of output text are not colored. For example 'Successfully began an Odin session!'.
 + The 'Begin Odin protocol' button does not change after a session is running. Should read: 'End Odin protocol' and send command "end", when session is already running.
 + Setting the option "T Flash" to true locks-up Thor itself, at least in my case. I didn't have a micro-SD in, but still. Causes Ctrl+C to be necessary to stop Thor GUI.
++ Sometimes the first line of output is a blank line.
 
 ## Implemented Thor features
 - [x] Connecting/Disconnecting devices
