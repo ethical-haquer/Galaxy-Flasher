@@ -38,7 +38,7 @@ Now we can install Thor GUI:
   pip3 install pexpect
   ```
 + This will install pexpect, which Thor GUI uses.
-+ Then download the latest ".py" file from [here]().
++ Then download the latest "Thor_GUI.py" file from [here]().
 + Once it's downloaded, open it with a text editor.
 + You need to edit line NUMBER of the file.
 + Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from "Linux.zip").
@@ -49,7 +49,7 @@ Now we can install Thor GUI:
 + If you see a sweet GUI pop up, then you've finished installing Thor GUI!
 
 ## Usage
-This program was designed to be as similiar to Odin as possible. The first thing you should do is click the "Start Thor" button. This will start Thor, and begin displaying Thor's output in the "Log" tab. Notice how this enables more buttons to be used. You can enter a [valid Thor command](https://github.com/Samsung-Loki/Thor#current-list-of-commands), perhaps "help", in the entry next to the "Send Command" button. Then click "Send Command". You should see "help" displayed under the "shell>" prompt, and the output from "help" should be displayed. To connect your device, have it plugged in, while in download mode, and click "Connect". A pop-up window should appear, asking you if you'd like to connect to the device. Clicking "yes" will connect your device and enable more buttons.
+This program was designed to be as similiar to Odin as possible. The first thing you should do is click the "Start Thor" button. This will start Thor, and begin displaying Thor's output in the "Log" tab. Notice how this enables more buttons to be used. You can enter a [valid Thor command](https://github.com/Samsung-Loki/Thor#current-list-of-commands), perhaps "help", in the entry next to the "Send Command" button. Then click "Send Command". You should see "help" displayed under the "shell>" prompt, and the output from "help" should be displayed. To connect your device, have it plugged in, while in download mode, and click "Connect". A pop-up window should appear, asking you if you'd like to connect to the device. Clicking "yes" will connect your device and enable more buttons. Closing the window will handle shutting everthing down.
 
 ## How you can help
 Here are some ways you can help me improve Thor GUI:
