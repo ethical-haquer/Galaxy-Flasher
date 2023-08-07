@@ -58,7 +58,7 @@ Now we can install Thor GUI:
 This program was designed to be as similiar to Odin as possible. The first thing you should do is click the "Start Thor" button. This will start Thor, and begin displaying Thor's output in the "Log" tab. Notice how this enables more buttons to be used. You can enter a [valid Thor command](https://github.com/Samsung-Loki/Thor#current-list-of-commands), perhaps "help", in the entry next to the "Send Command" button. Then click "Send Command". You should see the output from "help" displayed. To connect your device, have it plugged in, while in download mode, and click "Connect". A pop-up window should appear, asking you if you'd like to connect to the device. Clicking "yes" will connect your device and enable more buttons. Closing the window will handle shutting everthing down.
 
 ## How you can help
-Here are some ways you can help me improve Thor GUI:
+Here are some ways you can help me improve/finish Thor GUI:
 + Send me Thor's output after flashing an Odin archive(s). This is actually _very_ helpful, because in order to implement Odin archive flashing in Thor GUI, I need to know what Thor's expected output is. Since I only have one Samsung device, and don't need to flash it at the moment, I can't do this myself.
 + Find bugs. If you find an issue that isn't listed above in "Known Bugs", please let me know!
 + Improve the code. Pull-requests are always welcome!
