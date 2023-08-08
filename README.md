@@ -14,7 +14,7 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 + The 'Begin Odin protocol' button does not change after a session is running. Should read: 'End Odin protocol' and send command "end", when session is already running.
 + Setting the option "T Flash" to true locks-up Thor itself, at least in my case. I didn't have a micro-SD in, but still. Causes Ctrl+C to be necessary to stop Thor GUI.
 + Sometimes the first line of output is a blank line.
-+ Odin archive buttons rim colors change when they are disabled. They should remain greyed-out completely.
++ Odin archive button rims change color when hovered-over, even when they are disabled. They should remain greyed-out completely.
 
 ## Implemented Thor features
 - [x] Connecting/Disconnecting devices
