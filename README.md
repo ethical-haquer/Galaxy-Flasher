@@ -62,7 +62,7 @@ This program was designed to be as similiar to Odin as possible. The first thing
 Here are some ways you can help me improve/finish Thor GUI:
 + Send me Thor's output after flashing an Odin archive(s). This is actually _very_ helpful, because in order to implement Odin archive flashing in Thor GUI, I need to know what Thor's expected output is. Since I only have one Samsung device, and don't need to flash it at the moment, I can't do this myself.
 + Find bugs. If you find an issue that isn't listed above in "Known Bugs", please let me know!
-+ Improve the code. Pull-requests are always welcome!
++ Improve the code. Pull requests are always welcome!
 
 ## Credits
 [TheAirBlow](https://github.com/theairblow) for Thor Flash Utility
