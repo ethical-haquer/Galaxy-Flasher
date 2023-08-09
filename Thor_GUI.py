@@ -1,7 +1,25 @@
-# Name: Thor Flash Utility GUI
-# Version: Alpha v0.0
+"""
+Thor GUI - A GUI for the Thor Flash Utility
+Copyright (C) 2023  ethical_haquer
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+# Name: Thor GUI
+# Version: Alpha v0.1
 # By: ethical_haquer
-# Released: 8-7-23
+# Released: 8-9-23
 # Known issues: Numerous :)
 
 import tkinter as tk
@@ -14,7 +32,7 @@ import re
 import webbrowser
 from time import sleep
 
-version = 'Alpha v0.0'
+version = 'Alpha v0.1'
 
 currently_running = False
 odin_running = False
@@ -22,9 +40,10 @@ Thor = None
 output_thread = None
 stop_threads = False
 connection = False
+first_find = True
 tag= 'default_tag'
 
-print(f'Running Thor Flash Utility GUI - {version}...')
+print(f'Running Thor GUI - {version}...')
 
 # This starts and stops the Thor
 def start_thor():
@@ -40,7 +59,7 @@ def start_thor():
                 print('Stopped Thor')
                 window.destroy()
         elif not currently_running:
-            Thor = pexpect.spawn('dotnet PATH/TO/TheAirBlow.Thor.Shell.dll', timeout=None, encoding='utf-8')
+            Thor = pexpect.spawn('dotnet /home/nah/Thor/TheAirBlow.Thor.Shell.dll', timeout=None, encoding='utf-8')
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
@@ -48,23 +67,9 @@ def start_thor():
             Start_Button.configure(text='Stop Thor (and program)', fg='#F66151', padx=10)
             print('Started Thor')
     except pexpect.exceptions.TIMEOUT:
-            # Handle timeout here
             print('A Timeout Occurred in start_thor')
-
-# This starts and stops the Odin protocol
-def begin_odin():
-    global odin_running
-    global currently_running
-    if odin_running:
-        send_command('end')
-        if 'Succesfully ended an Odin session!' in Output_Text.get('end-3l linestart', 'end-3l lineend'):
-            odin_running = False
-            Begin_Button.configure(text='End Odin Protocol', fg='#F66151')
-    elif not odin_running:
-        send_command('begin odin')
-        if 'Succesfully started an Odin session!' in Output_Text.get('end-3l linestart', 'end-3l lineend'):
-            odin_running = True
-            Begin_Button.configure(text='Begin Odin Protocol', fg='#26A269')
+    except Exception as e:
+        print(f"An exception occurred in toggle_odin: {e}")
 
 # What most commands go through
 def send_command(command):
@@ -83,9 +88,8 @@ def send_command(command):
         except Exception as e:
             print(f"An exception occurred in send_command: {e}")
 
-# Deals with enabling/disabling buttons - Used by run(), connect(), and session(), mainly
+# Deals with enabling/disabling buttons - Mainly used by set_thor(), set_connect(), and set_odin()
 def set_widget_state(*args, state="normal", text=None, color=None):
-    print('set_widget_state is running...')
     for widget in args:
         widget.configure(state=state, text=text)
         if color is not None:
@@ -122,11 +126,20 @@ def determine_tag(line):
         tag = 'green'
     elif 'Phone [' in line:
         tag = 'dark_blue'
-    
-# Perhaps the most important part of the program - Handles displaying the output from Thor
+    elif line.startswith('Successfully began an Odin session!'):
+        tag = 'green'
+    elif line.startswith('Successfully ended an Odin session!'):
+        tag = 'green'
+    elif line.startswith('Option "'):
+        tag = 'green'
+    elif line.startswith('Total protocol commands: 11'):
+        tag = 'green'
+        
+# Perhaps the most important part of the program, along with scan_output - Handles displaying the output from Thor, while scan_output calls other functions when it detects a certain line in the output
 def update_output():
     global tag
     global connection
+    global cleaned_line2
     while True:
         try:
             chunk = Thor.read_nonblocking(4096, timeout=0)
@@ -140,54 +153,74 @@ def update_output():
                     Output_Text.insert(tk.END, cleaned_line2 + '\n', tag)
                     Output_Text.configure(state='disabled')
                     Output_Text.see(tk.END)
-                    if 'shell>' in cleaned_line2:
-                        run('on')
-                    if 'Successfully began an Odin session!' in cleaned_line2:
-                        session('on')
-                    if 'Now run "begin" with the protocol you need.' in cleaned_line2:
-                        set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
-                        connect('on')
-                        connection = True
-                    if 'Successfully disconnected the device!' in cleaned_line2:
-                        set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
-                        connect('off')
-                        connection = False
-                    if 'Cancel operation' in Output_Text.get('end-6l linestart', 'end-6l lineend') and 'Choose a device to connect to:' in Output_Text.get('end-5l linestart', 'end-5l lineend'):
-                        device()
-                    if 'No Samsung devices were found!' in cleaned_line2:
-                        print('Couldn\'t find a Samsung device!')
-                        
+                    scan_output()
         except pexpect.exceptions.TIMEOUT as e:
             pass
         except Exception as e:
             print(f"An exception occurred in update_output: '{e}'")
-
         # Delay between each update
         sleep(0.1)
 
+def scan_output():
+    global cleaned_line2
+    try:
+        if 'shell>' in cleaned_line2:
+            set_thor('on')
+        if 'Successfully began an Odin session!' in cleaned_line2:
+            set_odin('on')
+        if 'Successfully disconnected the device!' in cleaned_line2:
+            set_connect('off')
+        if 'Successfully connected to the device!' in cleaned_line2:
+            set_connect('on')
+        if 'Cancel operation' in Output_Text.get('end-6l linestart', 'end-6l lineend') and 'Choose a device to connect to:' in Output_Text.get('end-5l linestart', 'end-5l lineend'):
+            device()
+        if 'Successfully ended an Odin session!' in cleaned_line2:
+            set_odin('off')
+        if '" is set to "' in cleaned_line2:
+            if 'Option "T-Flash" is set to "False"' in cleaned_line2:
+                TFlash_Option_var = tk.IntVar(value=False)
+            if 'Option "T-Flash" is set to "True"' in cleaned_line2:
+                TFlash_Option_var = tk.IntVar(value=True)
+            if 'Option "EFS Clear" is set to "False"' in cleaned_line2:
+                EFSClear_Option_var = tk.IntVar(value=False)
+            if 'Option "EFS Clear" is set to "True"' in cleaned_line2:
+                EFSClear_Option_var = tk.IntVar(value=True)
+            if 'Option "Bootloader Update" is set to "False"' in cleaned_line2:
+                BootloaderUpdate_Option_var = tk.IntVar(value=False)
+            if 'Option "Bootloader Update" is set to "True"' in cleaned_line2:
+                BootloaderUpdate_Option_var = tk.IntVar(value=True)
+            if 'Option "Reset Flash Count" is set to "False"' in cleaned_line2:
+                ResetFlashCount_Option_var = tk.IntVar(value=False)
+            if 'Option "Reset Flash Count" is set to "True"' in cleaned_line2:
+                ResetFlashCount_Option_var = tk.IntVar(value=True)
+    except Exception as e:
+            print(f"An exception occurred in scan_output: '{e}'")
+
 # Handles connecting / disconnecting devices
 def toggle_connection():
-    global connect
+    global currently_running
+    global connection
     try:   
         if currently_running:
-            if connection == False:
+            if not connection:
                 send_command('connect')
-            
-            elif connection == True:
+            elif connection:
                 send_command('disconnect')
-                window.after(200, check_disconnection)
-
     except Exception as e:
         print(f"An exception occurred in toggle_connection: {e}")
 
-def check_disconnection():
-    global connect
+# This starts and stops the Odin protocol
+def toggle_odin():
+    global currently_running
+    global odin_running
     try:
-        if 'Not connected to a device!' in Output_Text.get('end-2l linestart', 'end-2l lineend'):
-            print('Something needs worked on...')
-
+        if currently_running:
+            if not odin_running:
+                send_command('begin odin')
+            elif odin_running:
+                send_command('end')
     except Exception as e:
-        print(f"An exception occurred in check_disconnection: {e}")
+        print(f"An exception occurred in toggle_odin: {e}")
 
 # Moves the correct frame to the top
 def toggle_options():
@@ -229,7 +262,7 @@ def apply_options():
         send_command('options tflash true')
         print('pass: 3')
     if efs_clear_status == 1:
-        print('Would have set the option "EFSClear" to true, but it is currently disabled')
+        print('Would have set the option "EFSClear" to true, but it is currently disabled due to how destructive it is.')
 #        send_command('options efsclear true')
     elif efs_clear_status == 0:
         send_command('options efsclear false')
@@ -243,59 +276,64 @@ def apply_options():
         send_command('options resetfc false')
 
 # Tells the program whether Thor is running or not
-def run(which):
-    if which == 'on':
-        set_widget_state(Connect_Button, Send_Button, Command_Entry)
-
-    elif which == 'off':
+def set_thor(value):
+    global first_find
+    if value == 'on':
+#       This check is here because otherwise the output is full of "set_widget_state is running...", in this case unnecessarily
+        if first_find == True:
+            set_widget_state(Connect_Button, Send_Button, Command_Entry)
+            first_find = False
+    elif value == 'off':
         set_widget_state(Connect_Button, Send_Button, Command_Entry, state='disabled')
-        connect('off')
+        set_connect('off')
 
 # Tells the program whether a device is connected or not
-def connect(which):
-    if which == 'on':
-        set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
-        Begin_Button.configure(state='normal')
-        session('on')
+def set_connect(value):
+    global connection
+    if value == 'on':
+        if connection == False:
+            set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
+            Begin_Button.configure(state='normal')
+            connection = True
+    elif value == 'off':
+        if connection == True:
+            set_odin('off')
+            Connect_Button.configure(text='Connect device', fg='#26A269')
+            Begin_Button.configure(state='disabled')
+            connection = False
         
-    elif which == 'off':
-        Connect_Button.configure(text='Connect device', fg='#26A269')
-        Begin_Button.configure(state='disabled')
-        session('off')
-
 # Tells the program whether an Odin session is running or not
-def session(which):
-    if which == 'on':
-        set_widget_state(BL_Checkbox, AP_Checkbox, CP_Checkbox, CSC_Checkbox, USERDATA_Checkbox, BL_Button, AP_Button, CP_Button, CSC_Button, USERDATA_Button, BL_Entry, AP_Entry, CP_Entry, CSC_Entry, USERDATA_Entry, TFlash_Option, EFSClear_Option, BootloaderUpdate_Option, ResetFlashCount_Option, Apply_Options_Button)
-
-    elif which == 'off':
-        set_widget_state(BL_Checkbox, AP_Checkbox, CP_Checkbox, CSC_Checkbox, USERDATA_Checkbox, BL_Button, AP_Button, CP_Button, CSC_Button, USERDATA_Button, BL_Entry, AP_Entry, CP_Entry, CSC_Entry, USERDATA_Entry, TFlash_Option, EFSClear_Option, BootloaderUpdate_Option, ResetFlashCount_Option, Apply_Options_Button, state='disabled')
+def set_odin(value):
+    global odin_running
+    if value == 'on':
+        if odin_running == False:
+            Begin_Button.configure(text='End Odin Protocol', fg='#F66151')
+            set_widget_state(BL_Checkbox, AP_Checkbox, CP_Checkbox, CSC_Checkbox, USERDATA_Checkbox, BL_Button, AP_Button, CP_Button, CSC_Button, USERDATA_Button, BL_Entry, AP_Entry, CP_Entry, CSC_Entry, USERDATA_Entry, TFlash_Option, EFSClear_Option, BootloaderUpdate_Option, ResetFlashCount_Option, Apply_Options_Button)
+            odin_running = True
+    elif value == 'off':
+        if odin_running == True:
+            Begin_Button.configure(text='Start Odin Protocol', fg='#26A269')
+            set_widget_state(BL_Checkbox, AP_Checkbox, CP_Checkbox, CSC_Checkbox, USERDATA_Checkbox, BL_Button, AP_Button, CP_Button, CSC_Button, USERDATA_Button, BL_Entry, AP_Entry, CP_Entry, CSC_Entry, USERDATA_Entry, TFlash_Option, EFSClear_Option, BootloaderUpdate_Option, ResetFlashCount_Option, Apply_Options_Button, state='disabled')
+            odin_running == False
 
 # Handles asking the user if they'd like to connect to the device
 def device():
-    global connect
     KEY_DOWN = '\x1b[B'
-    Connect_Device_Box = tk.messagebox.askquestion("Connect?", "Do you want to connect to this device?", icon='question') 
+    device = Output_Text.get('end-3l linestart', 'end-3l lineend')
+    Connect_Device_Box = tk.messagebox.askquestion("Question", f"Do you want to connect to the device:\n'{device}'?", icon='question') 
     try:
         if Connect_Device_Box == 'yes':
-            if 'Cancel operation' in Output_Text.get('end-2l linestart', 'end-2l lineend'):
-                Thor.send('\n')
-                print(Output_Text.get('end-1l linestart', 'end-1l lineend'))
-                print('TEST')
-                if 'Now run "begin" with the protocol you need.' in Output_Text.get('end-1l linestart', 'end-1l lineend'):
-                    set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
-                    connect('on')
-                    connection = True
+            Thor.send('\n')
+            if 'Now run "begin" with the protocol you need.' in Output_Text.get('end-1l linestart', 'end-1l lineend'):
+                set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
+                set_connect('on')
         else:
-            print(Output_Text.get('end-2l linestart', 'end-2l lineend'))
-            if 'Cancel operation' in Output_Text.get('end-2l linestart', 'end-2l lineend'):
-                Thor.send(KEY_DOWN)
-                Thor.send('\n')
-                if 'Cancelled by user' in Output_Text.get('end-3l linestart', 'end-3l lineend'):
-                    connect('off')
-                    connection = False
-                else:
-                    print('An error occurred in device')          
+            Thor.send(KEY_DOWN)
+            Thor.send('\n')
+            if 'Cancelled by user' in Output_Text.get('end-3l linestart', 'end-3l lineend'):
+                set_connect('off')
+            else:
+                print('An error occurred in device')       
     except Exception as e:
         print(f"An exception occurred in device: {e}")
 
@@ -349,7 +387,7 @@ def bind_button_events(button):
 
 # Creates the Tkinter window
 window = tk.Tk()
-window.title("Thor Flash Utility GUI - Alpha v0.0")
+window.title("Thor GUI - Alpha v0.1")
 
 # Sets the window size
 window.geometry("985x600")
@@ -374,7 +412,7 @@ Start_Button = tk.Button(window, text="Start Thor", command=start_thor, fg='#26A
 Start_Button.grid(row=0, column=8, sticky='we', pady=5, padx=5)
 
 # Creates the "Begin Odin" Button
-Begin_Button = tk.Button(window, text="Begin Odin Protocol", command=begin_odin, state='disabled', fg='#26A269', bg='#E1E1E1', highlightbackground='#ACACAC', highlightcolor='#E4F1FB', activebackground='#E4F1FB', relief='flat', borderwidth=0)
+Begin_Button = tk.Button(window, text="Begin Odin Protocol", command=toggle_odin, state='disabled', fg='#26A269', bg='#E1E1E1', highlightbackground='#ACACAC', highlightcolor='#E4F1FB', activebackground='#E4F1FB', relief='flat', borderwidth=0)
 Begin_Button.grid(row=0, column=10, sticky='we', pady=5, padx=5)
 
 # Creates the Command Entry
@@ -501,8 +539,11 @@ bind_button_events(Apply_Options_Button)
 Pit_Frame = tk.Frame(window, bg='white')
 Pit_Frame.grid(row=3, rowspan=5, column=0, columnspan=7, sticky='nesw', padx=5)
 
-Test_Label = tk.Label(Pit_Frame, text='Just a test :)')
-Test_Label.grid(row=0, column=0, padx=10, pady=5)
+Test_Label = tk.Label(Pit_Frame, text='Just a test :)', bg='#F0F0F0')
+Test_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
+
+Although_Label = tk.Label(Pit_Frame, text='Pull requests are always welcome though!', bg='#F0F0F0')
+Although_Label.grid(row=1, column=0, pady=10, padx=10, sticky='w')
 
 # Creates the "Log" frame
 Log_Frame = tk.Frame(window, bg='white')
@@ -524,9 +565,6 @@ Output_Text.tag_configure('dark_blue', foreground='#2A7BDE')
 
 # Raises the "Log" frame to top on start-up
 toggle_log()
-
-# TESTING
-#session('on')
 
 # Binds the on_window_close function to the window's close event
 window.protocol("WM_DELETE_WINDOW", on_window_close)
