@@ -24,6 +24,9 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 - [ ] Dumping a device's partition table into a PIT file
 - [ ] Printing a description of any PIT file
 
+## Planned improvements
++ Different themes: dark, light, etc. (With the current look as a "Windows" one)
+
 ## Install Instructions
 First, Thor has to be installed (If it isn't already). Here is how:
 + Install the .NET 7 Runtime (**NOTICE:** This _is_ proprietary, but Thor depends on it). Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
