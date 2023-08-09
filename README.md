@@ -29,7 +29,9 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 
 ## Install Instructions
 First, Thor has to be installed (If it isn't already). Here is how:
-+ Install the .NET 7 Runtime (**NOTICE:** This _is_ proprietary, but Thor depends on it). Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
+> [!NOTE]
+> The .NET Framework _is_ propreitary, but Thor depends on it.
++ Install the .NET 7 Runtime. Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
 + Install Thor. Go [here](https://github.com/Samsung-Loki/Thor/releases) and download the latest "Linux.zip".
 + Next, unzip the "Linux.zip" file somewhere, and run:
   ```
