@@ -1,7 +1,6 @@
 # Thor GUI
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
-![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/bf4e2fb2-ada4-45f1-a192-109e6deb1b92)
-
+![Thor_GUI_v0 1-alpha](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/7dbdec46-322e-4839-aa10-392fd8302260)
 
 ## Intro
 After witnessing a new Linux user, who had just switched over from Windows, struggle with using Thor's CLI, I decided to try and make a GUI for it. If you aren't comfortable with the command line, or just prefer a GUI, then this could be helpful for you. On the other hand, if you are comfortable using the command line, then you may just want to use Thor in the terminal. And yes, this is my first GitHub project, so please let me know if you have any suggestions. :slightly_smiling_face:
@@ -10,8 +9,6 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are some known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
-+ Some lines of output text are not colored. For example 'Successfully began an Odin session!'.
-+ The 'Begin Odin protocol' button does not change after a session is running. Should read: 'End Odin protocol' and send command "end", when session is already running.
 + Setting the option "T Flash" to true locks-up Thor itself, at least in my case. I didn't have a micro-SD in, but still. Causes Ctrl+C to be necessary to stop Thor GUI.
 + Sometimes the first line of output is a blank line.
 + Odin archive button rims change color when hovered-over, even when they are disabled. They should remain greyed-out completely.
