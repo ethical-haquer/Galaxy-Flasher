@@ -59,7 +59,7 @@ def start_thor():
                 print('Stopped Thor')
                 window.destroy()
         elif not currently_running:
-            Thor = pexpect.spawn('dotnet /home/nah/Thor/TheAirBlow.Thor.Shell.dll', timeout=None, encoding='utf-8')
+            Thor = pexpect.spawn('dotnet /PATH/TO/TheAirBlow.Thor.Shell.dll', timeout=None, encoding='utf-8')
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
@@ -133,6 +133,8 @@ def determine_tag(line):
     elif line.startswith('Option "'):
         tag = 'green'
     elif line.startswith('Total protocol commands: 11'):
+        tag = 'green'
+    elif line.startswith('Successfully set "'):
         tag = 'green'
         
 # Perhaps the most important part of the program, along with scan_output - Handles displaying the output from Thor, while scan_output calls other functions when it detects a certain line in the output
