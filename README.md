@@ -9,8 +9,8 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are some known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
-+ Setting the option "T Flash" to true locks-up Thor itself, at least in my case. I didn't have a micro-SD in, but still. Causes Ctrl+C to be necessary to stop Thor GUI.
-+ Sometimes the first line of output is a blank line.
++ Setting the option "T Flash" to "True" locks-up Thor itself, at least in my case. I didn't have a micro-SD in, but still. Causes Ctrl+C to be necessary to stop Thor GUI.
++ Sometimes the first line of output shown in "Log" is a blank line.
 + Odin archive button rims change color when hovered-over, even when they are disabled. They should remain greyed-out completely.
 
 ## Implemented Thor features
@@ -25,12 +25,13 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 - [ ] Printing a description of any PIT file
 
 ## Planned improvements
-+ Different themes: dark, light, etc. (With the current look as a "Windows" one)
++ Built in installer and setup for .NET and Thor.
++ Different themes: dark, light, etc. (With the current look as a "Windows" theme)
 
 ## Install Instructions
 First, Thor has to be installed (If it isn't already). Here is how:
 > [!NOTE]
-> The .NET Framework _is_ propreitary, but Thor depends on it.
+> The .NET Framework is propreitary, but Thor depends on it.
 + Install the .NET 7 Runtime. Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
 + Install Thor. Go [here](https://github.com/Samsung-Loki/Thor/releases) and download the latest "Linux.zip".
 + Next, unzip the "Linux.zip" file somewhere, and run:
