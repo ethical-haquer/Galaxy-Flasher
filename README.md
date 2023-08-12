@@ -56,7 +56,8 @@ Now we can install Thor GUI:
   ```
 + If a sweet-looking GUI shows up, then you've finished installing Thor GUI!
 
-**NOTE:** If you encounter any issues, or have any questions, just let me know and I'll be glad to help. 🙂
+> [!NOTE]
+> If you encounter any issues, or have any questions, just let me know and I'll be glad to help. 🙂
 
 ## Usage
 This program was designed to be as similiar to Odin as possible. The first thing you should do is click the "Start Thor" button. This will start Thor, and begin displaying Thor's output in the "Log" tab. Notice how this enables more buttons to be used. You can enter a [valid Thor command](https://github.com/Samsung-Loki/Thor#current-list-of-commands), perhaps "help", in the entry next to the "Send Command" button. Then click "Send Command". You should see the output from "help" displayed. To connect your device, have it plugged in, while in download mode, and click "Connect". A pop-up window should appear, asking you if you'd like to connect to the device. Clicking "yes" will connect your device and enable more buttons. Closing the window will handle shutting everthing down.
