@@ -12,6 +12,8 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 + Setting the option "T Flash" to "True" locks-up Thor itself, at least in my case. I didn't have a micro-SD in, but still. Causes Ctrl+C to be necessary to stop Thor GUI.
 + Sometimes the first line of output shown in "Log" is a blank line.
 + Odin archive button rims change color when hovered-over, even when they are disabled. They should remain greyed-out completely.
++ Many interactive Thor commands that require user input, such as "flashTar", cannot be used. Currently the only one of these commands that works (mostly, see below issue) is "connect". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
++ While running "connect" (ethier with the connect button, or manually) works, you will only be able to connect to the first device listed; and if there are multiple devices connected, clicking "No" will connect to the second device listed instead of canceling.
 
 ## Implemented Thor features
 - [x] Connecting/Disconnecting devices
