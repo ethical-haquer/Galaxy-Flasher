@@ -41,6 +41,7 @@ Aesthetic:
 > The .NET Framework is propreitary, but Thor depends on it.
 + Install Thor. Go [here](https://github.com/Samsung-Loki/Thor/releases) and download the latest "Linux.zip".
 + Next, unzip the "Linux.zip" file somewhere, and run:
+
   ```
   PATH/TO/TheAirBlow.Thor.Shell
   ```
@@ -60,6 +61,7 @@ pip3 install pexpect
 + You need to edit line 62 of the file.
 + Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from the "Linux.zip").
 + Save your changes to the file, and run:
+
   ```
   python3 PATH/TO/Thor_GUI.py
   ```
