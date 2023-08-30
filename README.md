@@ -1,4 +1,4 @@
-# NOTICE: This is not the main branch, and is under cconstruction
+# NOTICE: This is not the main branch, and is under construction
 
 # Thor GUI
 
