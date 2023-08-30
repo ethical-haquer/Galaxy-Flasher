@@ -9,11 +9,15 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are some known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
+Functional:
 + Setting the option "T Flash" to "True" locks-up Thor itself, at least in my case. I didn't have a micro-SD in, but still. Causes Ctrl+C to be necessary to stop Thor GUI.
-+ Sometimes the first line of output shown in "Log" is a blank line.
-+ Odin archive button rims change color when hovered-over, even when they are disabled. They should remain greyed-out completely.
 + Many interactive Thor commands that require user input, such as "flashTar", cannot be used. Currently the only one of these commands that works (mostly, see below issue) is "connect". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
 + While running "connect" (ethier with the connect button, or manually) works, you will only be able to connect to the first device listed; and if there are multiple devices connected, clicking "No" will connect to the second device listed instead of canceling.
+
+Aesthetic:
++ Sometimes the first line of output shown in "Log" is a blank line.
++ Odin archive button rims change color when hovered-over, even when they are disabled. They should remain greyed-out completely.
++ The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[]" changes to a "[X]", the whole section of output will be displayed again.
 
 ## Implemented Thor features
 - [x] Connecting/Disconnecting devices
@@ -30,10 +34,21 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 + Built in installer and setup for .NET and Thor.
 + Different themes: dark, light, etc. (With the current look as a "Windows" theme)
 
-## Install Instructions
-First, Thor has to be installed (If it isn't already). Here is how:
+## Prerequisites
+Thor:
+Thor needs the .NET Runtime to run. 
+
 > [!NOTE]
 > The .NET Framework is propreitary, but Thor depends on it.
+
+Instructions to install the .NET Runtime can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
+
+Pexpect:
+```
+pip3 install pexpect
+```
+## Install Instructions
+First, Thor has to be installed (If it isn't already). Here is how:
 + Install the .NET 7 Runtime. Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
 + Install Thor. Go [here](https://github.com/Samsung-Loki/Thor/releases) and download the latest "Linux.zip".
 + Next, unzip the "Linux.zip" file somewhere, and run:
