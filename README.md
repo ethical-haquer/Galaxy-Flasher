@@ -35,21 +35,10 @@ Aesthetic:
 + Different themes: dark, light, etc. (With the current look as a "Windows" theme)
 
 ## Prerequisites
-Thor:
-Thor needs the .NET Runtime to run. 
-
+### Thor
++ Install the .NET 7 Runtime. Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
 > [!NOTE]
 > The .NET Framework is propreitary, but Thor depends on it.
-
-Instructions to install the .NET Runtime can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
-
-Pexpect:
-```
-pip3 install pexpect
-```
-## Install Instructions
-First, Thor has to be installed (If it isn't already). Here is how:
-+ Install the .NET 7 Runtime. Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
 + Install Thor. Go [here](https://github.com/Samsung-Loki/Thor/releases) and download the latest "Linux.zip".
 + Next, unzip the "Linux.zip" file somewhere, and run:
   ```
@@ -57,16 +46,19 @@ First, Thor has to be installed (If it isn't already). Here is how:
   ```
 + If Thor runs, you're ready to move on!
 
-Now we can install Thor GUI:
-+ First run:
-  ```
-  pip3 install pexpect
-  ```
-+ This will install pexpect, which Thor GUI uses.
-+ Then download the latest Thor GUI release from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
+
+Instructions to install the .NET Runtime can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
+
+### Pexpect
+```
+pip3 install pexpect
+```
+
+## Install Instructions
++ Download the latest Thor GUI release from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it, and open the Thor_GUI.py file with a text editor.
 + You need to edit line 62 of the file.
-+ Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from "Linux.zip").
++ Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from the "Linux.zip").
 + Save your changes to the file, and run:
   ```
   python3 PATH/TO/Thor_GUI.py
