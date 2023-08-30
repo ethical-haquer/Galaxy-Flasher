@@ -1130,10 +1130,6 @@ Output_Text.tag_configure('dark_blue', foreground='#2A7BDE')
 
 # Raises the "Log" frame to top on start-up
 toggle_frame('Log')
-#toggle_log()
-
-# Testing
-set_odin('on')
 
 # Binds the on_window_close function to the window's close event
 window.protocol("WM_DELETE_WINDOW", on_window_close)
