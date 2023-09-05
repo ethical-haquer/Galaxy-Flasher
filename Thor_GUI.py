@@ -36,7 +36,7 @@ import os
 from functools import partial
 import zipfile
 
-path_to_thor = 'PATH/TO/TheAirBlow.Thor.Shell.dll'
+path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
 
 version = 'Alpha v0.2.0'
 
@@ -44,8 +44,6 @@ currently_running = False
 odin_running = False
 Thor = None
 connection = False
-first_find = True
-first_flash = True
 tag = 'green'
 graphical_flash = False
 prompt_available = False
@@ -152,7 +150,7 @@ def update_output():
         sleep(0.2)
 
 def scan_output():
-    global graphical_flash, last_lines, clean_line, archive_name, odin_archives, prompt_available
+    global graphical_flash, last_lines, clean_line, archive_name, odin_archives, prompt_available, first_prompt
     try:
         prompt_available = False
         if 'shell>' in clean_line:
@@ -166,7 +164,6 @@ def scan_output():
             set_connect('on')
         elif "Choose a device to connect to:" in clean_line and last_lines[-1] == "Cancel operation":
                 run_select_device()
-            
         elif 'Successfully ended an Odin session!' in clean_line:
             set_odin('off')
         elif 'Choose what partitions to flash from' in clean_line and last_lines[-1] == "(Press <space> to select, <enter> to accept)":
@@ -240,6 +237,7 @@ def scan_output():
 def determine_tag(line):
     global tag
     if line.startswith('Welcome to Thor Shell v1.0.4!'):
+        Output_Text.delete('1.0', 'end')
         tag = 'green'
     elif line.startswith('~~~~~~~~ Platform specific notes ~~~~~~~~'):
         tag = 'yellow'
@@ -338,12 +336,10 @@ def set_widget_state(*args, state="normal", text=None, color=None):
 
 # Tells the program whether Thor is running or not
 def set_thor(value):
-    global first_find
     if value == 'on':
-        set_widget_state(Connect_Button, Send_Button, Command_Entry)
-        first_find = False
+        set_widget_state(Connect_Button, Command_Entry)
     elif value == 'off':
-        set_widget_state(Connect_Button, Send_Button, Command_Entry, state='disabled')
+        set_widget_state(Connect_Button, Command_Entry, state='disabled')
         set_connect('off')
 
 # Tells the program whether a device is connected or not
@@ -487,9 +483,11 @@ def toggle_frame(name):
         if btn == button:
             btn.configure(bg='white')
             btn.grid_configure(pady=0)
+            btn.configure(activebackground='white')
         else:
             btn.configure(bg='#E1E1E1')
             btn.grid_configure(pady=5)
+            btn.configure(activebackground='#E4F1FB')
 
 def sendline_with_timeout(Thor, command, prompt, timeout):
     global clean_line
@@ -643,26 +641,22 @@ def select_device():
 def select_partitions(path, name):
     try:    
         file_names = []
-        
         def get_files_from_tar(path, name):
             file_names = []
             with tarfile.open(os.path.join(path, name), "r") as tar:
                 for member in tar.getmembers():
                     file_names.append(member.name)
             return file_names
-        
         def get_files_from_zip(path, name):
             file_names = []
             with zipfile.ZipFile(os.path.join(path, name), "r") as zip:
                 for file_info in zip.infolist():
                     file_names.append(file_info.filename)
             return file_names
-        
         def select_all(checkboxes, select_all_var):
             select_all_value = select_all_var.get()
             for checkbox, var in checkboxes:
                 var.set(select_all_value)
-        
         def flash_selected_files(checkboxes):
             selected_files = []
             for checkbox, var in checkboxes:
@@ -671,7 +665,6 @@ def select_partitions(path, name):
             if not selected_files:
                 print("No files selected.")
                 return
-        
         if name.endswith('.tar') or name.endswith('.md5'):
             file_names = get_files_from_tar(path, name)
         elif name.endswith('.zip'):
@@ -868,13 +861,8 @@ bind_button_events(Begin_Button)
 
 # Creates the Command Entry
 Command_Entry = tk.Entry(window, state='disabled', bg='#F0F0F0', relief='flat', highlightbackground='#7A7A7A', highlightcolor='#0078D7')
-Command_Entry.grid(row=1, column=8, columnspan=2, pady=5, padx=5, sticky='nesw')
+Command_Entry.grid(row=1, column=8, columnspan=3, pady=5, padx=5, sticky='nesw')
 Command_Entry.bind('<Return>', lambda event: send_command(Command_Entry.get()))
-
-# Creates the "Send Command" Button
-Send_Button = tk.Button(window, text="Send Command to Thor", command=lambda: send_command(Command_Entry.get()), state='disabled', bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0)
-Send_Button.grid(row=1, column=10, sticky='we', pady=5, padx=5)
-bind_button_events(Send_Button)
 
 # Creates the "Connect" Button
 Connect_Button = tk.Button(window, text="Connect", command=toggle_connection, state='disabled', fg='#26A269', bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0)
@@ -950,19 +938,19 @@ USERDATA_Entry = tk.Entry(window, bg='#F0F0F0', highlightcolor='#0078D7', relief
 USERDATA_Entry.grid(row=7, column=9, columnspan=2, sticky='we', padx=5)
 
 # Creates the five Frame Buttons
-Log_Button = tk.Button(window, text='Log', command=lambda:toggle_frame('Log'), bg='#E1E1E1', highlightbackground='#ACACAC', highlightcolor='#E4F1FB', activebackground='#E4F1FB', relief='flat', borderwidth=0)
+Log_Button = tk.Button(window, text='Log', command=lambda:toggle_frame('Log'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
 Log_Button.grid(row=2, column=0, sticky='wes', pady=5, padx=5)
 
 Options_Button = tk.Button(window, text='Options', command=lambda:toggle_frame('Options'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
 Options_Button.grid(row=2, column=1, sticky='wes', pady=5)
 
-Pit_Button = tk.Button(window, text='Pit', command=lambda:toggle_frame('Pit'), bg='#E1E1E1', highlightbackground='#ACACAC', highlightcolor='#E4F1FB', activebackground='#E4F1FB', relief='flat', borderwidth=0)
+Pit_Button = tk.Button(window, text='Pit', command=lambda:toggle_frame('Pit'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
 Pit_Button.grid(row=2, column=2, sticky='wes', pady=5, padx=5)
 
-Help_Button = tk.Button(window, text='Help', command=lambda:toggle_frame('Help'), bg='#E1E1E1', highlightbackground='#ACACAC', highlightcolor='#E4F1FB', activebackground='#E4F1FB', relief='flat', borderwidth=0)
+Help_Button = tk.Button(window, text='Help', command=lambda:toggle_frame('Help'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
 Help_Button.grid(row=2, column=3, sticky='wes', pady=5)
 
-About_Button = tk.Button(window, text='About', command=lambda:toggle_frame('About'), bg='#E1E1E1', highlightbackground='#ACACAC', highlightcolor='#E4F1FB', activebackground='#E4F1FB', relief='flat', borderwidth=0)
+About_Button = tk.Button(window, text='About', command=lambda:toggle_frame('About'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
 About_Button.grid(row=2, column=4, sticky='wes', pady=5, padx=5)
 
 # Creates the "Log" frame
