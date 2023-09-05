@@ -22,7 +22,7 @@ Functional:
 + Currently, the only interactive Thor commands (the ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
 
 Aesthetic:
-+ The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[]" changes to a "[X]", that whole section of output will be displayed again.
++ The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
 
 ## Implemented Thor features
 
@@ -55,9 +55,6 @@ Aesthetic:
   PATH/TO/TheAirBlow.Thor.Shell
   ```
 + If Thor runs, you're ready to move on!
-
-
-Instructions to install the .NET Runtime can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
 
 ### Pexpect
 
