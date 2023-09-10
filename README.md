@@ -1,4 +1,4 @@
-# NOTICE: This is not the main branch, and is under construction
+# NOTICE: This is not the main branch, and it is under construction.
 
 # Thor GUI
 
@@ -48,7 +48,7 @@ Aesthetic:
 + Install the .NET 7 Runtime. Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
 > [!NOTE]
 > The .NET Framework is propreitary, but Thor depends on it.
-+ Install Thor. Go [here](https://github.com/Samsung-Loki/Thor/releases) and download the latest "Linux.zip".
++ Install Thor. Download the "Linux.zip" file from [here](https://github.com/Samsung-Loki/Thor/releases/tag/1.0.4).
 + Next, unzip the "Linux.zip" file somewhere, and run:
 
   ```
@@ -95,14 +95,18 @@ pip3 install pexpect
   <br>
   <b>Running a <a href="https://github.com/Samsung-Loki/Thor#current-list-of-commands">Thor command</a>:</b> 
   <br>
-  To send Thor a command, enter it into the command entry (upper-right corner of Thor GUI, under the "Start Thor" button) and hit Enter.
+  To send Thor a command, enter it into the Command Entry (upper-right corner of Thor GUI, under the "Start Thor" button) and hit Enter.
   <br>
   <br>
   <b>Starting an Odin protocol</b> 
   <br>
-  To start an Odin protocol, which unlocks more buttons, click the "Begin Odin Protocol" button.
+  To start an Odin protocol, click the "Begin Odin Protocol" button.
   <br>
   <br>
+  <b>Flashing Odin archives</b> 
+  <br>
+  To flash Odin archives, first select what files to flash. You may either select the files with a file picker, by clicking one of the file buttons (For example, to select a BL file, click the "BL" button), or type the file path into the corresponding entry. Only files which are selected with the check-boxes will be flashed. To flash the selected files, hit the "Start" button. There are a few requirements that must be met for it to start the flash: At least one file must be selected (with the check-boxes), All selected files must exist, All selected files must be a .tar, .md5, or .zip, and All selected files must be in the same directory. If any of these conditions is not met, Thor GUI will simply let you know, so don't worry.
+  
 </details>
 
 ## How you can help
