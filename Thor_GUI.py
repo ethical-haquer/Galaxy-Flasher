@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # Name: Thor GUI
 # Version: Alpha v0.2.0
 # By: ethical_haquer
-# Released: N/A
+# Released: 8-23-23
 # Known issues: Numerous :) - See https://github.com/ethical-haquer/Thor_GUI#known-bugs for more info
 
 import tkinter as tk
@@ -35,6 +35,8 @@ import tarfile
 import os
 from functools import partial
 import zipfile
+from collections import deque
+import traceback
 
 path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
 
@@ -99,14 +101,35 @@ def send_command(command):
         except Exception as e:
             print(f"An exception occurred in send_command: {e}")
 
+# What commands from the Command Entry go through, allowing more than just 'shell>' as the prompt
+def other_send_command(command):
+    global Thor, successful_commands, prompt_available
+    if currently_running:
+        try:
+            if 'exit' in command or 'quit' in command:
+                print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.')
+            else:   
+                if prompt_available == True or clean_line.endswith('[y/n] (n):'):
+                    Thor.sendline(command)
+                    Output_Text.see(tk.END)
+                    successful_commands.append(command)
+                    print(f'Sent command: \'{command}\'')
+                else:  
+                    print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')
+        except Exception as e:
+            print(f"An exception occurred in other_send_command: {e}")
+
 # Perhaps the most important part of the program, along with scan_output - Handles displaying the output from Thor, while scan_output calls other functions when it detects certain lines in the output
 def update_output():
     global last_lines
     global tag
     global connection
     global clean_line
-    last_lines = [''] * 100
+#    last_lines = deque([''] * 300)
+    last_lines = deque(maxlen=1000)
     output_buffer = ''
+    output_text_lines = []
+    next_line = ''
     while True:
         try:
             chunk = Thor.read_nonblocking(4096, timeout=0)
@@ -114,40 +137,54 @@ def update_output():
                 chunk = output_buffer + chunk
                 output_lines = chunk.splitlines()
                 for line in output_lines:
-                    mostly_clean_line = re.sub(r'\x1b\[[?0-9;]*[A-Za-z]', '', line).strip()
+                    mostly_clean_line = re.sub(r'\x1b\[[?0-9;]*[A-Za-z]', '', line)
                     clean_line = re.sub('\x1b=', '', mostly_clean_line).strip()
+
                     if clean_line.startswith(("AP", "BL", "CP", "CSC", "HOME_CSC", "USERDATA")):
                         if clean_line.endswith(":"):
                             determine_tag(clean_line)
-                            Output_Text.configure(state='normal')
-                            Output_Text.insert(tk.END, clean_line + '\n', tag)
-                            Output_Text.configure(state='disabled')
-                            Output_Text.see(tk.END)
+                            output_text_lines.append((clean_line, tag))
                             scan_output()
-                            last_lines.pop(0)
-                            last_lines.append(clean_line)
+#                            last_lines.popleft()
+                            last_lines.append((clean_line, tag))
+                            next_line = ''
                         else:
-                            output_buffer = clean_line
-                    else:
-                        if output_buffer.startswith("AP"):
-                            clean_line = output_buffer + " " + clean_line
-                            output_buffer = ''
+                            next_line = clean_line
+                    elif next_line:
+                        clean_line = next_line + clean_line
+                        next_line = ''
                         determine_tag(clean_line)
-                        Output_Text.configure(state='normal')
-                        Output_Text.insert(tk.END, clean_line + '\n', tag)
-                        Output_Text.configure(state='disabled')
-                        Output_Text.see(tk.END)
+                        output_text_lines.append((clean_line, tag))
                         scan_output()
-                        last_lines.pop(0)
-                        last_lines.append(clean_line)
+#                        last_lines.popleft()
+                        last_lines.append((clean_line, tag))
+                    else:
+                        determine_tag(clean_line)
+                        output_text_lines.append((clean_line, tag))
+                        scan_output()
+#                        last_lines.popleft()
+                        last_lines.append((clean_line, tag))
+
+                    output_buffer = ''
+
         except pexpect.exceptions.TIMEOUT:
             pass
         except pexpect.exceptions.EOF:
-            break        
+            break
         except Exception as e:
             print(f"An exception occurred in update_output: '{e}'")
+
+        # Update the Output_Text widget
+        if output_text_lines:
+            for line, tag in output_text_lines:
+                Output_Text.configure(state='normal')
+                Output_Text.insert(tk.END, line + '\n', tag)
+                Output_Text.configure(state='disabled')
+            Output_Text.see(tk.END)
+            output_text_lines = []
+
         # Delay between each update
-        sleep(0.2)
+        sleep(0.1)
 
 def scan_output():
     global graphical_flash, last_lines, clean_line, archive_name, odin_archives, prompt_available, first_prompt
@@ -162,56 +199,61 @@ def scan_output():
             set_connect('off')
         elif 'Successfully connected to the device!' in clean_line:
             set_connect('on')
-        elif "Choose a device to connect to:" in clean_line and last_lines[-1] == "Cancel operation":
-                run_select_device()
+        elif "Choose a device to connect to:" in clean_line and last_lines[-1][0] == "Cancel operation":
+            run_select_device()
         elif 'Successfully ended an Odin session!' in clean_line:
             set_odin('off')
-        elif 'Choose what partitions to flash from' in clean_line and last_lines[-1] == "(Press <space> to select, <enter> to accept)":
-            print('test 1')
-            found_index = None
-            print('test 2')
-            for i in range(len(last_lines) - 1, -1, -1):
-                print('test 3')
-                if last_lines[i].startswith('Choose what partitions to flash from'):
-                    print('test 4')
-                    found_index = i
-                    print('test 5')
-                    break
-            if found_index is not None:
-                print('test 6')
-                archive_name_pre = last_lines[found_index + 1].rstrip(':')
-                print('test 7')
-                last_flash_command = get_last_flash_tar_command()
-                print('test 8')
-                archive_path = last_flash_command.split(' ')[1]
-                print('test 9')
-                archive_name = os.path.basename(archive_name_pre.strip())
-                print(f'Archive name is: {archive_name}')
-                print(f'Archive path is: {archive_path}')
-                # Check for "X"s in the archive list
-                has_x = False
-                for line in last_lines[found_index + 2:]:
-                    if '[X]' in line:
-                        has_x = True
-                        break
-                if not has_x:
-                    if graphical_flash == False:
-                        print('test 10')
-                        select_partitions(archive_path, archive_name)
-                        print('test 11')
-                    else:
-                        print('test 12')
+        elif '> [ ]' in clean_line:
+            print('test -1')
+            print(last_lines[-3])
+            if 'Choose what partitions to flash from' in last_lines[-3][0]:
+                print('test -2')
+                print(last_lines[-4][0])
+                print(last_lines[-5][0])
+                if '(Press <space> to select, <enter> to accept)' in last_lines[-4][0]:
+#or '(Press <space> to select, <enter> to accept)' in last_lines[-5][0]:
+                    print('test -3')
+                    print('test 1')
+                    found_index = None
+                    print('test 2')
+                    for i in range(len(last_lines) - 1, -1, -1):
+                        print('test 3')
+                        if last_lines[i][0].startswith('Choose what partitions to flash from'):
+                            print('test 4')
+                            found_index = i
+                            print('test 5')
+                            break
+                    if found_index is not None:
+                        print('test 6')
+                        archive_name_pre = last_lines[found_index + 1][0].rstrip(':')
+                        print('test 7')
+                        last_flash_command = get_last_flash_tar_command()
+                        print('test 8')
+                        archive_path = last_flash_command.split(' ')[1]
+                        print('test 9')
+                        archive_name = os.path.basename(archive_name_pre.strip())
+                        print(f'Archive name is: {archive_name}')
+                        print(f'Archive path is: {archive_path}')
                         combined_file = os.path.join(archive_path, archive_name)
-                        print('test 13')
                         print(f'The combined file is: \'{combined_file}\'')
-                        print(odin_archives)
-                        if combined_file in odin_archives:
+                        if graphical_flash == False:
+                            print('test 13')
+                            run_select_partitions(archive_path, archive_name)
+                            return False
                             print('test 14')
-                            select_partitions(archive_path, archive_name)
                         else:
-                            Thor.send('\n')
-        elif 'You chose to flash' and 'partitions in total:' in clean_line and last_lines[-1] == "(Are you absolutely sure you want to flash those? [y/n] (n):)":
-            verify_flash()
+                            print('test 15')
+                            print(odin_archives)
+                            if combined_file in odin_archives:
+                                print('test 17')
+                                run_select_partitions(archive_path, archive_name)
+                                return False
+                            else:
+                                Thor.send('\n')
+        
+        elif 'Are you absolutely sure you want to flash those? [y/n] (n):' in clean_line:
+            print('Running verify_flash')
+            run_verify_flash()
             graphical_flash = False
         elif '" is set to "' in clean_line:
             if 'Option "T-Flash" is set to "False"' in clean_line:
@@ -229,56 +271,70 @@ def scan_output():
             if 'Option "Reset Flash Count" is set to "False"' in clean_line:
                 ResetFlashCount_Option_var = tk.IntVar(value=False)
             if 'Option "Reset Flash Count" is set to "True"' in clean_line:
-                ResetFlashCount_Option_var = tk.IntVar(value=True)  
+                ResetFlashCount_Option_var = tk.IntVar(value=True)
     except Exception as e:
         print(f"An exception occurred in scan_output: '{e}'")
+        traceback.print_exc()
 
 # Handles coloring the output, as the original ANSI escape sequences are stripped out
 def determine_tag(line):
     global tag
+    green = [
+        'Total commands: 11',
+        'Choose a device to connect to:',
+        'Choose what partitions to flash from',
+        'Successfully connected to the device!',
+        'Successfully disconnected the device!',
+        'Successfully began an Odin session!',
+        'Successfully ended an Odin session!',
+        'Option "',
+        'Successfully set "',
+        'Total protocol commands: 11',
+        'You chose to flash '
+    ]
+    yellow = [
+        '~~~~~~~~ Platform specific notes ~~~~~~~~',
+        '[required] {optional} - option list',
+        'Are you absolutely sure you want to flash those? [y/n] (n):'
+    ]
+    blue = [
+        'exit - Closes the shell, quit also works'
+    ]
+    orange = [
+        'Cancel operation'
+    ]
+    dark_blue = [
+        
+    ]
+    red = [
+        '~~~~~~~^'
+    ]
+    green_italic = [
+        'Note: beginning a protocol session unlocks new commands for you to use'
+    ]
     if line.startswith('Welcome to Thor Shell v1.0.4!'):
-        Output_Text.delete('1.0', 'end')
+        Output_Text.configure(state='normal')
+        Output_Text.delete("1.0", "end")
+        Output_Text.configure(state='disabled')
         tag = 'green'
-    elif line.startswith('~~~~~~~~ Platform specific notes ~~~~~~~~'):
-        tag = 'yellow'
     elif line.startswith('shell>'):
         tag = 'default_tag'
-    elif line.startswith('~~~~~~~^'):
-        tag = 'red'
-    elif line.startswith('Note: beginning a protocol session unlocks new commands for you to use'):
-        tag = 'green_italic'
-    elif line.startswith('[required] {optional} - option list'):
-        tag = 'yellow'
-    elif line.startswith('Total commands: 11'):
-        tag = 'green'
-    elif line.startswith('exit - Closes the shell, quit also works'):
-        tag = 'blue'
-    elif line.startswith('Cancel operation'):
-        tag = 'orange'
-    elif line.startswith('Choose a device to connect to:'):
-        tag = 'green'
-    elif line.startswith('Successfully connected to the device!'):
-        tag = 'green'
-    elif line.startswith('Successfully disconnected the device!'):
-        tag = 'green'
     elif 'Phone [' in line:
         tag = 'dark_blue'
-    elif line.startswith('Successfully began an Odin session!'):
+    elif line in green:
         tag = 'green'
-    elif line.startswith('Successfully ended an Odin session!'):
-        tag = 'green'
-    elif line.startswith('Option "'):
-        tag = 'green'
-    elif line.startswith('Total protocol commands: 11'):
-        tag = 'green'
-    elif line.startswith('Successfully set "'):
-        tag = 'green'
-    elif line.startswith('Choose what partitions to flash from'):
-        tag = 'green'
-    elif line.startswith('You chose to flash '):
-        tag = 'green'
-    elif line.startswith('Are you absolutely sure you want to flash those? [y/n] (n):'):
+    elif line in yellow:
         tag = 'yellow'
+    elif line in blue:
+        tag = 'blue'
+    elif line in orange:
+        tag = 'orange'
+    elif line in dark_blue:
+        tag = 'dark_blue'
+    elif line in red:
+        tag = 'red'
+    elif line in green_italic:
+        tag = 'green_italic'
 
 # Figures out what the last "flashTar" command run was
 def get_last_flash_tar_command():
@@ -287,43 +343,6 @@ def get_last_flash_tar_command():
         if command.startswith("flashTar"):
             return command
     return None
-
-# Asks the user if they'd like to flash the selected partitions
-def verify_flash():
-    global last_lines
-    start_index = -1
-    num_partitions = -1
-    for i, clean_line in enumerate(last_lines):
-        if clean_line.startswith("You chose to flash"):
-            start_index = i
-            num_partitions = int(clean_line.split()[4])
-    if start_index == -1:
-        return
-    chosen_partitions = last_lines[start_index+1:]
-    end_index = -1
-    for i, command in enumerate(chosen_partitions):
-        if command.startswith("Are you absolutely sure you want to flash those?"):
-            end_index = i
-            break
-    if end_index == -1:
-        return
-    message = "You chose to flash {} partitions in total:\n".format(num_partitions)
-    message += "\n".join(chosen_partitions[:end_index]) + "\n"
-    message += "\nAre you absolutely sure you want to flash those?"
-    root = tk.Tk()
-    root.title("Verify Flash")
-    label = tk.Label(root, text=message)
-    label.pack()
-    def send_no():
-        Thor.sendline('n')
-        root.destroy()
-    def send_yes():
-        Thor.sendline('y')
-        root.destroy()
-    no_button = tk.Button(root, text="No", command=send_no)
-    no_button.pack(side='left')
-    yes_button = tk.Button(root, text="Yes", command=send_yes)
-    yes_button.pack(side='right')
 
 # Deals with enabling/disabling buttons - Mainly used by set_thor(), set_connect(), and set_odin()
 def set_widget_state(*args, state="normal", text=None, color=None):
@@ -337,9 +356,9 @@ def set_widget_state(*args, state="normal", text=None, color=None):
 # Tells the program whether Thor is running or not
 def set_thor(value):
     if value == 'on':
-        set_widget_state(Connect_Button, Command_Entry)
+        set_widget_state(Connect_Button, Command_Entry, Page_Up_Button, Page_Down_Button, Enter_Button, Space_Button)
     elif value == 'off':
-        set_widget_state(Connect_Button, Command_Entry, state='disabled')
+        set_widget_state(Connect_Button, Command_Entry, Page_Up_Button, Page_Down_Button, Enter_Button, Space_Button, state='disabled')
         set_connect('off')
 
 # Tells the program whether a device is connected or not
@@ -347,7 +366,7 @@ def set_connect(value):
     global connection
     if value == 'on':
         if connection == False:
-            set_widget_state(Connect_Button, text='Disconnect device', color='#F66151')
+            set_widget_state(Connect_Button, text='Disconnect', color='#F66151')
             Begin_Button.configure(state='normal')
             connection = True
     elif value == 'off':
@@ -399,7 +418,7 @@ def toggle_odin():
 
 # Runs the "flashTar" command when the "Start" button is clicked
 def start_flash():
-    global currently_running, odin_archives
+    global currently_running, odin_archives, graphical_flash
     try:
         checkboxes = [
             (BL_Checkbox_var, BL_Entry, "BL"),
@@ -454,7 +473,7 @@ def start_flash():
 def reset():
     global currently_running
     try:
-        TFlash_Option_var.set(False)
+#        TFlash_Option_var.set(False)
         EFSClear_Option_var.set(False)
         BootloaderUpdate_Option_var.set(False)
         ResetFlashCount_Option_var.set(True)
@@ -489,28 +508,13 @@ def toggle_frame(name):
             btn.grid_configure(pady=5)
             btn.configure(activebackground='#E4F1FB')
 
-def sendline_with_timeout(Thor, command, prompt, timeout):
-    global clean_line
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if prompt in clean_line:
-            Thor.sendline(command)
-            return True
-        time.sleep(0.3)
-    return False
-
 # Handles setting the options
 def apply_options():
-    tflash_status = TFlash_Option_var.get()
+#    tflash_status = TFlash_Option_var.get()
     efs_clear_status = EFSClear_Option_var.get()
     bootloader_update_status = BootloaderUpdate_Option_var.get()
     reset_flash_count_status = ResetFlashCount_Option_var.get()
-    if tflash_status == 1:
-        tflash_thread = Thread(target=sendline_with_timeout, args=(Thor, 'options tflash true', 'shell>', 30))
-        tflash_thread.start()
-        tflash_thread.join(timeout)
-    if tflash_thread.is_alive():
-        print("Couldn't set the option 'T-Flash' to true because it timed out")
+#    if tflash_status == 1:     
     if efs_clear_status == 1:
         Thor.sendline('options efsclear true')
     elif efs_clear_status == 0:
@@ -523,11 +527,17 @@ def apply_options():
         Thor.sendline('options resetfc true')
     elif reset_flash_count_status == 0:
         Thor.sendline('options resetfc false')
-    tflash_thread.join()
 
 # Runs select_device in the main thread
 def run_select_device():
     window.after(0, select_device)
+
+# Runs select_device in the main thread
+def run_select_partitions(*args):
+    window.after(0, select_partitions, *args)
+
+def run_verify_flash():
+    window.after(0, verify_flash)
 
 # Handles asking the user if they'd like to connect to a device
 def select_device():
@@ -537,31 +547,31 @@ def select_device():
     try:
         # Search for the start index of the device list
         for i in range(len(last_lines)-1, -1, -1):
-            if last_lines[i].startswith("Choose a device to connect to:"):
+            if last_lines[i][0].startswith("Choose a device to connect to:"):
                 start_index = i
                 break
-        
+
         # Create a list of devices
         if start_index is not None:
             for i in range(start_index+1, len(last_lines)):
-                line = last_lines[i]
+                line = last_lines[i][0]
                 if line.startswith("Cancel operation"):
                     break
                 if line.strip() != '':
                     devices.append(line.strip("> "))
-        
+
         if devices:
             title = "Connect device"
             message = "Choose a device to connect to:"
             selected_device = tk.StringVar(value=None)
-            
+
             # Create the Toplevel window
             Connect_Device_Window = tk.Toplevel(window, bg='#F0F0F0')
             Connect_Device_Window.title(title)
             Connect_Device_Window.wm_transient(window)
             Connect_Device_Window.grab_set()
             Connect_Device_Window.update_idletasks()
-            
+
             window_size = (550, 200)
             width, height = window_size
             x = window.winfo_rootx() + (window.winfo_width() - width) // 2
@@ -569,7 +579,7 @@ def select_device():
             Connect_Device_Window.geometry(f"{width}x{height}+{x}+{y}")
             Connect_Device_Window.grid_columnconfigure(0, weight=1)
             Connect_Device_Window.grid_columnconfigure(1, weight=1)
-            
+
             # Create the message label
             message_label = tk.Label(Connect_Device_Window, text=message, bg='#F0F0F0')
             message_label.grid(sticky='ew', columnspan=2, row=0)
@@ -598,7 +608,6 @@ def select_device():
                         print("No device was selected")
                     else:
                         print({selected})
-                        # Perform the connection logic here
                         for radio_button, var in radio_buttons:
                             if var.get() == selected:
                                 print('Sending Thor an \'Enter\'')
@@ -638,33 +647,51 @@ def select_device():
     except Exception as e:
         print(f"An exception occurred in select_device: {e}")
 
+# Handles asking the user what partitions they'd like to flash
 def select_partitions(path, name):
-    try:    
-        file_names = []
+    try:
+        selected_files = []
+        selected_files.clear()
+        combined_file = os.path.join(path, name)
         def get_files_from_tar(path, name):
             file_names = []
             with tarfile.open(os.path.join(path, name), "r") as tar:
                 for member in tar.getmembers():
                     file_names.append(member.name)
             return file_names
+        
         def get_files_from_zip(path, name):
             file_names = []
             with zipfile.ZipFile(os.path.join(path, name), "r") as zip:
                 for file_info in zip.infolist():
                     file_names.append(file_info.filename)
             return file_names
+        
         def select_all(checkboxes, select_all_var):
             select_all_value = select_all_var.get()
             for checkbox, var in checkboxes:
                 var.set(select_all_value)
-        def flash_selected_files(checkboxes):
-            selected_files = []
+        
+        def flash_selected_files(checkboxes, Select_Partitions_Window):
             for checkbox, var in checkboxes:
                 if var.get() == 1:
                     selected_files.append(checkbox.cget("text"))
             if not selected_files:
                 print("No files selected.")
                 return
+
+            for file_name in file_names:
+                sleep(0.05)
+                if file_name in selected_files:
+                    Thor.send('\x20')  # Select file
+                    print('Selected a file')
+                Thor.send('\x1b[B')  # Move down
+                print('Moved down')
+            Thor.send('\n')  # Confirm selection
+            print('Confirmed selection')
+            Select_Partitions_Window.destroy()  # Close the Toplevel window
+            return False
+
         if name.endswith('.tar') or name.endswith('.md5'):
             file_names = get_files_from_tar(path, name)
         elif name.endswith('.zip'):
@@ -672,49 +699,114 @@ def select_partitions(path, name):
         else:
             print("Invalid file format. Please provide a .tar, .zip, or .md5 file.")
             return
-        title = "Select partitions"
-        message = f"Select what partitions to flash from:\n{name}"
-        checkboxes = []
+
+        # Create a new Toplevel window
+        Select_Partitions_Window = tk.Toplevel(window, bg='#F0F0F0')
+        Select_Partitions_Window.title("Select partitions")
+        Select_Partitions_Window.wm_transient(window)
+        Select_Partitions_Window.grab_set()
+        Select_Partitions_Window.update_idletasks()
+
         select_all_var = tk.IntVar()
-        select_all_button = tk.Checkbutton(text="Select all", variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var))
-        checkboxes.append((select_all_button, select_all_var))
+        select_all_button = tk.Checkbutton(Select_Partitions_Window, text="Select all", variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var), bg='#F0F0F0', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat')
+        select_all_button.pack(pady=5)
+
+        window_height = 30
+        checkboxes = []
         for file_name in file_names:
             var = tk.IntVar()
-            checkbox = tk.Checkbutton(text=file_name, variable=var)
+            checkbox = tk.Checkbutton(Select_Partitions_Window, text=file_name, variable=var, bg='#FFFFFF', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat', font=("Monospace", 10))
+            checkbox.pack(anchor='w', pady=(0,5), padx=5)
             checkboxes.append((checkbox, var))
-        buttons = [
-            {"text": "Flash Selected Files", "command": lambda: flash_selected_files(checkboxes)},
-        ]
-        show_message(title, message, checkboxes, buttons)
-        for file_name in selected_files:
-            Thor.send('\x20')  # Select file
-            Thor.send('\x1b[B')  # Move down
-        Thor.send('\n')  # Confirm selection
+            window_height = window_height + 28
+
+        Select_Partitions_Button = tk.Button(Select_Partitions_Window, text="Select", command=lambda: flash_selected_files(checkboxes, Select_Partitions_Window), bg='#E1E1E1', fg='#26A269', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+        window_height = window_height + 38
+        Select_Partitions_Button.pack()
+        bind_button_events(Select_Partitions_Button)
+
+        window_size=(240, window_height)
+        width, height = window_size
+        x = window.winfo_rootx() + (window.winfo_width() - width) // 2
+        y = window.winfo_rooty() + (window.winfo_height() - height) // 2
+        Select_Partitions_Window.geometry(f"{width}x{height}+{x}+{y}")
+
+        # Start the main event loop
+        Select_Partitions_Window.mainloop()
+
     except Exception as e:
         print(f"An exception occurred in select_partitions: {e}")
 
+# Asks the user if they'd like to flash the selected partitions
+def verify_flash():
+    global last_lines
+    start_index = -1
+    num_partitions = -1
+    for i, clean_line in enumerate(last_lines):
+        if 'You chose to flash' in clean_line:
+            start_index = i
+            num_partitions = int(clean_line.split()[4])
+    if start_index == -1:
+        return
+    chosen_partitions = list(last_lines)[start_index + 1:]
+    end_index = -1
+    for i, command in enumerate(chosen_partitions):
+        if command.startswith("Are you absolutely sure you want to flash those?"):
+            end_index = i
+            break
+    if end_index == -1:
+        return
+    message = "You chose to flash {} partitions in total\n".format(num_partitions)
+    message += "\nAre you absolutely sure you want to flash them?"
+    Verify_Flash_Window = tk.Toplevel(window, bg='#F0F0F0')
+    Verify_Flash_Window.title('Verify Flash')
+    Verify_Flash_Window.wm_transient(window)
+    Verify_Flash_Window.grab_set()
+    Verify_Flash_Window.update_idletasks()
+    Label = tk.Label(Verify_Flash_Window, text=message, bg='#F0F0F0', font=("Monospace", 11))
+    Label.grid(row=0, column=0, columnspan=2)
+    def send_no():
+        print('Sent \'n\'')
+        #Thor.sendline('n')
+        Select_Partitions_Window.destroy()
+    def send_yes():
+        Thor.sendline('y')
+        #print('Sent \'y\'')
+        Select_Partitions_Window.destroy()
+    No_Button = tk.Button(Verify_Flash_Window, text="No", command=lambda: send_no, bg='#E1E1E1', fg='#F66151', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+    No_Button.grid(row=1, column=0, sticky='we', pady=5, padx=(5,2.5))
+    bind_button_events(No_Button)
+    Yes_Button = tk.Button(Verify_Flash_Window, text="Yes", command=lambda: send_yes, bg='#E1E1E1', fg='#26A269', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+    Yes_Button.grid(row=1, column=1, sticky='we', pady=5, padx=(2.5,5))
+    bind_button_events(Yes_Button)
+
 # Opens file picker when Odin archive button is clicked
 def open_file(type):
-    file_path = filedialog.askopenfilename(title=f"Select the {type} file", initialdir='~')
-    if file_path:
-        if type == "BL":
-            BL_Entry.delete(0, 'end')
-            BL_Entry.insert(0, file_path)
-        elif type == "AP":
-            AP_Entry.delete(0, 'end')
-            AP_Entry.insert(0, file_path)
-        elif type == "CP":
-            CP_Entry.delete(0, 'end')
-            CP_Entry.insert(0, file_path)
-        elif type == "CSC":
-            CSC_Entry.delete(0, 'end')
-            CSC_Entry.insert(0, file_path)
-        elif type == "USERDATA":
-            USERDATA_Entry.delete(0, 'end')
-            USERDATA_Entry.insert(0, file_path)
-        print(f"Selected {type}: '{file_path}' with file picker")
+    try:    
+        file_path = filedialog.askopenfilename(title=f"Select the {type} file", initialdir='~', filetypes=[(f'{type} file', '.tar .zip .md5')])
+        if file_path:
+            if type == "BL":
+                BL_Entry.delete(0, 'end')
+                BL_Entry.insert(0, file_path)
+            elif type == "AP":
+                AP_Entry.delete(0, 'end')
+                AP_Entry.insert(0, file_path)
+            elif type == "CP":
+                CP_Entry.delete(0, 'end')
+                CP_Entry.insert(0, file_path)
+            elif type == "CSC":
+                CSC_Entry.delete(0, 'end')
+                CSC_Entry.insert(0, file_path)
+            elif type == "USERDATA":
+                USERDATA_Entry.delete(0, 'end')
+                USERDATA_Entry.insert(0, file_path)
+            print(f'Selected {type}: \'{file_path}\' with file picker')
+#    except tk.TclError:
+#        print('Thor GUI was closed with the file picker still open - Don\'t do that. :)')
+    except Exception as e:
+        print(f"An exception occurred in open_file: {e}")
 
-# Opens message-boxes, used by... well, a lot of things :)
+# Opens message-boxes - Used primarily by start_flash, but is also used by on_window_close
 def show_message(title, message, buttons, window_size=(300, 200)):
     global Message_Window
     def handle_window_close():
@@ -754,7 +846,7 @@ class HyperlinkManager:
 
     def __init__(self, text):
         self.text = text
-        self.text.tag_config("hyper", foreground="blue", underline=1)
+        self.text.tag_config("hyper", foreground="blue")
         self.text.tag_bind("hyper", "<Enter>", self._enter)
         self.text.tag_bind("hyper", "<Leave>", self._leave)
         self.text.tag_bind("hyper", "<ButtonRelease-1>", self._click)
@@ -815,6 +907,7 @@ def on_window_close():
     except Exception as e:
         print(f"An exception occurred in on_window_close: {e}")
 
+# Deals with changing button rim colors
 def on_button_hover(event, button):
     if button["state"] != "disabled":
         button.config(relief="flat", borderwidth=0, highlightbackground="#0479D7", activebackground='#E4F1FB')
@@ -828,7 +921,7 @@ def bind_button_events(button):
     button.bind("<Leave>", lambda event: on_button_leave(event, button))
 
 # Creates the Tkinter window
-window = tk.Tk()
+window = tk.Tk(className='Thor GUI')
 window.title(f"Thor GUI - {version}")
 
 # Sets the window size
@@ -856,18 +949,38 @@ bind_button_events(Start_Button)
 
 # Creates the "Begin Odin" Button
 Begin_Button = tk.Button(window, text="Begin Odin Protocol", command=toggle_odin, state='disabled', fg='#26A269', bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0)
-Begin_Button.grid(row=0, column=10, sticky='we', pady=5, padx=5)
+Begin_Button.grid(row=0, column=10, columnspan=2, sticky='we', pady=5, padx=5)
 bind_button_events(Begin_Button)
-
-# Creates the Command Entry
-Command_Entry = tk.Entry(window, state='disabled', bg='#F0F0F0', relief='flat', highlightbackground='#7A7A7A', highlightcolor='#0078D7')
-Command_Entry.grid(row=1, column=8, columnspan=3, pady=5, padx=5, sticky='nesw')
-Command_Entry.bind('<Return>', lambda event: send_command(Command_Entry.get()))
 
 # Creates the "Connect" Button
 Connect_Button = tk.Button(window, text="Connect", command=toggle_connection, state='disabled', fg='#26A269', bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0)
 Connect_Button.grid(row=0,column=9, sticky='we', pady=5)
 bind_button_events(Connect_Button)
+
+# Creates the Command Entry
+Command_Entry = tk.Entry(window, state='disabled', bg='#F0F0F0', relief='flat', highlightbackground='#7A7A7A', highlightcolor='#0078D7')
+Command_Entry.grid(row=1, column=8, columnspan=4, padx=5, sticky='nesw')
+Command_Entry.bind('<Return>', lambda event: other_send_command(Command_Entry.get()))
+
+# Creates the "Enter" Button
+Enter_Button = tk.Button(window, text="Enter", command=lambda: Thor.send('\n'), bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0, state='disabled')
+Enter_Button.grid(row=2, column=8, sticky='ew', padx=5)
+bind_button_events(Enter_Button)
+
+# Creates the "Space" Button
+Space_Button = tk.Button(window, text="Space", command=lambda: Thor.send('\x20'), bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0, state='disabled')
+Space_Button.grid(row=2, column=9, padx=(0, 5), sticky='ew')
+bind_button_events(Space_Button)
+
+# Creates the "PgUp" Button
+Page_Up_Button = tk.Button(window, text="PgUp", command=lambda: Thor.send('\x1b[A'), bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0, state='disabled')
+Page_Up_Button.grid(row=2, column=10, sticky='ew')
+bind_button_events(Page_Up_Button)
+
+# Creates the "PgDn" Button
+Page_Down_Button = tk.Button(window, text="PgDn", command=lambda: Thor.send('\x1b[B'), bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0, state='disabled')
+Page_Down_Button.grid(row=2, column=11, sticky='ew', padx=5)
+bind_button_events(Page_Down_Button)
 
 # Creates the "Start" Button
 Start_Flash_Button = tk.Button(window, text="Start", command=start_flash, fg='#26A269', bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0, state='disabled')
@@ -876,7 +989,7 @@ bind_button_events(Start_Flash_Button)
 
 # Creates the "Reset" Button
 Reset_Button = tk.Button(window, text="Reset", command=reset, fg='#F66151', bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0)
-Reset_Button.grid(row=8, column=10, sticky='we', pady=5, padx=5)
+Reset_Button.grid(row=8, column=10, columnspan=2, sticky='we', pady=5, padx=5)
 bind_button_events(Reset_Button)
 
 # Creates the Odin Archive Check-boxes
@@ -923,35 +1036,35 @@ bind_button_events(USERDATA_Button)
 
 # Creates the Odin archive Entries
 BL_Entry = tk.Entry(window, bg='#F0F0F0', highlightcolor='#0078D7', relief='flat', highlightbackground='#7A7A7A')
-BL_Entry.grid(row=3, column=9, columnspan=2, sticky='we', padx=5)
+BL_Entry.grid(row=3, column=9, columnspan=3, sticky='we', padx=5)
 
 AP_Entry = tk.Entry(window, bg='#F0F0F0', highlightcolor='#0078D7', relief='flat', highlightbackground='#7A7A7A')
-AP_Entry.grid(row=4, column=9, columnspan=2, sticky='we', padx=5)
+AP_Entry.grid(row=4, column=9, columnspan=3, sticky='we', padx=5)
 
 CP_Entry = tk.Entry(window, bg='#F0F0F0', highlightcolor='#0078D7', relief='flat', highlightbackground='#7A7A7A')
-CP_Entry.grid(row=5, column=9, columnspan=2, sticky='we', padx=5)
+CP_Entry.grid(row=5, column=9, columnspan=3, sticky='we', padx=5)
 
 CSC_Entry = tk.Entry(window, bg='#F0F0F0', highlightcolor='#0078D7', relief='flat', highlightbackground='#7A7A7A')
-CSC_Entry.grid(row=6, column=9, columnspan=2, sticky='we', padx=5)
+CSC_Entry.grid(row=6, column=9, columnspan=3, sticky='we', padx=5)
 
 USERDATA_Entry = tk.Entry(window, bg='#F0F0F0', highlightcolor='#0078D7', relief='flat', highlightbackground='#7A7A7A')
-USERDATA_Entry.grid(row=7, column=9, columnspan=2, sticky='we', padx=5)
+USERDATA_Entry.grid(row=7, column=9, columnspan=3, sticky='we', padx=5)
 
 # Creates the five Frame Buttons
 Log_Button = tk.Button(window, text='Log', command=lambda:toggle_frame('Log'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
-Log_Button.grid(row=2, column=0, sticky='wes', pady=5, padx=5)
+Log_Button.grid(row=2, column=0, sticky='wes', pady=(0, 0), padx=(5, 0))
 
 Options_Button = tk.Button(window, text='Options', command=lambda:toggle_frame('Options'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
-Options_Button.grid(row=2, column=1, sticky='wes', pady=5)
+Options_Button.grid(row=2, column=1, sticky='wes', pady=(0, 5))
 
 Pit_Button = tk.Button(window, text='Pit', command=lambda:toggle_frame('Pit'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
-Pit_Button.grid(row=2, column=2, sticky='wes', pady=5, padx=5)
+Pit_Button.grid(row=2, column=2, sticky='wes', pady=5)
 
 Help_Button = tk.Button(window, text='Help', command=lambda:toggle_frame('Help'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
 Help_Button.grid(row=2, column=3, sticky='wes', pady=5)
 
 About_Button = tk.Button(window, text='About', command=lambda:toggle_frame('About'), bg='#E1E1E1', highlightbackground='#ACACAC', activebackground='#E4F1FB', relief='flat', borderwidth=0)
-About_Button.grid(row=2, column=4, sticky='wes', pady=5, padx=5)
+About_Button.grid(row=2, column=4, sticky='wes', pady=5)
 
 # Creates the "Log" frame
 Log_Frame = tk.Frame(window, bg='white')
@@ -966,40 +1079,43 @@ Output_Text.grid(row=0, column=0, rowspan=6, sticky='nesw')
 Options_Frame = tk.Frame(window, bg='white')
 Options_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
+NOTE_Label = tk.Label(Options_Frame, text='NOTE: The "T Flash" option is temporarily not supported by Thor GUI.', bg='white')
+NOTE_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
+
 TFlash_Option_var = tk.IntVar()
-TFlash_Option = tk.Checkbutton(Options_Frame, variable=TFlash_Option_var, text='T Flash', bg='#F0F0F0', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat')
-TFlash_Option.grid(row=0, column=0, pady=10, padx=10, sticky='w')
+TFlash_Option = tk.Checkbutton(Options_Frame, variable=TFlash_Option_var, text='T Flash', bg='#F0F0F0', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat', state='disabled')
+TFlash_Option.grid(row=1, column=0, pady=10, padx=10, sticky='w')
 
 TFlash_Label = tk.Label(Options_Frame, text='Writes the bootloader of a working device onto the SD card', bg='white', cursor='hand2')
-TFlash_Label.grid(row=1, column=0, pady=10, padx=10, sticky='w')
+TFlash_Label.grid(row=2, column=0, pady=10, padx=10, sticky='w')
 
 TFlash_Label.bind("<ButtonRelease-1>", lambda e: open_link('https://android.stackexchange.com/questions/196304/what-does-odins-t-flash-option-do'))
 
 EFSClear_Option_var = tk.IntVar()
 EFSClear_Option = tk.Checkbutton(Options_Frame, variable=EFSClear_Option_var, text='EFS Clear', bg='#F0F0F0', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat')
-EFSClear_Option.grid(row=2, column=0, pady=10, padx=10, sticky='w')
+EFSClear_Option.grid(row=3, column=0, pady=10, padx=10, sticky='w')
 
 EFSClear_Label = tk.Label(Options_Frame, text='Wipes the EFS partition (WARNING: You better know what you\'re doing!)', bg='white', cursor='hand2')
-EFSClear_Label.grid(row=3, column=0, pady=10, padx=10, sticky='w')
+EFSClear_Label.grid(row=4, column=0, pady=10, padx=10, sticky='w')
 
 EFSClear_Label.bind("<ButtonRelease-1>", lambda e: open_link('https://android.stackexchange.com/questions/185679/what-is-efs-and-msl-in-android'))
 
 BootloaderUpdate_Option_var = tk.IntVar()
 BootloaderUpdate_Option = tk.Checkbutton(Options_Frame, variable=BootloaderUpdate_Option_var, text='Bootloader Update', bg='#F0F0F0', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat')
-BootloaderUpdate_Option.grid(row=4, column=0, pady=10, padx=10, sticky='w')
+BootloaderUpdate_Option.grid(row=5, column=0, pady=10, padx=10, sticky='w')
 
 BootloaderUpdate_Label = tk.Label(Options_Frame, text='', bg='white')
-BootloaderUpdate_Label.grid(row=5, column=0, pady=10, padx=10, sticky='w')
+BootloaderUpdate_Label.grid(row=6, column=0, pady=10, padx=10, sticky='w')
 
 ResetFlashCount_Option_var = tk.IntVar(value=True)
 ResetFlashCount_Option = tk.Checkbutton(Options_Frame, variable=ResetFlashCount_Option_var, text='Reset Flash Count', bg='#F0F0F0', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat')
-ResetFlashCount_Option.grid(row=6, column=0, pady=10, padx=10, sticky='w')
+ResetFlashCount_Option.grid(row=7, column=0, pady=10, padx=10, sticky='w')
 
 ResetFlashCount_Label = tk.Label(Options_Frame, text='', bg='white')
-ResetFlashCount_Label.grid(row=7, column=0, pady=10, padx=10, sticky='w')
+ResetFlashCount_Label.grid(row=8, column=0, pady=10, padx=10, sticky='w')
 
 Apply_Options_Button = tk.Button(Options_Frame, text='Apply', command=apply_options, state='disabled', bg='#E1E1E1', highlightbackground='#ACACAC', highlightcolor='#E4F1FB', activebackground='#E4F1FB', relief='flat', borderwidth=0)
-Apply_Options_Button.grid(row=8, column=0, pady=10, padx=10, sticky='w')
+Apply_Options_Button.grid(row=9, column=0, pady=10, padx=10, sticky='w')
 bind_button_events(Apply_Options_Button)
 
 # Creates the "Pit" frame
@@ -1074,20 +1190,20 @@ Thor_GUI_Websites_Text.insert(tk.END, "XDA", hyperlink.add(partial(open_link, 'h
 Thor_GUI_Websites_Text.tag_add("center", "1.0", "end")
 Thor_GUI_Websites_Text.config(state=tk.DISABLED)
 
-Thor_GUI_Label_8 = tk.Label(About_Frame, text='Built around the:', bg='white', font=('Monospace', 11))
+Thor_GUI_Label_4 = tk.Label(About_Frame, text='Built around the:', bg='white', font=('Monospace', 11))
+Thor_GUI_Label_4.grid(sticky='ew')
+
+Thor_GUI_Label_5 = tk.Label(About_Frame, text='', bg='white')
+Thor_GUI_Label_5.grid(sticky='ew')
+
+Thor_GUI_Label_6 = tk.Label(About_Frame, text='Thor Flash Utility', bg='white', font=("Monospace", 13))
+Thor_GUI_Label_6.grid(sticky='ew')
+
+Thor_GUI_Label_7 = tk.Label(About_Frame, text='v1.0.4', bg='white', font=('Monospace', 11))
+Thor_GUI_Label_7.grid(sticky='ew')
+
+Thor_GUI_Label_8 = tk.Label(About_Frame, text='An alternative to Heimdall', bg='white', font=('Monospace', 11))
 Thor_GUI_Label_8.grid(sticky='ew')
-
-Thor_GUI_Label_18 = tk.Label(About_Frame, text='', bg='white')
-Thor_GUI_Label_18.grid(sticky='ew')
-
-Thor_GUI_Label_9 = tk.Label(About_Frame, text='Thor Flash Utility', bg='white', font=("Monospace", 13))
-Thor_GUI_Label_9.grid(sticky='ew')
-
-Thor_GUI_Label_10 = tk.Label(About_Frame, text='v1.0.4', bg='white', font=('Monospace', 11))
-Thor_GUI_Label_10.grid(sticky='ew')
-
-Thor_GUI_Label_11 = tk.Label(About_Frame, text='An alternative to Heimdall', bg='white', font=('Monospace', 11))
-Thor_GUI_Label_11.grid(sticky='ew')
 
 Thor_Websites_Text = tk.Text(About_Frame, bg='white', font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
 Thor_Websites_Text.grid(sticky='ew')
@@ -1099,11 +1215,11 @@ Thor_Websites_Text.insert(tk.END, "XDA", hyperlink.add(partial(open_link, 'https
 Thor_Websites_Text.tag_add("center", "1.0", "end")
 Thor_Websites_Text.config(state=tk.DISABLED)
 
-Thor_GUI_Label_20 = tk.Label(About_Frame, text='', bg='white')
-Thor_GUI_Label_20.grid(sticky='ew')
+Thor_GUI_Label_9 = tk.Label(About_Frame, text='', bg='white')
+Thor_GUI_Label_9.grid(sticky='ew')
 
-Thor_GUI_Label_21 = tk.Label(About_Frame, text='Credits:', bg='white', font=('Monospace', 13))
-Thor_GUI_Label_21.grid(sticky='ew')
+Thor_GUI_Label_10 = tk.Label(About_Frame, text='Credits:', bg='white', font=('Monospace', 13))
+Thor_GUI_Label_10.grid(sticky='ew')
 
 TheAirBlow_Text = tk.Text(About_Frame, bg='white', font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
 TheAirBlow_Text.grid(sticky='ew')
@@ -1124,23 +1240,23 @@ ethical_haquer_Text.insert(tk.END, ", for Thor GUI")
 ethical_haquer_Text.tag_add("center", "1.0", "end")
 ethical_haquer_Text.config(state=tk.DISABLED)
 
-Thor_GUI_Label_17 = tk.Label(About_Frame, text='', bg='white')
-Thor_GUI_Label_17.grid(sticky='ew')
+Thor_GUI_Label_11 = tk.Label(About_Frame, text='', bg='white')
+Thor_GUI_Label_11.grid(sticky='ew')
 
-Thor_GUI_Label_6 = tk.Label(About_Frame, text='This program comes with absolutely no warranty.', bg='white', font=("Monospace", 9))
-Thor_GUI_Label_6.grid(sticky='ew')
+Thor_GUI_Label_12 = tk.Label(About_Frame, text='This program comes with absolutely no warranty.', bg='white', font=("Monospace", 9))
+Thor_GUI_Label_12.grid(sticky='ew')
 
-Thor_GUI_Label_7 = tk.Label(About_Frame, text='See the GNU General Public License, version 3 or later for details.', bg='white', font=("Monospace", 9))
-Thor_GUI_Label_7.grid(sticky='ew')
+Thor_GUI_Label_13 = tk.Label(About_Frame, text='See the GNU General Public License, version 3 or later for details.', bg='white', font=("Monospace", 9))
+Thor_GUI_Label_13.grid(sticky='ew')
 
-Thor_GUI_Label_16 = tk.Label(About_Frame, text='', bg='white')
-Thor_GUI_Label_16.grid(sticky='ew')
-
-Thor_GUI_Label_14 = tk.Label(About_Frame, text='Thor Flash Utility comes with absolutely no warranty.', bg='white', font=("Monospace", 9))
+Thor_GUI_Label_14 = tk.Label(About_Frame, text='', bg='white')
 Thor_GUI_Label_14.grid(sticky='ew')
 
-Thor_GUI_Label_15 = tk.Label(About_Frame, text='See the Mozilla Public License, version 2 or later for details.', bg='white', font=("Monospace", 9))
+Thor_GUI_Label_15 = tk.Label(About_Frame, text='Thor Flash Utility comes with absolutely no warranty.', bg='white', font=("Monospace", 9))
 Thor_GUI_Label_15.grid(sticky='ew')
+
+Thor_GUI_Label_16 = tk.Label(About_Frame, text='See the Mozilla Public License, version 2 or later for details.', bg='white', font=("Monospace", 9))
+Thor_GUI_Label_16.grid(sticky='ew')
 
 # Configures the tags for coloring the output text
 Output_Text.tag_configure('green', foreground='#26A269')
