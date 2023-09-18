@@ -48,7 +48,7 @@ Aesthetic:
 
 + Install the .NET 7 Runtime. Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
 > [!NOTE]
-> The .NET Framework is propreitary, but Thor depends on it.
+> The .NET Framework is propreitary.
 + Install Thor. Download the "Linux.zip" file from [here](https://github.com/Samsung-Loki/Thor/releases/tag/1.0.4).
 + Next, unzip the "Linux.zip" file somewhere, and run:
 
