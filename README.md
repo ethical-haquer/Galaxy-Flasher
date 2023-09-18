@@ -3,7 +3,7 @@
 # Thor GUI
 
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
-![Thor_GUI_Alpha_v0 2 0](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/694342ae-0625-4ccf-8fae-b6e4f4c22228)
+![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4fa0e2e6-da03-49fe-be44-af1bba96344f)
 
 ## Intro
 
@@ -30,6 +30,7 @@ Aesthetic:
 - [x] Starting/Stopping an Odin session
 - [x] Setting options
 - [x] Typing and sending Thor a command
+
 - [x] Flashing Odin archives
 - [ ] Flashing a single partition
 - [ ] Printing a description of a device's partition table
