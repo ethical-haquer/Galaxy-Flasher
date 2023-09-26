@@ -1,4 +1,3 @@
-# NOTICE: This is not the main branch, and it is under construction.
 
 # Thor GUI
 
@@ -11,7 +10,7 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the soon-to-be Alpha v0.2.0 release can be found below.
+Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the _latest release_ can be found below.
 
 ## Known Bugs
 
