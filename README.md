@@ -6,9 +6,26 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 <details>
   <summary>Screenshots</summary>
   <br>
-  ![Select_Partitions](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/57fe8e2e-6ebf-44b6-b223-9eb4e221a35f)
-  
+  <b>NOTE:</b> This section is a work-in-progress
+  <br>
+  <br>
+  "Options" Tab:
+  <br>
+  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/8d2625f9-780a-4f83-b9e5-db90d691295e" alt="Options Tab">
+  <br>
+  Command Entry:
+  <br>
+  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/6292ec8e-7ffc-4036-a000-2ec178e9314b" alt="Command Entry">
+  <br>
+  "Select Partitions" Window:
+  <br>
+  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/57fe8e2e-6ebf-44b6-b223-9eb4e221a35f" alt="Select Partitions Window">
+  <br>
+  "Verify Flash" Window:
+  <br>
+  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/1b6bb3a9-38d8-4f47-aedf-310f7a88ca34" alt="Verify Flash Window">
 </details>
+
 ## Intro
 
 After witnessing a new Linux user, who had just switched over from Windows, struggle with using Thor's CLI, I decided to try and make a GUI for it. If you aren't comfortable with the command line, or just prefer a GUI, then this could be helpful for you. On the other hand, if you are comfortable using the command line, then you may just want to use Thor in the terminal. And yes, this is my first GitHub project, so please let me know if you have any suggestions. :slightly_smiling_face:
