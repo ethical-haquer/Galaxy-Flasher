@@ -79,7 +79,7 @@ pip3 install pexpect
 > If you encounter any issues, or have any questions, just let me know and I'll be glad to help. 🙂
 
 ## Usage
-
+**NOTE:** This section is a work-in-progress
 <details>
   <summary>Guide</summary>
   <br>
