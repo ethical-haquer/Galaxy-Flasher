@@ -142,7 +142,7 @@ pip3 install pexpect
   If any of these above conditions is not met, Thor GUI will simply let you know, so don't worry.
   <br>
   <br>
-  After a flash has been started, you will be presented with a "Select Partitions" Window. You may click "Select All" to flash all of the partitions, or choose certain partitions to flash. Once you have finished selecting the partitions you want to flash, hit the "Select" button. There will be a "Select Partitions" Window for <b>every file</b> you selected with the check-boxes.
+  After a flash has been started, you will be presented with a "Select Partitions" Window. You may click "Select All" to select all of the listed partitions, or choose certain partitions to flash. Once you have finished selecting the partitions you want to flash, hit the "Select" button. There will be a "Select Partitions" Window for <b>every file</b> you selected with the check-boxes.
   <br>
   <br>
   After you have finished selecting partitions to flash you will see a "Verify Flash" window. This is your chance to cancel the flash if needed, by clicking the "No" button. Otherwise, click the "Yes" button and the flash will start.
