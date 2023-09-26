@@ -17,7 +17,6 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Thor GUI's:
 
 Functional:
-+ Setting the option "T Flash" to "True" locks-up Thor itself, at least in my case. I didn't have a micro-SD in, but still. Causes Ctrl+C to be necessary to stop Thor GUI.
 + Currently, the only interactive Thor commands (the ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
 
 Aesthetic:
@@ -29,7 +28,6 @@ Aesthetic:
 - [x] Starting/Stopping an Odin session
 - [x] Setting options
 - [x] Typing and sending Thor a command
-
 - [x] Flashing Odin archives
 - [ ] Flashing a single partition
 - [ ] Printing a description of a device's partition table
