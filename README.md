@@ -99,7 +99,7 @@ pip3 install pexpect
 > If you encounter any issues, or have any questions, just let me know and I'll be glad to help. 🙂
 
 ## Usage
-**NOTE:** This section is a work-in-progress
+**NOTE:** This section is a work-in-progress, and will soon have a screen recording as well.
 <details>
   <summary>Guide</summary>
   <br>
@@ -132,7 +132,9 @@ pip3 install pexpect
   <br>
   At least one file must be selected (with the check-boxes), 
   <br>
-  All selected files must exist, All selected files must be a .tar, .md5, or .zip, 
+  All selected files must exist, 
+  <br>
+  All selected files must be a .tar, .md5, or .zip, 
   <br>
   All selected files must be in the same directory. 
   <br>
