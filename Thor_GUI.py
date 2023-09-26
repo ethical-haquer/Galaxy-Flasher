@@ -36,9 +36,8 @@ import os
 from functools import partial
 import zipfile
 from collections import deque
-import traceback
 
-path_to_thor = '/PATH/TO/Thor/TheAirBlow.Thor.Shell.dll'
+path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
 
 version = 'Alpha v0.2.0'
 
@@ -244,7 +243,6 @@ def scan_output():
                 ResetFlashCount_Option_var = tk.IntVar(value=True)
     except Exception as e:
         print(f"An exception occurred in scan_output: '{e}'")
-        traceback.print_exc()
 
 # Handles coloring the output, as the original ANSI escape sequences are stripped out
 def determine_tag(line):
@@ -650,7 +648,7 @@ def select_partitions(path, name):
                 if var.get() == 1:
                     selected_files.append(checkbox.cget("text"))
             if not selected_files:
-                print("No files selected.")
+                Thor.send('\n')
                 return
 
             for file_name in file_names:
