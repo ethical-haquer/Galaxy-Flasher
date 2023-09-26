@@ -125,8 +125,25 @@ pip3 install pexpect
   <br>
   <b>Flashing Odin archives</b> 
   <br>
-  To flash Odin archives, first select what files to flash. You may either select the files with a file picker, by clicking one of the file buttons (For example, to select a BL file, click the "BL" button), or type the file path into the corresponding entry. Only files which are selected with the check-boxes will be flashed. To flash the selected files, hit the "Start" button. There are a few requirements that must be met for it to start the flash: At least one file must be selected (with the check-boxes), All selected files must exist, All selected files must be a .tar, .md5, or .zip, and All selected files must be in the same directory. If any of these conditions is not met, Thor GUI will simply let you know, so don't worry.
-  
+  To flash Odin archives, first select what files to flash. You may either select the files with a file picker, by clicking one of the file buttons (For example, to select a BL file, click the "BL" button), or type the file path into the corresponding entry. Only files which are selected with the check-boxes will be flashed. 
+  <br>
+  <br>
+  To flash the selected files, hit the "Start" button. There are a few requirements that must be met for it to start the flash: 
+  <br>
+  At least one file must be selected (with the check-boxes), 
+  <br>
+  All selected files must exist, All selected files must be a .tar, .md5, or .zip, 
+  <br>
+  All selected files must be in the same directory. 
+  <br>
+  <br>
+  If any of these above conditions is not met, Thor GUI will simply let you know, so don't worry.
+  <br>
+  <br>
+  After a flash has been started, you will be presented with a "Select Partitions" Window. You may click "Select All" to flash all of the partitions, or choose certain partitions to flash. Once you have finished selecting the partitions you want to flash, hit the "Select" button. There will be a "Select Partitions" Window for <b>every file</b> you selected with the check-boxes.
+  <br>
+  <br>
+  After you have finished selecting partitions to flash you will see a "Verify Flash" window. This is your chance to cancel the flash if needed, by clicking the "No" button. Otherwise, click the "Yes" button and the flash will start.
 </details>
 
 ## How you can help
