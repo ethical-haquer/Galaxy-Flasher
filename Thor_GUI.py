@@ -19,12 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # Name: Thor GUI
 # Version: Alpha v0.2.0
 # By: ethical_haquer
-# Released: 8-25-23
+# Released: 9-25-23
 # Known issues: Numerous :) - See https://github.com/ethical-haquer/Thor_GUI#known-bugs for more info
 
 import tkinter as tk
 from tkinter import scrolledtext
-from tkinter import messagebox 
+from tkinter import messagebox
 from tkinter import filedialog
 import pexpect
 from threading import Thread
@@ -37,7 +37,7 @@ from functools import partial
 import zipfile
 from collections import deque
 
-path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
+path_to_thor = '/PATH/TO/Thor/TheAirBlow.Thor.Shell.dll'
 
 version = 'Alpha v0.2.0'
 
@@ -54,13 +54,13 @@ successful_commands = []
 odin_archives = []
 
 print(f'''
- _____ _                   ____ _   _ ___ 
+ _____ _                   ____ _   _ ___
 |_   _| |__   ___  _ __   / ___| | | |_ _|
-  | | | '_ \ / _ \| '__| | |  _| | | || | 
-  | | | | | | (_) | |    | |_| | |_| || | 
+  | | | '_ \ / _ \| '__| | |  _| | | || |
+  | | | | | | (_) | |    | |_| | |_| || |
   |_| |_| |_|\___/|_|     \____|\___/|___|
 
-              {version}                                     
+              {version}
 ''')
 
 # This starts and stops Thor
@@ -81,7 +81,7 @@ def start_thor():
             print('A Timeout Occurred in start_thor')
     except Exception as e:
         print(f"An exception occurred in start_thor: {e}")
-    
+
 # What most commands go through
 def send_command(command):
     global Thor, successful_commands, prompt_available
@@ -89,13 +89,13 @@ def send_command(command):
         try:
             if 'exit' in command or 'quit' in command:
                 print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.')
-            else:   
+            else:
                 if prompt_available == True:
                     Thor.sendline(command)
                     Output_Text.see(tk.END)
                     successful_commands.append(command)
                     print(f'Sent command: \'{command}\'')
-                else:  
+                else:
                     print(f'Couldn\'t send the command: \'{command}\', as the \'shell>\' prompt wasn\'t available')
         except Exception as e:
             print(f"An exception occurred in send_command: {e}")
@@ -107,13 +107,13 @@ def other_send_command(command):
         try:
             if 'exit' in command or 'quit' in command:
                 print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.')
-            else:   
+            else:
                 if prompt_available == True or clean_line.endswith('[y/n] (n):'):
                     Thor.sendline(command)
                     Output_Text.see(tk.END)
                     successful_commands.append(command)
                     print(f'Sent command: \'{command}\'')
-                else:  
+                else:
                     print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')
         except Exception as e:
             print(f"An exception occurred in other_send_command: {e}")
@@ -272,7 +272,7 @@ def determine_tag(line):
         'Cancel operation'
     ]
     dark_blue = [
-        
+
     ]
     red = [
         '~~~~~~~^'
@@ -343,7 +343,7 @@ def set_connect(value):
             Connect_Button.configure(text='Connect device', fg='#26A269')
             Begin_Button.configure(state='disabled')
             connection = False
-        
+
 # Tells the program whether an Odin session is running or not
 def set_odin(value):
     global odin_running
@@ -362,7 +362,7 @@ def set_odin(value):
 def toggle_connection():
     global currently_running
     global connection
-    try:   
+    try:
         if currently_running:
             if not connection:
                 send_command('connect')
@@ -436,7 +436,7 @@ def start_flash():
         print(f"An exception occurred in start_flash: {e}")
 
     return True
-    
+
 # Sets the "Options" back to default and resets the Odin archive Check-buttons/Entries
 def reset():
     global currently_running
@@ -476,14 +476,14 @@ def toggle_frame(name):
             btn.grid_configure(pady=5)
             btn.configure(activebackground='#E4F1FB')
 
-# Handles setting the options 
+# Handles setting the options
 # NOTE: The T Flash option is currently disabled
 def apply_options():
 #    tflash_status = TFlash_Option_var.get()
     efs_clear_status = EFSClear_Option_var.get()
     bootloader_update_status = BootloaderUpdate_Option_var.get()
     reset_flash_count_status = ResetFlashCount_Option_var.get()
-#    if tflash_status == 1:     
+#    if tflash_status == 1:
     if efs_clear_status == 1:
         Thor.sendline('options efsclear true')
     elif efs_clear_status == 0:
@@ -555,7 +555,7 @@ def select_device():
 
             message_label = tk.Label(Connect_Device_Window, text=message, bg='#F0F0F0')
             message_label.grid(sticky='ew', columnspan=2, row=0)
-            
+
             radio_buttons = []
             even = False
             row = 1
@@ -571,7 +571,7 @@ def select_device():
                     even = False
                 bind_button_events(radio_button)
                 row = row + 1
-            
+
                 def handle_connect():
                     KEY_DOWN = '\x1b[B'
                     selected = selected_device.get()
@@ -581,14 +581,12 @@ def select_device():
                         print({selected})
                         for radio_button, var in radio_buttons:
                             if var.get() == selected:
-                                print('Sending Thor an \'Enter\'')
                                 Thor.send('\n')
                                 close_connect_window()
                                 return False
                             else:
-                                print('Sending Thor a \'Key-down\'')
                                 Thor.send(KEY_DOWN)
-                
+
                 def close_connect_window():
                     Connect_Device_Window.destroy()
                     Connect_Button.event_generate('<Leave>')
@@ -596,7 +594,6 @@ def select_device():
                 def cancel_connect():
                     KEY_DOWN = '\x1b[B'
                     for radio_button, var in radio_buttons:
-                        print('Sending Thor a \'Key-down\'')
                         Thor.send(KEY_DOWN)
                     Thor.send('\n')
                     close_connect_window()
@@ -605,12 +602,12 @@ def select_device():
             Connect_Button_2 = tk.Button(Connect_Device_Window, text="Connect", command=handle_connect, bg='#E1E1E1', fg='#26A269', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
             Connect_Button_2.grid(pady=5, padx=5, column=1, row=row, sticky='we')
             bind_button_events(Connect_Button_2)
-            
+
             # Create the Cancel button
             Cancel_Button = tk.Button(Connect_Device_Window, text="Cancel", command=cancel_connect, bg='#E1E1E1', fg='#F66151', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
             Cancel_Button.grid(pady=5, padx=5, column=0, row=row, sticky='we')
             bind_button_events(Cancel_Button)
-            
+
             Connect_Device_Window.protocol("WM_DELETE_WINDOW", close_connect_window)
             Connect_Device_Window.mainloop()
         else:
@@ -630,36 +627,35 @@ def select_partitions(path, name):
                 for member in tar.getmembers():
                     file_names.append(member.name)
             return file_names
-        
+
         def get_files_from_zip(path, name):
             file_names = []
             with zipfile.ZipFile(os.path.join(path, name), "r") as zip:
                 for file_info in zip.infolist():
                     file_names.append(file_info.filename)
             return file_names
-        
+
         def select_all(checkboxes, select_all_var):
             select_all_value = select_all_var.get()
             for checkbox, var in checkboxes:
                 var.set(select_all_value)
-        
+
         def flash_selected_files(checkboxes, Select_Partitions_Window):
             for checkbox, var in checkboxes:
                 if var.get() == 1:
                     selected_files.append(checkbox.cget("text"))
             if not selected_files:
+                print(f'You chose not to select any partitions from {name}')
                 Thor.send('\n')
-                return
+                Select_Partitions_Window.destroy()
+                return False
 
             for file_name in file_names:
                 sleep(0.05)
                 if file_name in selected_files:
                     Thor.send('\x20')
-                    print('Selected a file')
                 Thor.send('\x1b[B')
-                print('Moved down')
             Thor.send('\n')
-            print('Confirmed selection')
             Select_Partitions_Window.destroy()
             return False
 
@@ -677,12 +673,18 @@ def select_partitions(path, name):
         Select_Partitions_Window.grab_set()
         Select_Partitions_Window.update_idletasks()
 
+        window_height = 30
+        checkboxes = []
+        shortened_file = name[:34]
+
+        Label = tk.Label(Select_Partitions_Window, text=f"Select what partitions to flash from\n{shortened_file}...", font=("Monospace", 10), bg='#F0F0F0')
+        Label.pack(pady=5)
+        window_height = window_height + 50
+
         select_all_var = tk.IntVar()
         select_all_button = tk.Checkbutton(Select_Partitions_Window, text="Select all", variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var), bg='#F0F0F0', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat')
         select_all_button.pack(pady=5)
 
-        window_height = 30
-        checkboxes = []
         for file_name in file_names:
             var = tk.IntVar()
             checkbox = tk.Checkbutton(Select_Partitions_Window, text=file_name, variable=var, bg='#FFFFFF', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat', font=("Monospace", 10))
@@ -695,7 +697,7 @@ def select_partitions(path, name):
         Select_Partitions_Button.pack()
         bind_button_events(Select_Partitions_Button)
 
-        window_size=(240, window_height)
+        window_size=(330, window_height)
         width, height = window_size
         x = window.winfo_rootx() + (window.winfo_width() - width) // 2
         y = window.winfo_rooty() + (window.winfo_height() - height) // 2
@@ -734,12 +736,13 @@ def verify_flash():
         bind_button_events(Yes_Button)
 
         Verify_Flash_Window.mainloop()
+
     except Exception as e:
         print(f"An exception occurred in verify_flash: {e}")
 
 # Opens file picker when Odin archive button is clicked
 def open_file(type):
-    try:    
+    try:
         file_path = filedialog.askopenfilename(title=f"Select the {type} file", initialdir='~', filetypes=[(f'{type} file', '.tar .zip .md5')])
         if file_path:
             if type == "BL":
@@ -1103,7 +1106,7 @@ Get_Help_Text.insert(tk.END, ", or open an issue on ")
 Get_Help_Text.insert(tk.END, "GitHub", hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI')))
 Get_Help_Text.insert(tk.END, ".")
 Get_Help_Text.tag_add("center", "1.0", "end")
-Get_Help_Text.config(state=tk.DISABLED) 
+Get_Help_Text.config(state=tk.DISABLED)
 
 Help_Label_2 = tk.Label(Help_Frame, text='', bg='white')
 Help_Label_2.grid(row=3, column=0, sticky='ew')
@@ -1121,7 +1124,7 @@ Report_Text.insert(tk.END, ", you can ")
 Report_Text.insert(tk.END, "report it", hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=')))
 Report_Text.insert(tk.END, ".")
 Report_Text.tag_add("center", "1.0", "end")
-Report_Text.config(state=tk.DISABLED) 
+Report_Text.config(state=tk.DISABLED)
 
 # Creates the "About" frame
 About_Frame = tk.Frame(window, bg='white')
