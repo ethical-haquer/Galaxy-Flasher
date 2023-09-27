@@ -4,7 +4,7 @@
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 ![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4fa0e2e6-da03-49fe-be44-af1bba96344f)
 <details>
-  <summary>Screenshots</summary>
+  <summary><b>Screenshots</b></summary>
   <br>
   <b>NOTE:</b> This section is a work-in-progress
   <br>
@@ -99,31 +99,36 @@ pip3 install pexpect
 > If you encounter any issues, or have any questions, just let me know and I'll be glad to help. 🙂
 
 ## Usage
-**NOTE:** This section is a work-in-progress, and will soon have a screen recording as well.
+**NOTE:** This section is a work-in-progress
+
+https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5df866bb-74d1-40ba-b5b0-571ed88d68a3
+
 <details>
-  <summary>Guide</summary>
+  <summary><b>Guide</b></summary>
   <br>
-  <b>Starting Thor:</b>
+  <b>Starting Thor (0:00):</b>
   <br>
   To start Thor, click the "Start Thor" button. This is usually the first thing you'd do after running Thor GUI.
   <br>
   <br>
-  <b>Connecting to a device:</b> 
+  <b>Connecting to a device (0:09):</b> 
   <br>
   To connect to a device, click the "Connect" button. A pop-up window will appear, asking you what device you'd like to connect to. Choose a device, and then click "Select".
   <br>
   <br>
-  <b>Running a <a href="https://github.com/Samsung-Loki/Thor#current-list-of-commands">Thor command</a>:</b> 
+  <b>Starting an Odin protocol (0:17):</b>
+  <br>
+  To start an Odin protocol, which is needed to flash a device, click the "Start Odin protocol" button. 
+  <br>
+  <b>Fun fact:</b> The top three buttons in Thor GUI are placed in the order they should be used, from left to right.
+  <br>
+  <br>
+  <b>Running a <a href="https://github.com/Samsung-Loki/Thor#current-list-of-commands">Thor command</a> (1:12):</b> 
   <br>
   To send Thor a command, enter it into the Command Entry (upper-right corner of Thor GUI, under the "Start Thor" button) and hit Enter.
   <br>
   <br>
-  <b>Starting an Odin protocol</b> 
-  <br>
-  To start an Odin protocol, click the "Begin Odin Protocol" button.
-  <br>
-  <br>
-  <b>Flashing Odin archives</b> 
+  <b>Flashing Odin archives (0:19)</b> 
   <br>
   To flash Odin archives, first select what files to flash. You may either select the files with a file picker, by clicking one of the file buttons (For example, to select a BL file, click the "BL" button), or type the file path into the corresponding entry. Only files which are selected with the check-boxes will be flashed. 
   <br>
