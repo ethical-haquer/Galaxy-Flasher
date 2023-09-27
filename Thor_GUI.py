@@ -17,9 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 # Name: Thor GUI
-# Version: Alpha v0.2.0
+# Version: Alpha v0.2.1
 # By: ethical_haquer
-# Released: 9-25-23
+# Released: 9-27-23
 # Known issues: Numerous :) - See https://github.com/ethical-haquer/Thor_GUI#known-bugs for more info
 
 import tkinter as tk
