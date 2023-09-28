@@ -16,12 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# Name: Thor GUI
-# Version: Alpha v0.2.1
-# By: ethical_haquer
-# Released: 9-27-23
-# Known issues: Numerous :) - See https://github.com/ethical-haquer/Thor_GUI#known-bugs for more info
-
 import tkinter as tk
 from tkinter import scrolledtext
 from tkinter import messagebox
@@ -39,7 +33,7 @@ from collections import deque
 
 path_to_thor = '/PATH/TO/Thor/TheAirBlow.Thor.Shell.dll'
 
-version = 'Alpha v0.2.0'
+version = 'Alpha v0.2.1'
 
 currently_running = False
 odin_running = False
