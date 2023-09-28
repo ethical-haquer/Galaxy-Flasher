@@ -31,7 +31,7 @@ from functools import partial
 import zipfile
 from collections import deque
 
-path_to_thor = '/PATH/TO/Thor/TheAirBlow.Thor.Shell.dll'
+path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
 
 version = 'Alpha v0.2.1'
 
