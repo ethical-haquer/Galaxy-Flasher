@@ -2,7 +2,8 @@
 # Thor GUI
 
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
-![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4fa0e2e6-da03-49fe-be44-af1bba96344f)
+![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/22818301-bc93-4820-a6a6-ade3c26d0f33)
+
 <details>
   <summary><b>Screenshots</b></summary>
   <br>
@@ -60,6 +61,7 @@ Aesthetic:
 
 + Built in installer and setup for .NET and Thor.
 + Different themes: dark, light, etc. (With the current look as a "Windows" theme)
++ Settings
 
 ## Prerequisites
 
