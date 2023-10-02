@@ -2,8 +2,12 @@
 # Thor GUI
 
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
-![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/22818301-bc93-4820-a6a6-ade3c26d0f33)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/0592c939-58eb-42b6-a7ff-f7274f7820cb">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b97628ef-a932-4ef3-8bdf-cc3005895a83">
+  <img alt="Screenshot of Thor GUI.">
+</picture>
 <details>
   <summary><b>Screenshots</b></summary>
   <br>
@@ -12,19 +16,35 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
   <br>
   "Options" Tab:
   <br>
-  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/8d2625f9-780a-4f83-b9e5-db90d691295e" alt="Options Tab">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/03246c37-4d9a-462b-9968-23b6e01ad036">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/e2f51f25-e682-48f9-97ad-0f8d189ca460">
+    <img alt="Options Tab">
+  </picture>
   <br>
   Command Entry:
   <br>
-  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/6292ec8e-7ffc-4036-a000-2ec178e9314b" alt="Command Entry">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/7d875fc7-bead-47bd-943c-d3622b320546">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/136b84a6-81f8-4ed9-b7e2-1e2ebfc973ff">
+    <img alt="Command Entry">
+  </picture>
   <br>
   "Select Partitions" Window:
   <br>
-  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/57fe8e2e-6ebf-44b6-b223-9eb4e221a35f" alt="Select Partitions Window">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/fd1419dc-0d3c-47e4-a37e-c188e0c702d5">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/83a61e3c-09d7-41a5-8178-124abc6fc623">
+    <img alt="Select Partitions Window">
+  </picture>
   <br>
   "Verify Flash" Window:
   <br>
-  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/1b6bb3a9-38d8-4f47-aedf-310f7a88ca34" alt="Verify Flash Window">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/db33a809-6a95-4585-bcec-26a95c0c5127">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/48a7da84-1474-4d09-9b9d-ae2a74d02100">
+    <img alt="Verify Flash Window">
+  </picture>
 </details>
 
 ## Intro
@@ -33,7 +53,7 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the _latest release_ can be found below.
+Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
@@ -41,9 +61,11 @@ In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues),
 
 Functional:
 + Currently, the only interactive Thor commands (the ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
++ Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104).
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
++ The text in the "Connect Device" and "Force Stop" windows is not in the middle.
 
 ## Implemented Thor features
 
@@ -60,8 +82,7 @@ Aesthetic:
 ## Planned improvements
 
 + Built in installer and setup for .NET and Thor.
-+ Different themes: dark, light, etc. (With the current look as a "Windows" theme)
-+ Settings
++ More Settings
 
 ## Prerequisites
 
@@ -81,15 +102,22 @@ Aesthetic:
 ### Pexpect
 
 ```
-pip3 install pexpect
+pip install pexpect
+```
+
+### Sun Valley ttk theme
+
+```
+pip install sv-ttk
 ```
 
 ## Install Instructions
 
 + Download the latest Thor GUI release from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it, and open the Thor_GUI.py file with a text editor.
-+ You need to edit line 40 of the file.
++ You need to edit line 38 and 41 of the file.
 + Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from the "Linux.zip").
++ Replace "/PATH/TO/DIRECTORY/CONTAINING/THOR_GUI's/FILES/" with the correct path to **the directory containing** the Thor_GUI.py file - Not the file itself.
 + Save your changes to the file, and run:
 
   ```
@@ -166,6 +194,8 @@ Here are some ways you can help me improve/finish Thor GUI:
 [TheAirBlow](https://github.com/theairblow) for Thor Flash Utility
 
 Myself, [ethical_haquer](https://github.com/ethical-haquer), for Thor GUI
+
+[rdbende](https://github.com/rdbende) for the Sun Valley tkk theme
 
 ## This program is licenced under
 
