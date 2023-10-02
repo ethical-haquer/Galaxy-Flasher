@@ -16,19 +16,35 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
   <br>
   "Options" Tab:
   <br>
-  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/8d2625f9-780a-4f83-b9e5-db90d691295e" alt="Options Tab">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/03246c37-4d9a-462b-9968-23b6e01ad036">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/e2f51f25-e682-48f9-97ad-0f8d189ca460">
+    <img alt="Options Tab">
+  </picture>
   <br>
   Command Entry:
   <br>
-  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/6292ec8e-7ffc-4036-a000-2ec178e9314b" alt="Command Entry">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/7d875fc7-bead-47bd-943c-d3622b320546">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/136b84a6-81f8-4ed9-b7e2-1e2ebfc973ff">
+    <img alt="Command Entry">
+  </picture>
   <br>
   "Select Partitions" Window:
   <br>
-  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/57fe8e2e-6ebf-44b6-b223-9eb4e221a35f" alt="Select Partitions Window">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/fd1419dc-0d3c-47e4-a37e-c188e0c702d5">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/83a61e3c-09d7-41a5-8178-124abc6fc623">
+    <img alt="Select Partitions Window">
+  </picture>
   <br>
   "Verify Flash" Window:
   <br>
-  <img src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/1b6bb3a9-38d8-4f47-aedf-310f7a88ca34" alt="Verify Flash Window">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/db33a809-6a95-4585-bcec-26a95c0c5127">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/48a7da84-1474-4d09-9b9d-ae2a74d02100">
+    <img alt="Verify Flash Window">
+  </picture>
 </details>
 
 ## Intro
