@@ -2,7 +2,11 @@
 # Thor GUI
 
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
-![Thor_GUI](https://github.com/ethical-haquer/Thor_GUI/assets/141518185/22818301-bc93-4820-a6a6-ade3c26d0f33)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/0134c34d-6bb0-4032-8b1c-4721e2791875">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b97628ef-a932-4ef3-8bdf-cc3005895a83">
+  <img alt="Screenshot of Thor GUI." src="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b97628ef-a932-4ef3-8bdf-cc3005895a83">
+</picture>
 
 <details>
   <summary><b>Screenshots</b></summary>
@@ -33,7 +37,7 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the _latest release_ can be found below.
+Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the soon-to-be Alpha v0.3.0 release can be found below.
 
 ## Known Bugs
 
@@ -60,7 +64,6 @@ Aesthetic:
 ## Planned improvements
 
 + Built in installer and setup for .NET and Thor.
-+ Different themes: dark, light, etc. (With the current look as a "Windows" theme)
 + Settings
 
 ## Prerequisites
@@ -81,15 +84,22 @@ Aesthetic:
 ### Pexpect
 
 ```
-pip3 install pexpect
+pip install pexpect
+```
+
+### Sun Valley ttk theme
+
+```
+pip install sv-ttk
 ```
 
 ## Install Instructions
 
 + Download the latest Thor GUI release from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it, and open the Thor_GUI.py file with a text editor.
-+ You need to edit line 40 of the file.
++ You need to edit line 38 and 41 of the file.
 + Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from the "Linux.zip").
++ Replace "/PATH/TO/DIRECTORY/CONTAINING/THOR_GUI's/FILES/" with the correct path to **the directory containing** the Thor_GUI.py file - Not the file itself.
 + Save your changes to the file, and run:
 
   ```
@@ -166,6 +176,8 @@ Here are some ways you can help me improve/finish Thor GUI:
 [TheAirBlow](https://github.com/theairblow) for Thor Flash Utility
 
 Myself, [ethical_haquer](https://github.com/ethical-haquer), for Thor GUI
+
+[rdbende](https://github.com/rdbende) for the Sun Valley tkk theme
 
 ## This program is licenced under
 
