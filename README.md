@@ -53,7 +53,7 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the soon-to-be Alpha v0.3.0 release can be found below.
+Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
@@ -61,9 +61,11 @@ In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues),
 
 Functional:
 + Currently, the only interactive Thor commands (the ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
++ Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104).
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
++ The text in the "Connect Device" and "Force Stop" windows is not in the middle.
 
 ## Implemented Thor features
 
@@ -80,7 +82,7 @@ Aesthetic:
 ## Planned improvements
 
 + Built in installer and setup for .NET and Thor.
-+ Settings
++ More Settings
 
 ## Prerequisites
 
