@@ -540,9 +540,9 @@ def select_device():
         if devices:
             title = "Connect device"
             message = "Choose a device to connect to:"
-            selected_device = ttk.StringVar(value=None)
+            selected_device = tk.StringVar(value=None)
 
-            Connect_Device_Window = ttk.Toplevel(window, bg='#F0F0F0')
+            Connect_Device_Window = tk.Toplevel(window)
             Connect_Device_Window.title(title)
             Connect_Device_Window.wm_transient(window)
             Connect_Device_Window.grab_set()
@@ -556,15 +556,15 @@ def select_device():
             Connect_Device_Window.grid_columnconfigure(0, weight=1)
             Connect_Device_Window.grid_columnconfigure(1, weight=1)
 
-            message_label = ttk.Label(Connect_Device_Window, text=message, bg='#F0F0F0')
+            message_label = ttk.Label(Connect_Device_Window, text=message)
             message_label.grid(sticky='ew', columnspan=2, row=0)
 
             radio_buttons = []
             even = False
             row = 1
             for device in devices:
-                var = ttk.StringVar(value=device)
-                radio_button = ttk.Radiobutton(Connect_Device_Window, text=device, variable=selected_device, value=device, bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+                var = tk.StringVar(value=device)
+                radio_button = ttk.Radiobutton(Connect_Device_Window, text=device, variable=selected_device, value=device)
                 radio_buttons.append((radio_button, var))
                 if even == False:
                     radio_button.grid(pady=5, padx=5, columnspan=2, row=row)
@@ -601,11 +601,11 @@ def select_device():
                     close_connect_window()
 
             # Create the Connect button
-            Connect_Button_2 = ttk.Button(Connect_Device_Window, text="Connect", command=handle_connect, bg='#E1E1E1', fg='#26A269', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+            Connect_Button_2 = ttk.Button(Connect_Device_Window, text="Connect", command=handle_connect)
             Connect_Button_2.grid(pady=5, padx=5, column=1, row=row, sticky='we')
 
             # Create the Cancel button
-            Cancel_Button = ttk.Button(Connect_Device_Window, text="Cancel", command=cancel_connect, bg='#E1E1E1', fg='#F66151', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+            Cancel_Button = ttk.Button(Connect_Device_Window, text="Cancel", command=cancel_connect)
             Cancel_Button.grid(pady=5, padx=5, column=0, row=row, sticky='we')
 
             Connect_Device_Window.protocol("WM_DELETE_WINDOW", close_connect_window)
