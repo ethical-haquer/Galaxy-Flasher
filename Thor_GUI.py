@@ -65,7 +65,6 @@ print(f'''
 ''')
 
 if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
-    print('Case 1')
     theme = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
 else:
     print(f'The \'thor_gui_settings.pkl\' file was not found in \'{path_to_thor_gui}\', so Thor GUI is creating it.')
@@ -323,11 +322,9 @@ def get_last_flash_tar_command():
     return None
 
 # Deals with enabling/disabling buttons - Mainly used by set_thor(), set_connect(), and set_odin()
-def set_widget_state(*args, state="normal", text=None, color=None):
+def set_widget_state(*args, state="normal", text=None):
     for widget in args:
         widget.configure(state=state, text=text)
-        if color is not None:
-            widget.configure(fg=color)
         if text is not None:
             widget.configure(text=text)
 
@@ -344,13 +341,13 @@ def set_connect(value):
     global connection
     if value == 'on':
         if connection == False:
-            set_widget_state(Connect_Button, text='Disconnect', color='#F66151')
+            set_widget_state(Connect_Button, text='Disconnect')
             Begin_Button.configure(state='normal')
             connection = True
     elif value == 'off':
         if connection == True:
             set_odin('off')
-            Connect_Button.configure(text='Connect device', fg='#26A269')
+            Connect_Button.configure(text='Connect device')
             Begin_Button.configure(state='disabled')
             connection = False
 
@@ -359,12 +356,12 @@ def set_odin(value):
     global odin_running
     if value == 'on':
         if odin_running == False:
-            Begin_Button.configure(text='End Odin Protocol', fg='#F66151')
+            Begin_Button.configure(text='End Odin Protocol')
             set_widget_state(Apply_Options_Button, Start_Flash_Button)
             odin_running = True
     elif value == 'off':
         if odin_running == True:
-            Begin_Button.configure(text='Start Odin Protocol', fg='#26A269')
+            Begin_Button.configure(text='Start Odin Protocol')
             set_widget_state(Apply_Options_Button, Start_Flash_Button, state='disabled')
             odin_running == False
 
@@ -414,10 +411,10 @@ def start_flash():
                     return True
                 else:
                     print(f"Invalid {file_type} file selected - Files must be .tar, .zip, or .md5")
-                    show_message("Invalid file", f"Files must be .tar, .zip, or .md5", [{'text': 'OK', 'fg': 'black'}], window_size=(400, 200))
+                    show_message("Invalid file", f"Files must be .tar, .zip, or .md5", [{'text': 'OK'}], window_size=(400, 200))
             else:
                 print(f"Invalid {file_type} file selected - The file does not exist")
-                show_message("Invalid file", f"The selected {file_type} file does not exist", [{'text': 'OK', 'fg': 'black'}], window_size=(400, 200))
+                show_message("Invalid file", f"The selected {file_type} file does not exist", [{'text': 'OK'}], window_size=(400, 200))
             return False
 
         for checkbox_var, entry, file_type in checkboxes:
@@ -451,7 +448,6 @@ def start_flash():
 def reset():
     global currently_running
     try:
-        print('Changed theme')
 #        TFlash_Option_var.set(False)
         EFSClear_Option_var.set(False)
         BootloaderUpdate_Option_var.set(False)
@@ -671,7 +667,7 @@ def select_partitions(path, name):
             print("Invalid file format. Please provide a .tar, .zip, or .md5 file.")
             return
 
-        Select_Partitions_Window = ttk.Toplevel(window, bg='#F0F0F0')
+        Select_Partitions_Window = tk.Toplevel(window)
         Select_Partitions_Window.title("Select partitions")
         Select_Partitions_Window.wm_transient(window)
         Select_Partitions_Window.grab_set()
@@ -681,22 +677,22 @@ def select_partitions(path, name):
         checkboxes = []
         shortened_file = name[:34]
 
-        Label = ttk.Label(Select_Partitions_Window, text=f"Select what partitions to flash from\n{shortened_file}...", font=("Monospace", 10), bg='#F0F0F0')
+        Label = ttk.Label(Select_Partitions_Window, text=f"Select what partitions to flash from\n{shortened_file}...", font=("Monospace", 10))
         Label.pack(pady=5)
         window_height = window_height + 50
 
-        select_all_var = ttk.IntVar()
-        select_all_button = ttk.Checkbutton(Select_Partitions_Window, text="Select all", variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var), bg='#F0F0F0', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat')
+        select_all_var = tk.IntVar()
+        select_all_button = ttk.Checkbutton(Select_Partitions_Window, text="Select all", variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var))
         select_all_button.pack(pady=5)
 
         for file_name in file_names:
-            var = ttk.IntVar()
-            checkbox = ttk.Checkbutton(Select_Partitions_Window, text=file_name, variable=var, bg='#FFFFFF', highlightbackground='#F0F0F0', highlightcolor='#F0F0F0', activebackground='#F0F0F0', relief='flat', font=("Monospace", 10))
+            var = tk.IntVar()
+            checkbox = ttk.Checkbutton(Select_Partitions_Window, text=file_name, variable=var)
             checkbox.pack(anchor='w', pady=(0,5), padx=5)
             checkboxes.append((checkbox, var))
-            window_height = window_height + 28
+            window_height = window_height + 33
 
-        Select_Partitions_Button = ttk.Button(Select_Partitions_Window, text="Select", command=lambda: flash_selected_files(checkboxes, Select_Partitions_Window), bg='#E1E1E1', fg='#26A269', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+        Select_Partitions_Button = ttk.Button(Select_Partitions_Window, text="Select", command=lambda: flash_selected_files(checkboxes, Select_Partitions_Window))
         window_height = window_height + 38
         Select_Partitions_Button.pack()
 
@@ -716,12 +712,12 @@ def verify_flash():
     global last_lines
     try:
         message = "\nAre you absolutely sure you want to flash the partitions you selected?"
-        Verify_Flash_Window = ttk.Toplevel(window, bg='#F0F0F0')
+        Verify_Flash_Window = tk.Toplevel(window)
         Verify_Flash_Window.title('Verify Flash')
         Verify_Flash_Window.wm_transient(window)
         Verify_Flash_Window.grab_set()
         Verify_Flash_Window.update_idletasks()
-        Label = ttk.Label(Verify_Flash_Window, text=message, bg='#F0F0F0', font=("Monospace", 11))
+        Label = ttk.Label(Verify_Flash_Window, text=message, font=("Monospace", 11))
         Label.grid(row=0, column=0, columnspan=2)
         def send_no():
             print('Sent \'n\'')
@@ -731,9 +727,9 @@ def verify_flash():
             Thor.sendline('y')
             print('Sent \'y\'')
             Verify_Flash_Window.destroy()
-        No_Button = ttk.Button(Verify_Flash_Window, text="No", command=send_no, bg='#E1E1E1', fg='#F66151', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+        No_Button = ttk.Button(Verify_Flash_Window, text="No", command=send_no)
         No_Button.grid(row=1, column=0, sticky='we', pady=5, padx=(5,2.5))
-        Yes_Button = ttk.Button(Verify_Flash_Window, text="Yes", command=send_yes, bg='#E1E1E1', fg='#26A269', highlightbackground='#ACACAC', relief='flat', borderwidth=0, font=("Monospace", 11))
+        Yes_Button = ttk.Button(Verify_Flash_Window, text="Yes", command=send_yes)
         Yes_Button.grid(row=1, column=1, sticky='we', pady=5, padx=(2.5,5))
 
         Verify_Flash_Window.mainloop()
@@ -775,7 +771,7 @@ def show_message(title, message, buttons, window_size=(300, 200)):
         Start_Button.event_generate('<Leave>')
         Start_Flash_Button.event_generate('<Leave>')
 
-    Message_Window = ttk.Toplevel(window, bg='#F0F0F0')
+    Message_Window = tk.Toplevel(window)
     Message_Window.title(title)
     Message_Window.wm_transient(window)
     Message_Window.grab_set()
@@ -784,14 +780,14 @@ def show_message(title, message, buttons, window_size=(300, 200)):
     x = window.winfo_rootx() + (window.winfo_width() - width) // 2
     y = window.winfo_rooty() + (window.winfo_height() - height) // 2
     Message_Window.geometry(f"{width}x{height}+{x}+{y}")
-    message_label = ttk.Label(Message_Window, text=message, bg="#F0F0F0")
+    message_label = ttk.Label(Message_Window, text=message)
     message_label.pack(padx=20, pady=20)
 
     for button in buttons:
         button_text = button.get('text', 'OK')
         button_fg = button.get('fg', 'black')
         button_command = button.get('command', handle_window_close)
-        button_widget = ttk.Button(Message_Window, text=button_text, fg=button_fg, bg='#E1E1E1', highlightbackground='#ACACAC', relief='flat', borderwidth=0, command=button_command)
+        button_widget = ttk.Button(Message_Window, text=button_text, command=button_command)
         button_widget.pack(pady=5)
 
     Message_Window.protocol("WM_DELETE_WINDOW", handle_window_close)
@@ -868,7 +864,7 @@ def on_window_close():
                 print('Stopping Thor GUI...')
                 window.destroy()
             elif prompt_available == False:
-                show_message("Force Stop Thor", "The 'shell>' prompt isn't available, so the 'exit' command can't be sent.\nThor may be busy or locked up.\nYou may force stop Thor by clicking the 'Force Stop' button.\nHowever, if Thor is in the middle of a flash or something, there will be consequences.", [{'text': 'Cancel', 'fg': '#26A269'}, {'text': 'Force Stop', 'fg': '#F66151', 'command': force_stop}], window_size=(700, 200))
+                show_message("Force Stop Thor", "The 'shell>' prompt isn't available, so the 'exit' command can't be sent.\nThor may be busy or locked up.\nYou may force stop Thor by clicking the 'Force Stop' button.\nHowever, if Thor is in the middle of a flash or something, there will be consequences.", [{'text': 'Cancel'}, {'text': 'Force Stop', 'command': force_stop}], window_size=(700, 200))
         else:
             window.after_cancel(start_flash)
             print('Stopping Thor GUI...')
@@ -1187,6 +1183,15 @@ ethical_haquer_Text.insert(tk.END, "ethical_haquer", hyperlink.add(partial(open_
 ethical_haquer_Text.insert(tk.END, ", for Thor GUI")
 ethical_haquer_Text.tag_add("center", "1.0", "end")
 ethical_haquer_Text.config(state=tk.DISABLED)
+
+rdbende_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+rdbende_Text.grid(sticky='ew')
+hyperlink = HyperlinkManager(rdbende_Text)
+rdbende_Text.tag_configure("center", justify='center')
+rdbende_Text.insert(tk.END, "rdbende", hyperlink.add(partial(open_link, 'https://github.com/TheAirBlow')))
+rdbende_Text.insert(tk.END, " for the Sun Valley tkk theme")
+rdbende_Text.tag_add("center", "1.0", "end")
+rdbende_Text.config(state=tk.DISABLED)
 
 Disclaimer_Label = ttk.Label(About_Frame, text='\n\nThis program comes with absolutely no warranty.', font=("Monospace", 9), anchor="center")
 Disclaimer_Label.grid(sticky='ew')
