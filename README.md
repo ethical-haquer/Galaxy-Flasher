@@ -61,7 +61,8 @@ In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues),
 
 Functional:
 + Currently, the only interactive Thor commands (the ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
-+ Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104).
++ Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104). The work-around is to click and drag the pointer over the files and diectories displayed, which will turn them blue, and therfore readable
++ All links in the "Help" and "About" tabs will not work. The reason is because there is a bug on line 826, it has "ttk.CURRENT", but it should be "tk.CURRENT".
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
@@ -193,9 +194,9 @@ Here are some ways you can help me improve/finish Thor GUI:
 
 [TheAirBlow](https://github.com/theairblow) for Thor Flash Utility
 
-Myself, [ethical_haquer](https://github.com/ethical-haquer), for Thor GUI
-
 [rdbende](https://github.com/rdbende) for the Sun Valley tkk theme
+
+Myself, [ethical_haquer](https://github.com/ethical-haquer), for Thor GUI
 
 ## This program is licenced under
 
