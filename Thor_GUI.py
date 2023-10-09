@@ -33,14 +33,15 @@ from collections import deque
 import sv_ttk
 from tkinter import ttk
 import pickle
+import sys
 
 # The path to 'TheAirBlow.Thor.Shell.dll', including the filename itself. Example: '/home/billy25/Thor/TheAirBlow.Thor.Shell.dll'.
 path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
 
-# The directory containing the 'Thor_GUI.py' file, should end in a '/'. Example: 'home/billy25/Thor_GUI/'
-path_to_thor_gui = "/PATH/TO/DIRECTORY/CONTAINING/THOR_GUI's/FILES/"
+# There is no need to edit this line anymore ;)
+path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-version = 'Alpha v0.3.0'
+version = 'Alpha v0.3.1'
 
 currently_running = False
 odin_running = False
@@ -67,7 +68,7 @@ print(f'''
 if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
     theme = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
 else:
-    print(f'The \'thor_gui_settings.pkl\' file was not found in \'{path_to_thor_gui}\', so Thor GUI is creating it.')
+    print(f'The \'thor_gui_settings.pkl\' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.')
     theme = 'light'
     pickle.dump([theme], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
     theme = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
@@ -823,7 +824,7 @@ class HyperlinkManager:
         self.text.config(cursor="")
 
     def _click(self, event):
-        for tag in self.text.tag_names(ttk.CURRENT):
+        for tag in self.text.tag_names(tk.CURRENT):
             if tag[:6] == "hyper-":
                 self.links[tag]()
                 return
@@ -1086,7 +1087,7 @@ Help_Frame = ttk.Frame(window)
 Help_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Help_Frame.grid_columnconfigure(0, weight=1)
 
-Help_Label = ttk.Label(Help_Frame, text='Need help?', font=("Monospace", 13), anchor="center")
+Help_Label = ttk.Label(Help_Frame, text='\nNeed help?', font=("Monospace", 13), anchor="center")
 Help_Label.grid(row=0, column=0, sticky='ew')
 
 Get_Help_Text = tk.Text(Help_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
@@ -1121,7 +1122,7 @@ About_Frame = ttk.Frame(window)
 About_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 About_Frame.grid_columnconfigure(0, weight=1)
 
-Thor_GUI_Label = ttk.Label(About_Frame, text='Thor GUI', font=("Monospace", 13), anchor="center")
+Thor_GUI_Label = ttk.Label(About_Frame, text='\nThor GUI', font=("Monospace", 13), anchor="center")
 Thor_GUI_Label.grid(sticky='ew')
 
 Thor_GUI_Label_2 = ttk.Label(About_Frame, text=f'{version}', font=('Monospace', 11), anchor="center")
@@ -1174,6 +1175,15 @@ TheAirBlow_Text.insert(tk.END, " for Thor Flash Utility")
 TheAirBlow_Text.tag_add("center", "1.0", "end")
 TheAirBlow_Text.config(state=tk.DISABLED)
 
+rdbende_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+rdbende_Text.grid(sticky='ew')
+hyperlink = HyperlinkManager(rdbende_Text)
+rdbende_Text.tag_configure("center", justify='center')
+rdbende_Text.insert(tk.END, "rdbende", hyperlink.add(partial(open_link, 'https://github.com/rdbende')))
+rdbende_Text.insert(tk.END, " for the Sun Valley tkk theme")
+rdbende_Text.tag_add("center", "1.0", "end")
+rdbende_Text.config(state=tk.DISABLED)
+
 ethical_haquer_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
 ethical_haquer_Text.grid(sticky='ew')
 hyperlink = HyperlinkManager(ethical_haquer_Text)
@@ -1183,15 +1193,6 @@ ethical_haquer_Text.insert(tk.END, "ethical_haquer", hyperlink.add(partial(open_
 ethical_haquer_Text.insert(tk.END, ", for Thor GUI")
 ethical_haquer_Text.tag_add("center", "1.0", "end")
 ethical_haquer_Text.config(state=tk.DISABLED)
-
-rdbende_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
-rdbende_Text.grid(sticky='ew')
-hyperlink = HyperlinkManager(rdbende_Text)
-rdbende_Text.tag_configure("center", justify='center')
-rdbende_Text.insert(tk.END, "rdbende", hyperlink.add(partial(open_link, 'https://github.com/TheAirBlow')))
-rdbende_Text.insert(tk.END, " for the Sun Valley tkk theme")
-rdbende_Text.tag_add("center", "1.0", "end")
-rdbende_Text.config(state=tk.DISABLED)
 
 Disclaimer_Label = ttk.Label(About_Frame, text='\n\nThis program comes with absolutely no warranty.', font=("Monospace", 9), anchor="center")
 Disclaimer_Label.grid(sticky='ew')
