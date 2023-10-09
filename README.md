@@ -62,7 +62,6 @@ In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues),
 Functional:
 + Currently, the only interactive Thor commands (the ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
 + Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104). The work-around is to click and drag the pointer over the files and diectories displayed, which will turn them blue, and therfore readable
-+ All links in the "Help" and "About" tabs will not work. The reason is because there is a bug on line 826, it has "ttk.CURRENT", but it should be "tk.CURRENT".
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
@@ -116,9 +115,8 @@ pip install sv-ttk
 
 + Download the latest Thor GUI release from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it, and open the Thor_GUI.py file with a text editor.
-+ You need to edit line 38 and 41 of the file.
++ You need to edit line 38 of the file.
 + Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from the "Linux.zip").
-+ Replace "/PATH/TO/DIRECTORY/CONTAINING/THOR_GUI's/FILES/" with the correct path to **the directory containing** the Thor_GUI.py file - Not the file itself.
 + Save your changes to the file, and run:
 
   ```
