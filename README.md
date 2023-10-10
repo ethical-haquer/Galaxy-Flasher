@@ -60,8 +60,8 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Thor GUI's:
 
 Functional:
-+ Currently, the only interactive Thor commands (the ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
-+ Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104). The work-around is to click and drag the pointer over the files and diectories displayed, which will turn them blue, and therfore readable
++ Currently, the only interactive Thor commands (ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
++ Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104). The work-around is to click and drag the pointer over the files and diectories displayed, which will turn them blue, and therefore readable.
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
@@ -82,7 +82,7 @@ Aesthetic:
 ## Planned improvements
 
 + Built in installer and setup for .NET and Thor.
-+ More Settings
++ A more extensive Settings
 
 ## Prerequisites
 
@@ -152,11 +152,6 @@ https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5df866bb-74d1-40ba-b
   <b>Fun fact:</b> The top three buttons in Thor GUI are placed in the order they should be used, from left to right.
   <br>
   <br>
-  <b>Running a <a href="https://github.com/Samsung-Loki/Thor#current-list-of-commands">Thor command</a> (1:12):</b> 
-  <br>
-  To send Thor a command, enter it into the Command Entry (upper-right corner of Thor GUI, under the "Start Thor" button) and hit Enter.
-  <br>
-  <br>
   <b>Flashing Odin archives (0:19)</b> 
   <br>
   To flash Odin archives, first select what files to flash. You may either select the files with a file picker, by clicking one of the file buttons (For example, to select a BL file, click the "BL" button), or type the file path into the corresponding entry. Only files which are selected with the check-boxes will be flashed. 
@@ -180,6 +175,11 @@ https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5df866bb-74d1-40ba-b
   <br>
   <br>
   After you have finished selecting partitions to flash you will see a "Verify Flash" window. This is your chance to cancel the flash if needed, by clicking the "No" button. Otherwise, click the "Yes" button and the flash will start.
+  <br>
+  <br>
+  <b>Running a <a href="https://github.com/Samsung-Loki/Thor#current-list-of-commands">Thor command</a> (1:12):</b> 
+  <br>
+  To send Thor a command, enter it into the Command Entry (upper-right corner of Thor GUI, under the "Start Thor" button) and hit Enter. (the key on the keyboard, not the button on Thor GUI)
 </details>
 
 ## How you can help
@@ -196,7 +196,6 @@ Here are some ways you can help me improve/finish Thor GUI:
 
 Myself, [ethical_haquer](https://github.com/ethical-haquer), for Thor GUI
 
-## This program is licenced under
+## License
 
-[GNU General Public License v3.0](https://github.com/ethical-haquer/Thor_GUI/blob/main/LICENSE)
-
+Thor GUI is licensed under GPLv3. Please see [`LICENSE`](./LICENSE) for the full license text.
