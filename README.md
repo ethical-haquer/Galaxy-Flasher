@@ -6,7 +6,7 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/0592c939-58eb-42b6-a7ff-f7274f7820cb">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b97628ef-a932-4ef3-8bdf-cc3005895a83">
-  <img alt="Screenshot of Thor GUI.">
+  <img alt="Screenshot of Thor GUI">
 </picture>
 <details>
   <summary><b>Screenshots</b></summary>
@@ -190,9 +190,9 @@ Here are some ways you can help me improve/finish Thor GUI:
 
 ## Credits
 
-[TheAirBlow](https://github.com/theairblow) for Thor Flash Utility
+[TheAirBlow](https://github.com/theairblow) for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor)
 
-[rdbende](https://github.com/rdbende) for the Sun Valley tkk theme
+[rdbende](https://github.com/rdbende) for the [Sun Valley tkk theme](https://github.com/rdbende/Sun-Valley-ttk-theme)
 
 Myself, [ethical_haquer](https://github.com/ethical-haquer), for Thor GUI
 
