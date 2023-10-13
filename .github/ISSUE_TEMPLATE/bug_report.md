@@ -26,9 +26,9 @@ If applicable, add screenshots to help explain your problem.
  - OS: [e.g. Linux]
  - Distribution: [e.g Debian, Arch]
  - Thor version: [e.g 1.0.4]
- - Thor GUI version: [e.g. Alpha 2.0]
+ - Thor GUI version: [e.g. Alpha v0.3.1]
 
-**Thor's output, as displayed in Log tab:
+**Thor's output, as displayed in the "Log" tab:
 <Copy/Paste output here>
 
 **Thor GUI's output, as displayed in terminal:
