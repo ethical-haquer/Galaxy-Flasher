@@ -2,22 +2,11 @@ name: Bug Report
 description: File a bug report
 title: "[Bug]: "
 labels: ["bug", "triage"]
-projects: ["octo-org/1", "octo-org/44"]
-assignees:
-  - octocat
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
-  - type: input
-    id: contact
-    attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
-    validations:
-      required: false
   - type: textarea
     id: what-happened
     attributes:
@@ -31,10 +20,12 @@ body:
     id: version
     attributes:
       label: Version
-      description: What version of our software are you running?
+      description: What version of Thor GUI are you running?
       options:
-        - 1.0.2 (Default)
-        - 1.0.3 (Edge)
+        - Alpha v0.3.1 (Default)
+        - Alpha v0.3.0 (Edge)
+        - Alpha v0.2.1
+        - Alpha v0.2.0
       default: 0
     validations:
       required: true
