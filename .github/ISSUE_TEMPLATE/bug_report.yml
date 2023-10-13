@@ -1,5 +1,5 @@
 name: Bug Report
-description: File a bug report
+description: Report a bug
 title: "[Bug]: "
 labels: ["bug", "triage"]
 body:
@@ -17,40 +17,32 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: version
     attributes:
       label: Version
-      description: What version of Thor GUI are you running?
+      description: What version of Thor GUI are you using? (check in the "About" tab)
       options:
         - Alpha v0.3.1 (Default)
         - Alpha v0.3.0 (Edge)
         - Alpha v0.2.1
         - Alpha v0.2.0
+        - Alpha v0.1
+        - Alpha v0.0
       default: 0
     validations:
       required: true
   - type: dropdown
-    id: browsers
     attributes:
-      label: What browsers are you seeing the problem on?
-      multiple: true
+      label: Version
+      description: What version of Thor are you using? (check in the "About" tab)
       options:
-        - Firefox
-        - Chrome
-        - Safari
-        - Microsoft Edge
+        - v1.0.4
   - type: textarea
-    id: logs
     attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      label: Thor GUI's log output 
+      description: Please copy and paste Thor GUI's log output from the terminal. This will be automatically formatted into code, so no need for backticks.
       render: shell
-  - type: checkboxes
-    id: terms
+  - type: textarea
     attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
-      options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true
-
+      label: Thor's log output 
+      description: Please copy and paste Thor's log output from the "Log" tab. This will be automatically formatted into code, so no need for backticks.
+      render: shell
