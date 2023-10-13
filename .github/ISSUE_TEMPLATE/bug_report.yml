@@ -18,7 +18,7 @@ body:
       required: true
   - type: dropdown
     attributes:
-      label: Version
+      label: Thor GUI version
       description: What version of Thor GUI are you using? (check in the "About" tab)
       options:
         - Alpha v0.3.1 (Default)
@@ -32,7 +32,7 @@ body:
       required: true
   - type: dropdown
     attributes:
-      label: Version
+      label: Thor version
       description: What version of Thor are you using? (check in the "About" tab)
       options:
         - v1.0.4
