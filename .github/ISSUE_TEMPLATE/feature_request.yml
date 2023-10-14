@@ -36,7 +36,7 @@ body:
         - Alpha v0.3.0
         - Alpha v0.2.1
         - Alpha v0.2.0
-          - Alpha v0.1
+        - Alpha v0.1
         - Alpha v0.0
       default: 0
     validations:
