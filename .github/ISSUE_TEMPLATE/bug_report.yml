@@ -49,6 +49,6 @@ body:
       render: shell
   - type: textarea
     attributes:
-      label: Thor's log output 
-      description: Please copy and paste Thor's log output from the "Log" tab. This will be automatically formatted into code, so no need for backticks.
+      label: Thor Flash Utility's log output 
+      description: Please copy and paste Thor Flash Utility's log output from the "Log" tab. This will be automatically formatted into code, so no need for backticks.
       render: shell
