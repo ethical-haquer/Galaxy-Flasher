@@ -11,8 +11,7 @@ body:
     attributes:
       label: What happened?
       description: Also, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
+      placeholder: When I clicked on ... it didn't ... I expected it to ...
     validations:
       required: true
   - type: dropdown
@@ -26,7 +25,6 @@ body:
         - Alpha v0.2.0
         - Alpha v0.1
         - Alpha v0.0
-      default: 0
     validations:
       required: true
   - type: dropdown
