@@ -24,12 +24,12 @@ body:
     validations:
       required: true
   - type: textarea
-      attributes:
-        label: Describe why the feature would be helpful
-        description: A description of why this feature would be helpful.
-        value: ""
-      validations:
-        required: true
+    attributes:
+      label: Describe why the feature would be helpful
+      description: A description of why this feature would be helpful.
+      value: ""
+    validations:
+      required: true
   - type: dropdown
     attributes:
       label: Thor GUI version
