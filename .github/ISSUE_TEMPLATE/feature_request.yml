@@ -24,6 +24,7 @@ body:
     attributes:
       label: Describe why the feature would be helpful
       description: A description of why this feature would be helpful.
+      placeholder: This feature would be helpful because ...
     validations:
       required: true
   - type: dropdown
