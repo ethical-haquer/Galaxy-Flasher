@@ -111,8 +111,9 @@ pip install pexpect
 pip install sv-ttk
 ```
 
-## Install Instructions
+## Installation
 
++ First, make sure you have the above prerequisites.
 + Download the latest Thor GUI release from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it, and open the Thor_GUI.py file with a text editor.
 + You need to edit line 38 of the file.
