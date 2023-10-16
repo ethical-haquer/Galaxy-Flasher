@@ -1,4 +1,4 @@
-"""
+'''
 Thor GUI - A GUI for the Thor Flash Utility
 Copyright (C) 2023  ethical_haquer
 
@@ -14,7 +14,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
+'''
 
 import tkinter as tk
 from tkinter import scrolledtext
@@ -34,6 +34,7 @@ import sv_ttk
 from tkinter import ttk
 import pickle
 import sys
+from tktooltip import ToolTip
 
 # The path to 'TheAirBlow.Thor.Shell.dll', including the filename itself. Example: '/home/billy25/Thor/TheAirBlow.Thor.Shell.dll'.
 path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
@@ -41,7 +42,7 @@ path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
 # There is no need to edit this line anymore ;)
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-version = 'Alpha v0.3.1'
+version = 'Alpha v0.3.2'
 
 currently_running = False
 odin_running = False
@@ -65,13 +66,20 @@ print(f'''
               {version}
 ''')
 
+# This loads the 'thor_gui_settings.pkl' file, which contains variables
 if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
-    theme = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
+    filed_version,theme,tooltips = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
+    if not filed_version == version:
+        print(f'The found \'thor_gui_settings.pkl\' file was not created by this version of Thor_GUI, so Thor GUI is updating it.')
+        filed_version = version
+        pickle.dump([filed_version,theme,tooltips], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
 else:
     print(f'The \'thor_gui_settings.pkl\' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.')
+    filed_version = version
     theme = 'light'
-    pickle.dump([theme], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
-    theme = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
+    tooltips = 'on'
+    pickle.dump([filed_version,theme,tooltips], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
+filed_version,theme,tooltips = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
 
 # This starts and stops Thor
 def start_thor():
@@ -90,7 +98,7 @@ def start_thor():
     except pexpect.exceptions.TIMEOUT:
             print('A Timeout Occurred in start_thor')
     except Exception as e:
-        print(f"An exception occurred in start_thor: {e}")
+        print(f'An exception occurred in start_thor: {e}')
 
 # What most commands go through
 def send_command(command):
@@ -108,7 +116,7 @@ def send_command(command):
                 else:
                     print(f'Couldn\'t send the command: \'{command}\', as the \'shell>\' prompt wasn\'t available')
         except Exception as e:
-            print(f"An exception occurred in send_command: {e}")
+            print(f'An exception occurred in send_command: {e}')
 
 # What commands from the Command Entry go through, allowing more than just 'shell>' as the prompt
 def other_send_command(command):
@@ -126,7 +134,7 @@ def other_send_command(command):
                 else:
                     print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')
         except Exception as e:
-            print(f"An exception occurred in other_send_command: {e}")
+            print(f'An exception occurred in other_send_command: {e}')
 
 # Perhaps the most important part of the program, along with scan_output - Handles displaying the output from Thor, while scan_output calls other functions when it detects certain lines in the output
 def update_output():
@@ -148,8 +156,8 @@ def update_output():
                     mostly_clean_line = re.sub(r'\x1b\[[?0-9;]*[A-Za-z]', '', line)
                     clean_line = re.sub('\x1b=', '', mostly_clean_line).strip()
 
-                    if clean_line.startswith(("AP", "BL", "CP", "CSC", "HOME_CSC", "USERDATA")):
-                        if clean_line.endswith(":"):
+                    if clean_line.startswith(('AP', 'BL', 'CP', 'CSC', 'HOME_CSC', 'USERDATA')):
+                        if clean_line.endswith(':'):
                             determine_tag(clean_line)
                             output_text_lines.append((clean_line, tag))
                             scan_output()
@@ -177,7 +185,7 @@ def update_output():
         except pexpect.exceptions.EOF:
             break
         except Exception as e:
-            print(f"An exception occurred in update_output: '{e}'")
+            print(f'An exception occurred in update_output: \'{e}\'')
 
         # Update the Output_Text widget
         if output_text_lines:
@@ -204,8 +212,8 @@ def scan_output():
             set_connect('off')
         elif 'Successfully connected to the device!' in clean_line:
             set_connect('on')
-        elif "Choose a device to connect to:" in clean_line and last_lines[-1][0] == "Cancel operation":
-            run_select_device()
+        elif 'Choose a device to connect to:' in clean_line and last_lines[-1][0] == 'Cancel operation':
+            run_function(select_device)
         elif 'Successfully ended an Odin session!' in clean_line:
             set_odin('off')
         elif '> [ ]' in clean_line:
@@ -223,36 +231,36 @@ def scan_output():
                         archive_name = os.path.basename(archive_name_pre.strip())
                         combined_file = os.path.join(archive_path, archive_name)
                         if graphical_flash == False:
-                            run_select_partitions(archive_path, archive_name)
+                            run_function(select_partitions, archive_path, archive_name)
                             return False
                         else:
                             if combined_file in odin_archives:
-                                run_select_partitions(archive_path, archive_name)
+                                run_function(select_partitions, archive_path, archive_name)
                                 return False
                             else:
                                 Thor.send('\n')
         elif 'Are you absolutely sure you want to flash those? [y/n] (n):' in clean_line:
-            run_verify_flash()
+            run_function(verify_flash)
             graphical_flash = False
-        elif '" is set to "' in clean_line:
-            if 'Option "T-Flash" is set to "False"' in clean_line:
+        elif '\' is set to \'' in clean_line:
+            if 'Option \'T-Flash\' is set to \'False\'' in clean_line:
                 TFlash_Option_var = ttk.IntVar(value=False)
-            if 'Option "T-Flash" is set to "True"' in clean_line:
+            if 'Option \'T-Flash\' is set to \'True\'' in clean_line:
                 TFlash_Option_var = ttk.IntVar(value=True)
-            if 'Option "EFS Clear" is set to "False"' in clean_line:
+            if 'Option \'EFS Clear\' is set to \'False\'' in clean_line:
                 EFSClear_Option_var = ttk.IntVar(value=False)
-            if 'Option "EFS Clear" is set to "True"' in clean_line:
+            if 'Option \'EFS Clear\' is set to \'True\'' in clean_line:
                 EFSClear_Option_var = ttk.IntVar(value=True)
-            if 'Option "Bootloader Update" is set to "False"' in clean_line:
+            if 'Option \'Bootloader Update\' is set to \'False\'' in clean_line:
                 BootloaderUpdate_Option_var = ttk.IntVar(value=False)
-            if 'Option "Bootloader Update" is set to "True"' in clean_line:
+            if 'Option \'Bootloader Update\' is set to \'True\'' in clean_line:
                 BootloaderUpdate_Option_var = ttk.IntVar(value=True)
-            if 'Option "Reset Flash Count" is set to "False"' in clean_line:
+            if 'Option \'Reset Flash Count\' is set to \'False\'' in clean_line:
                 ResetFlashCount_Option_var = ttk.IntVar(value=False)
-            if 'Option "Reset Flash Count" is set to "True"' in clean_line:
+            if 'Option \'Reset Flash Count\' is set to \'True\'' in clean_line:
                 ResetFlashCount_Option_var = ttk.IntVar(value=True)
     except Exception as e:
-        print(f"An exception occurred in scan_output: '{e}'")
+        print(f'An exception occurred in scan_output: \'{e}\'')
 
 # Handles coloring the output, as the original ANSI escape sequences are stripped out
 def determine_tag(line):
@@ -265,8 +273,8 @@ def determine_tag(line):
         'Successfully disconnected the device!',
         'Successfully began an Odin session!',
         'Successfully ended an Odin session!',
-        'Option "',
-        'Successfully set "',
+        'Option \'',
+        'Successfully set \'',
         'Total protocol commands: 11',
         'You chose to flash '
     ]
@@ -292,7 +300,7 @@ def determine_tag(line):
     ]
     if line.startswith('Welcome to Thor Shell v1.0.4!'):
         Output_Text.configure(state='normal')
-        Output_Text.delete("1.0", "end")
+        Output_Text.delete('1.0', 'end')
         Output_Text.configure(state='disabled')
         tag = 'green'
     elif line.startswith('shell>'):
@@ -314,20 +322,52 @@ def determine_tag(line):
     elif line in green_italic:
         tag = 'green_italic'
 
-# Figures out what the last "flashTar" command run was
+# Figures out what the last 'flashTar' command run was
 def get_last_flash_tar_command():
     global successful_commands
     for command in reversed(successful_commands):
-        if command.startswith("flashTar"):
+        if command.startswith('flashTar'):
             return command
     return None
 
 # Deals with enabling/disabling buttons - Mainly used by set_thor(), set_connect(), and set_odin()
-def set_widget_state(*args, state="normal", text=None):
+def set_widget_state(*args, state='normal', text=None):
     for widget in args:
         widget.configure(state=state, text=text)
         if text is not None:
             widget.configure(text=text)
+
+def create_tooltips():
+    delay = 0.25
+    ToolTip(Start_Button, msg="Start/Stop Thor", delay=delay)
+    ToolTip(Connect_Button, msg="Connect/Disconnect a device in download mode", delay=delay)
+    ToolTip(Begin_Button, msg="Start/Stop an Odin session", delay=delay)
+    ToolTip(Command_Entry, msg="You can enter a Thor command here,\nand press enter to send it", delay=delay)
+    ToolTip(Enter_Button, msg="Send Thor an 'Enter'", delay=delay)
+    ToolTip(Space_Button, msg="Send Thor a 'Space'", delay=delay)
+    ToolTip(Page_Up_Button, msg="Send Thor a 'Page Up'", delay=delay)
+    ToolTip(Page_Down_Button, msg="Send Thor a 'Page Down'", delay=delay)
+    ToolTip(BL_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
+    ToolTip(AP_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
+    ToolTip(CP_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
+    ToolTip(CSC_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
+    ToolTip(USERDATA_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
+    ToolTip(BL_Button, msg="Select a BL file", delay=delay)
+    ToolTip(AP_Button, msg="Select an AP file", delay=delay)
+    ToolTip(CP_Button, msg="Select a CP file", delay=delay)
+    ToolTip(CSC_Button, msg="Select a CSC file", delay=delay)
+    ToolTip(USERDATA_Button, msg="Select a USERDATA file", delay=delay)
+    ToolTip(Log_Button, msg="'Log' Tab", delay=delay)
+    ToolTip(Options_Button, msg="'Options' Tab", delay=delay)
+    ToolTip(Pit_Button, msg="'Pit' Tab", delay=delay)
+    ToolTip(Settings_Button, msg="'Settings' Tab", delay=delay)
+    ToolTip(Help_Button, msg="'Help' Tab", delay=delay)
+    ToolTip(About_Button, msg="'About' Tab", delay=delay)
+    ToolTip(Apply_Options_Button, msg="Apply the above options", delay=delay)
+    ToolTip(Theme_Toggle, msg="Toggle theme", delay=delay)
+    ToolTip(Tooltip_Toggle, msg="Toggle tooltips", delay=delay)
+    ToolTip(Start_Flash_Button, msg="Start a flash", delay=delay)
+    ToolTip(Reset_Button, msg="Reset the options in the 'Options' tab to default, and clear the Odin archive check-boxes and archive entries", delay=delay)
 
 # Tells the program whether Thor is running or not
 def set_thor(value):
@@ -377,7 +417,7 @@ def toggle_connection():
             elif connection:
                 send_command('disconnect')
     except Exception as e:
-        print(f"An exception occurred in toggle_connection: {e}")
+        print(f'An exception occurred in toggle_connection: {e}')
 
 # This starts and stops the Odin protocol
 def toggle_odin():
@@ -390,18 +430,18 @@ def toggle_odin():
             elif odin_running:
                 send_command('end')
     except Exception as e:
-        print(f"An exception occurred in toggle_odin: {e}")
+        print(f'An exception occurred in toggle_odin: {e}')
 
-# Runs the "flashTar" command when the "Start" button is clicked
+# Runs the 'flashTar' command when the 'Start' button is clicked
 def start_flash():
     global currently_running, odin_archives, graphical_flash
     try:
         checkboxes = [
-            (BL_Checkbox_var, BL_Entry, "BL"),
-            (AP_Checkbox_var, AP_Entry, "AP"),
-            (CP_Checkbox_var, CP_Entry, "CP"),
-            (CSC_Checkbox_var, CSC_Entry, "CSC"),
-            (USERDATA_Checkbox_var, USERDATA_Entry, "USERDATA")
+            (BL_Checkbox_var, BL_Entry, 'BL'),
+            (AP_Checkbox_var, AP_Entry, 'AP'),
+            (CP_Checkbox_var, CP_Entry, 'CP'),
+            (CSC_Checkbox_var, CSC_Entry, 'CSC'),
+            (USERDATA_Checkbox_var, USERDATA_Entry, 'USERDATA')
         ]
         odin_archives = []
         unique_directories = set()
@@ -411,11 +451,11 @@ def start_flash():
                 if file_path.endswith(('.tar', '.zip', '.md5')):
                     return True
                 else:
-                    print(f"Invalid {file_type} file selected - Files must be .tar, .zip, or .md5")
-                    show_message("Invalid file", f"Files must be .tar, .zip, or .md5", [{'text': 'OK'}], window_size=(400, 200))
+                    print(f'Invalid {file_type} file selected - Files must be .tar, .zip, or .md5')
+                    show_message('Invalid file', f'Files must be .tar, .zip, or .md5', [{'text': 'OK'}], window_size=(400, 200))
             else:
-                print(f"Invalid {file_type} file selected - The file does not exist")
-                show_message("Invalid file", f"The selected {file_type} file does not exist", [{'text': 'OK'}], window_size=(400, 200))
+                print(f'Invalid {file_type} file selected - The file does not exist')
+                show_message('Invalid file', f'The selected {file_type} file does not exist', [{'text': 'OK'}], window_size=(400, 200))
             return False
 
         for checkbox_var, entry, file_type in checkboxes:
@@ -427,25 +467,25 @@ def start_flash():
                 unique_directories.add(os.path.dirname(file_path))
 
         if len(odin_archives) == 0:
-            print("No files were selected - Please select at least one file")
-            show_message("No files selected", "Please select at least one file", [{'text': 'OK', 'fg': 'black'}], window_size=(400, 200))
+            print('No files were selected - Please select at least one file')
+            show_message('No files selected', 'Please select at least one file', [{'text': 'OK', 'fg': 'black'}], window_size=(400, 200))
             return False
 
         if len(unique_directories) > 1:
-            print("Invalid files - All selected files must be in the same directory")
-            show_message("Invalid files", "All selected files must be in the same directory", [{'text': 'OK', 'fg': 'black'}], window_size=(400, 200))
+            print('Invalid files - All selected files must be in the same directory')
+            show_message('Invalid files', 'All selected files must be in the same directory', [{'text': 'OK', 'fg': 'black'}], window_size=(400, 200))
             return False
 
         common_directory = unique_directories.pop()
         graphical_flash = True
-        send_command(f"flashTar {common_directory}")
+        send_command(f'flashTar {common_directory}')
 
     except Exception as e:
-        print(f"An exception occurred in start_flash: {e}")
+        print(f'An exception occurred in start_flash: {e}')
 
     return True
 
-# Sets the "Options" back to default and resets the Odin archive Check-buttons/Entries
+# Sets the 'Options' back to default and resets the Odin archive Check-buttons/Entries
 def reset():
     global currently_running
     try:
@@ -464,12 +504,12 @@ def reset():
         CSC_Entry.delete(0, 'end')
         USERDATA_Entry.delete(0, 'end')
     except Exception as e:
-        print(f"An exception occurred in reset: {e}")
+        print(f'An exception occurred in reset: {e}')
 
 # Moves the correct frame to the top
 def toggle_frame(name):
-    frame_name = name + "_Frame"
-    button_name = name + "_Button"
+    frame_name = name + '_Frame'
+    button_name = name + '_Button'
     frame = globals()[frame_name]
     button = globals()[button_name]
     frame.lift()
@@ -487,37 +527,30 @@ def apply_options():
     efs_clear_status = EFSClear_Option_var.get()
     bootloader_update_status = BootloaderUpdate_Option_var.get()
     reset_flash_count_status = ResetFlashCount_Option_var.get()
+
 #    if tflash_status == 1:
+
     if efs_clear_status == 1:
         Thor.sendline('options efsclear true')
+
     elif efs_clear_status == 0:
         Thor.sendline('options efsclear false')
+
     if bootloader_update_status == 1:
         Thor.sendline('options blupdate true')
+
     elif bootloader_update_status == 0:
         Thor.sendline('options blupdate false')
+
     if reset_flash_count_status == 1:
         Thor.sendline('options resetfc true')
+
     elif reset_flash_count_status == 0:
         Thor.sendline('options resetfc false')
 
-# Runs select_device in the main thread
-def run_select_device():
-    window.after(0, select_device)
-
-# Runs select_device in the main thread
-def run_select_partitions(*args):
-    window.after(0, select_partitions, *args)
-
-# Runs verify_flash in the main thread
-def run_verify_flash():
-    window.after(0, verify_flash)
-
-# Will soon replace the above three functions ^
-"""
-def run_function(function):
+# Runs functions in the main thread
+def run_function(function, *args):
     window.after(0, function, *args)
-"""
 
 # Handles asking the user if they'd like to connect to a device
 def select_device():
@@ -526,21 +559,21 @@ def select_device():
     start_index = None
     try:
         for i in range(len(last_lines)-1, -1, -1):
-            if last_lines[i][0].startswith("Choose a device to connect to:"):
+            if last_lines[i][0].startswith('Choose a device to connect to:'):
                 start_index = i
                 break
 
         if start_index is not None:
             for i in range(start_index+1, len(last_lines)):
                 line = last_lines[i][0]
-                if line.startswith("Cancel operation"):
+                if line.startswith('Cancel operation'):
                     break
                 if line.strip() != '':
-                    devices.append(line.strip("> "))
+                    devices.append(line.strip('> '))
 
         if devices:
-            title = "Connect device"
-            message = "Choose a device to connect to:"
+            title = 'Connect device'
+            message = 'Choose a device to connect to:'
             selected_device = tk.StringVar(value=None)
 
             Connect_Device_Window = tk.Toplevel(window)
@@ -553,12 +586,12 @@ def select_device():
             width, height = window_size
             x = window.winfo_rootx() + (window.winfo_width() - width) // 2
             y = window.winfo_rooty() + (window.winfo_height() - height) // 2
-            Connect_Device_Window.geometry(f"{width}x{height}+{x}+{y}")
+            Connect_Device_Window.geometry(f'{width}x{height}+{x}+{y}')
             Connect_Device_Window.grid_columnconfigure(0, weight=1)
             Connect_Device_Window.grid_columnconfigure(1, weight=1)
 
-            message_label = ttk.Label(Connect_Device_Window, text=message)
-            message_label.grid(sticky='ew', columnspan=2, row=0)
+            message_label = ttk.Label(Connect_Device_Window, text=message, anchor='center')
+            message_label.grid(columnspan=2, sticky='ew')
 
             radio_buttons = []
             even = False
@@ -579,42 +612,36 @@ def select_device():
                     KEY_DOWN = '\x1b[B'
                     selected = selected_device.get()
                     if selected == '':
-                        print("No device was selected")
+                        print('No device was selected')
                     else:
-                        print({selected})
                         for radio_button, var in radio_buttons:
                             if var.get() == selected:
                                 Thor.send('\n')
-                                close_connect_window()
+                                Connect_Device_Window.destroy()
                                 return False
                             else:
                                 Thor.send(KEY_DOWN)
-
-                def close_connect_window():
-                    Connect_Device_Window.destroy()
-                    Connect_Button.event_generate('<Leave>')
 
                 def cancel_connect():
                     KEY_DOWN = '\x1b[B'
                     for radio_button, var in radio_buttons:
                         Thor.send(KEY_DOWN)
                     Thor.send('\n')
-                    close_connect_window()
+                    Connect_Device_Window.destroy()
 
             # Create the Connect button
-            Connect_Button_2 = ttk.Button(Connect_Device_Window, text="Connect", command=handle_connect)
+            Connect_Button_2 = ttk.Button(Connect_Device_Window, text='Connect', command=handle_connect)
             Connect_Button_2.grid(pady=5, padx=5, column=1, row=row, sticky='we')
 
             # Create the Cancel button
-            Cancel_Button = ttk.Button(Connect_Device_Window, text="Cancel", command=cancel_connect)
+            Cancel_Button = ttk.Button(Connect_Device_Window, text='Cancel', command=cancel_connect)
             Cancel_Button.grid(pady=5, padx=5, column=0, row=row, sticky='we')
 
-            Connect_Device_Window.protocol("WM_DELETE_WINDOW", close_connect_window)
             Connect_Device_Window.mainloop()
         else:
-            print("No devices available.")
+            print('No devices available.')
     except Exception as e:
-        print(f"An exception occurred in select_device: {e}")
+        print(f'An exception occurred in select_device: {e}')
 
 # Handles asking the user what partitions they'd like to flash
 def select_partitions(path, name):
@@ -624,14 +651,14 @@ def select_partitions(path, name):
         combined_file = os.path.join(path, name)
         def get_files_from_tar(path, name):
             file_names = []
-            with tarfile.open(os.path.join(path, name), "r") as tar:
+            with tarfile.open(os.path.join(path, name), 'r') as tar:
                 for member in tar.getmembers():
                     file_names.append(member.name)
             return file_names
 
         def get_files_from_zip(path, name):
             file_names = []
-            with zipfile.ZipFile(os.path.join(path, name), "r") as zip:
+            with zipfile.ZipFile(os.path.join(path, name), 'r') as zip:
                 for file_info in zip.infolist():
                     file_names.append(file_info.filename)
             return file_names
@@ -644,7 +671,7 @@ def select_partitions(path, name):
         def flash_selected_files(checkboxes, Select_Partitions_Window):
             for checkbox, var in checkboxes:
                 if var.get() == 1:
-                    selected_files.append(checkbox.cget("text"))
+                    selected_files.append(checkbox.cget('text'))
             if not selected_files:
                 print(f'You chose not to select any partitions from {name}')
                 Thor.send('\n')
@@ -665,11 +692,11 @@ def select_partitions(path, name):
         elif name.endswith('.zip'):
             file_names = get_files_from_zip(path, name)
         else:
-            print("Invalid file format. Please provide a .tar, .zip, or .md5 file.")
+            print('Invalid file format. Please provide a .tar, .zip, or .md5 file.')
             return
 
         Select_Partitions_Window = tk.Toplevel(window)
-        Select_Partitions_Window.title("Select partitions")
+        Select_Partitions_Window.title('Select partitions')
         Select_Partitions_Window.wm_transient(window)
         Select_Partitions_Window.grab_set()
         Select_Partitions_Window.update_idletasks()
@@ -678,12 +705,12 @@ def select_partitions(path, name):
         checkboxes = []
         shortened_file = name[:34]
 
-        Label = ttk.Label(Select_Partitions_Window, text=f"Select what partitions to flash from\n{shortened_file}...", font=("Monospace", 10))
+        Label = ttk.Label(Select_Partitions_Window, text=f'Select what partitions to flash from\n{shortened_file}...', font=('Monospace', 10))
         Label.pack(pady=5)
         window_height = window_height + 50
 
         select_all_var = tk.IntVar()
-        select_all_button = ttk.Checkbutton(Select_Partitions_Window, text="Select all", variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var))
+        select_all_button = ttk.Checkbutton(Select_Partitions_Window, text='Select all', variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var))
         select_all_button.pack(pady=5)
 
         for file_name in file_names:
@@ -693,7 +720,7 @@ def select_partitions(path, name):
             checkboxes.append((checkbox, var))
             window_height = window_height + 33
 
-        Select_Partitions_Button = ttk.Button(Select_Partitions_Window, text="Select", command=lambda: flash_selected_files(checkboxes, Select_Partitions_Window))
+        Select_Partitions_Button = ttk.Button(Select_Partitions_Window, text='Select', command=lambda: flash_selected_files(checkboxes, Select_Partitions_Window))
         window_height = window_height + 38
         Select_Partitions_Button.pack()
 
@@ -701,97 +728,109 @@ def select_partitions(path, name):
         width, height = window_size
         x = window.winfo_rootx() + (window.winfo_width() - width) // 2
         y = window.winfo_rooty() + (window.winfo_height() - height) // 2
-        Select_Partitions_Window.geometry(f"{width}x{height}+{x}+{y}")
+        Select_Partitions_Window.geometry(f'{width}x{height}+{x}+{y}')
 
         Select_Partitions_Window.mainloop()
 
     except Exception as e:
-        print(f"An exception occurred in select_partitions: {e}")
+        print(f'An exception occurred in select_partitions: {e}')
 
 # Asks the user if they'd like to flash the selected partitions
 def verify_flash():
     global last_lines
     try:
-        message = "\nAre you absolutely sure you want to flash the partitions you selected?"
         Verify_Flash_Window = tk.Toplevel(window)
         Verify_Flash_Window.title('Verify Flash')
         Verify_Flash_Window.wm_transient(window)
         Verify_Flash_Window.grab_set()
         Verify_Flash_Window.update_idletasks()
-        Label = ttk.Label(Verify_Flash_Window, text=message, font=("Monospace", 11))
-        Label.grid(row=0, column=0, columnspan=2)
+        Verify_Flash_Window.columnconfigure(0, weight=1)
+        Verify_Flash_Window.columnconfigure(1, weight=1)
+
+        Label = ttk.Label(Verify_Flash_Window, text='Are you absolutely sure you want to flash the partitions you selected?', font=('Monospace', 11), anchor='center')
+        Label.grid(row=0, column=0, columnspan=2, pady=9)
+
         def send_no():
             print('Sent \'n\'')
             Thor.sendline('n')
             Verify_Flash_Window.destroy()
+
         def send_yes():
             Thor.sendline('y')
             print('Sent \'y\'')
             Verify_Flash_Window.destroy()
-        No_Button = ttk.Button(Verify_Flash_Window, text="No", command=send_no)
+
+        No_Button = ttk.Button(Verify_Flash_Window, text='No', command=send_no)
         No_Button.grid(row=1, column=0, sticky='we', pady=5, padx=(5,2.5))
-        Yes_Button = ttk.Button(Verify_Flash_Window, text="Yes", command=send_yes)
+
+        Yes_Button = ttk.Button(Verify_Flash_Window, text='Yes', command=send_yes)
         Yes_Button.grid(row=1, column=1, sticky='we', pady=5, padx=(2.5,5))
 
-        Verify_Flash_Window.mainloop()
+        width = 640
+        height = 77
+        x = window.winfo_rootx() + (window.winfo_width() - width) // 2
+        y = window.winfo_rooty() + (window.winfo_height() - height) // 2
+        Verify_Flash_Window.geometry(f'{width}x{height}+{x}+{y}')
 
+        Verify_Flash_Window.mainloop()
     except Exception as e:
-        print(f"An exception occurred in verify_flash: {e}")
+        print(f'An exception occurred in verify_flash: {e}')
 
 # Opens file picker when Odin archive button is clicked
 def open_file(type):
     try:
-        file_path = filedialog.askopenfilename(title=f"Select the {type} file", initialdir='~', filetypes=[(f'{type} file', '.tar .zip .md5')])
+        file_path = filedialog.askopenfilename(title=f'Select the {type} file', initialdir='~', filetypes=[(f'{type} file', '.tar .zip .md5')])
         if file_path:
-            if type == "BL":
+            if type == 'BL':
                 BL_Entry.delete(0, 'end')
                 BL_Entry.insert(0, file_path)
-            elif type == "AP":
+            elif type == 'AP':
                 AP_Entry.delete(0, 'end')
                 AP_Entry.insert(0, file_path)
-            elif type == "CP":
+            elif type == 'CP':
                 CP_Entry.delete(0, 'end')
                 CP_Entry.insert(0, file_path)
-            elif type == "CSC":
+            elif type == 'CSC':
                 CSC_Entry.delete(0, 'end')
                 CSC_Entry.insert(0, file_path)
-            elif type == "USERDATA":
+            elif type == 'USERDATA':
                 USERDATA_Entry.delete(0, 'end')
                 USERDATA_Entry.insert(0, file_path)
             print(f'Selected {type}: \'{file_path}\' with file picker')
     except ttk.TclError:
         print('Thor GUI was closed with the file picker still open - Don\'t do that. :)')
     except Exception as e:
-        print(f"An exception occurred in open_file: {e}")
+        print(f'An exception occurred in open_file: {e}')
 
 # Opens message-boxes - Used primarily by start_flash, but is also used by on_window_close
 def show_message(title, message, buttons, window_size=(300, 200)):
     global Message_Window
-    def handle_window_close():
-        Message_Window.destroy()
-        Start_Button.event_generate('<Leave>')
-        Start_Flash_Button.event_generate('<Leave>')
 
     Message_Window = tk.Toplevel(window)
     Message_Window.title(title)
     Message_Window.wm_transient(window)
     Message_Window.grab_set()
     Message_Window.update_idletasks()
+
     width, height = window_size
     x = window.winfo_rootx() + (window.winfo_width() - width) // 2
     y = window.winfo_rooty() + (window.winfo_height() - height) // 2
-    Message_Window.geometry(f"{width}x{height}+{x}+{y}")
-    message_label = ttk.Label(Message_Window, text=message)
-    message_label.pack(padx=20, pady=20)
+    Message_Window.geometry(f'{width}x{height}+{x}+{y}')
+    Message_Window.grid_columnconfigure(0, weight=1)
+#    Message_Window.grid_rowconfigure(0, weight=1)
 
+    message_label = ttk.Label(Message_Window, text=message, anchor='center')
+    message_label.grid(sticky='we', pady=20)
+
+    row = 1
     for button in buttons:
         button_text = button.get('text', 'OK')
         button_fg = button.get('fg', 'black')
-        button_command = button.get('command', handle_window_close)
+        button_command = button.get('command', Message_Window.destroy)
         button_widget = ttk.Button(Message_Window, text=button_text, command=button_command)
-        button_widget.pack(pady=5)
+        button_widget.grid(row=row, pady=5)
+        row = row + 1
 
-    Message_Window.protocol("WM_DELETE_WINDOW", handle_window_close)
     Message_Window.mainloop()
 
 # Opens websites
@@ -803,40 +842,49 @@ class HyperlinkManager:
 
     def __init__(self, text):
         self.text = text
-        self.text.tag_config("hyper", foreground="blue")
-        self.text.tag_bind("hyper", "<Enter>", self._enter)
-        self.text.tag_bind("hyper", "<Leave>", self._leave)
-        self.text.tag_bind("hyper", "<ButtonRelease-1>", self._click)
+        self.text.tag_config('hyper', foreground='blue')
+        self.text.tag_bind('hyper', '<Enter>', self._enter)
+        self.text.tag_bind('hyper', '<Leave>', self._leave)
+        self.text.tag_bind('hyper', '<ButtonRelease-1>', self._click)
         self.reset()
 
     def reset(self):
         self.links = {}
 
     def add(self, action):
-        tag = "hyper-%d" % len(self.links)
+        tag = 'hyper-%d' % len(self.links)
         self.links[tag] = action
-        return "hyper", tag
+        return 'hyper', tag
 
     def _enter(self, event):
-        self.text.config(cursor="hand2")
+        self.text.config(cursor='hand2')
 
     def _leave(self, event):
-        self.text.config(cursor="")
+        self.text.config(cursor='')
 
     def _click(self, event):
         for tag in self.text.tag_names(tk.CURRENT):
-            if tag[:6] == "hyper-":
+            if tag[:6] == 'hyper-':
                 self.links[tag]()
                 return
 
 def change_theme():
-    if sv_ttk.get_theme() == "dark":
+    if sv_ttk.get_theme() == 'dark':
         theme = 'light'
         sv_ttk.use_light_theme()
-    elif sv_ttk.get_theme() == "light":
+    elif sv_ttk.get_theme() == 'light':
         theme = 'dark'
         sv_ttk.use_dark_theme()
-    pickle.dump([theme], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
+    pickle.dump([filed_version,theme,tooltips], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
+
+def change_tooltips():
+    global tooltips
+    if tooltips == 'on':
+        tooltips = 'off'
+    elif tooltips == 'off':
+        tooltips = 'on'
+        create_tooltips()
+    pickle.dump([filed_version,theme,tooltips], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
 
 # Handles stopping everthing when the window is closed, or the 'Stop Thor' button is clicked
 def on_window_close():
@@ -850,7 +898,7 @@ def on_window_close():
             Thor.wait()
             print('Stopped Thor (possibly forcibly)')
             output_thread.join(timeout=0.5)  # Wait for the output thread to finish with a timeout
-            Message_Window.destroy()
+            Force_Close_Window.destroy()
             print('Stopping Thor GUI...')
             window.destroy()
         if currently_running:
@@ -865,20 +913,44 @@ def on_window_close():
                 print('Stopping Thor GUI...')
                 window.destroy()
             elif prompt_available == False:
-                show_message("Force Stop Thor", "The 'shell>' prompt isn't available, so the 'exit' command can't be sent.\nThor may be busy or locked up.\nYou may force stop Thor by clicking the 'Force Stop' button.\nHowever, if Thor is in the middle of a flash or something, there will be consequences.", [{'text': 'Cancel'}, {'text': 'Force Stop', 'command': force_stop}], window_size=(700, 200))
+                Force_Close_Window = tk.Toplevel(window)
+                Force_Close_Window.title('Force Stop Thor')
+                Force_Close_Window.wm_transient(window)
+                Force_Close_Window.grab_set()
+                Force_Close_Window.update_idletasks()
+                Force_Close_Window.columnconfigure(0, weight=1)
+                Force_Close_Window.columnconfigure(1, weight=1)
+                width = 786
+                height = 132
+                x = window.winfo_rootx() + (window.winfo_width() - width) // 2
+                y = window.winfo_rooty() + (window.winfo_height() - height) // 2
+                Force_Close_Window.geometry(f'{width}x{height}+{x}+{y}')
+                Force_Close_Label = ttk.Label(Force_Close_Window, text='The \'shell>\' prompt isn\'t available, so the \'exit\' command can\'t be sent.', font=('Monospace', 11), anchor='center')
+                Force_Close_Label.grid(columnspan=2, column=0, row=0, sticky='we', pady=(5,2))
+                Force_Close_Label_2 = ttk.Label(Force_Close_Window, text='Thor may be busy, or locked up.', font=('Monospace', 11), anchor='center')
+                Force_Close_Label_2.grid(columnspan=2, column=0, row=1, sticky='we', pady=2)
+                Force_Close_Label_3 = ttk.Label(Force_Close_Window, text='You may force stop Thor by clicking the \'Force Stop\' button.', font=('Monospace', 11), anchor='center')
+                Force_Close_Label_3.grid(columnspan=2, column=0, row=2, sticky='we', pady=2)
+                Force_Close_Label_4 = ttk.Label(Force_Close_Window, text='However, if Thor is in the middle of a flash or something, there will be consequences.', font=('Monospace', 11), anchor='center')
+                Force_Close_Label_4.grid(columnspan=2, column=0, row=3, sticky='we', padx=5, pady=(0,5))
+                Cancel_Force_Stop_Button = ttk.Button(Force_Close_Window, text='Cancel', command=Force_Close_Window.destroy)
+                Cancel_Force_Stop_Button.grid(column=0, row=4, sticky='we', pady=5, padx=(5,2.5))
+                Force_Stop_Button = ttk.Button(Force_Close_Window, text='Force Stop', command=force_stop)
+                Force_Stop_Button.grid(column=1, row=4, sticky='we', pady=5, padx=(2.5,5))
+                Force_Close_Window.mainloop()
         else:
             window.after_cancel(start_flash)
             print('Stopping Thor GUI...')
             window.destroy()
     except Exception as e:
-        print(f"An exception occurred in on_window_close: {e}")
+        print(f'An exception occurred in on_window_close: {e}')
 
 # Creates the Tkinter window
 window = tk.Tk(className='Thor GUI')
-window.title(f"Thor GUI - {version}")
+window.title(f'Thor GUI - {version}')
 
 # Sets the window size
-window.geometry("985x600")
+window.geometry('985x600')
 
 # Sets the row and column widths
 window.grid_rowconfigure(3, weight=1)
@@ -889,19 +961,19 @@ window.grid_rowconfigure(7, weight=1)
 window.grid_columnconfigure(6, weight=1)
 
 # Creates the Title Label
-Title_Label = ttk.Label(window, text="Thor Flash Utility v1.0.4", font=("Monospace", 20), anchor="center")
-Title_Label.grid(row=0, column=0, columnspan=7, rowspan=2, sticky="nesw")
+Title_Label = ttk.Label(window, text='Thor Flash Utility v1.0.4', font=('Monospace', 20), anchor='center')
+Title_Label.grid(row=0, column=0, columnspan=7, rowspan=2, sticky='nesw')
 
-# Creates the "Start Thor" Button
-Start_Button = ttk.Button(window, text="Start Thor", command=start_thor)
+# Creates the 'Start Thor' Button
+Start_Button = ttk.Button(window, text='Start Thor', command=start_thor)
 Start_Button.grid(row=0, column=8, padx=5, sticky='ew')
 
-# Creates the "Begin Odin" Button
-Begin_Button = ttk.Button(window, text="Begin Odin Protocol", command=toggle_odin, state='disabled')
+# Creates the 'Begin Odin' Button
+Begin_Button = ttk.Button(window, text='Begin Odin Protocol', command=toggle_odin, state='disabled')
 Begin_Button.grid(row=0, column=10, columnspan=2, sticky='we', pady=5, padx=5)
 
-# Creates the "Connect" Button
-Connect_Button = ttk.Button(window, text="Connect", command=toggle_connection, state='disabled')
+# Creates the 'Connect' Button
+Connect_Button = ttk.Button(window, text='Connect', command=toggle_connection, state='disabled')
 Connect_Button.grid(row=0,column=9, sticky='we', pady=5)
 
 # Creates the Command Entry
@@ -909,28 +981,28 @@ Command_Entry = ttk.Entry(window, state='disabled')
 Command_Entry.grid(row=1, column=8, columnspan=4, padx=5, sticky='nesw')
 Command_Entry.bind('<Return>', lambda event: other_send_command(Command_Entry.get()))
 
-# Creates the "Enter" Button
-Enter_Button = ttk.Button(window, text="Enter", command=lambda: Thor.send('\n'), state='disabled')
+# Creates the 'Enter' Button
+Enter_Button = ttk.Button(window, text='Enter', command=lambda: Thor.send('\n'), state='disabled')
 Enter_Button.grid(row=2, column=8, sticky='ew', padx=5)
 
-# Creates the "Space" Button
-Space_Button = ttk.Button(window, text="Space", command=lambda: Thor.send('\x20'), state='disabled')
+# Creates the 'Space' Button
+Space_Button = ttk.Button(window, text='Space', command=lambda: Thor.send('\x20'), state='disabled')
 Space_Button.grid(row=2, column=9, padx=(0, 5), sticky='ew')
 
-# Creates the "PgUp" Button
-Page_Up_Button = ttk.Button(window, text="PgUp", command=lambda: Thor.send('\x1b[A'), state='disabled')
+# Creates the 'PgUp' Button
+Page_Up_Button = ttk.Button(window, text='PgUp', command=lambda: Thor.send('\x1b[A'), state='disabled')
 Page_Up_Button.grid(row=2, column=10, sticky='ew')
 
-# Creates the "PgDn" Button
-Page_Down_Button = ttk.Button(window, text="PgDn", command=lambda: Thor.send('\x1b[B'), state='disabled')
+# Creates the 'PgDn' Button
+Page_Down_Button = ttk.Button(window, text='PgDn', command=lambda: Thor.send('\x1b[B'), state='disabled')
 Page_Down_Button.grid(row=2, column=11, sticky='ew', padx=5)
 
-# Creates the "Start" Button
-Start_Flash_Button = ttk.Button(window, text="Start", command=start_flash, state='disabled')
+# Creates the 'Start' Button
+Start_Flash_Button = ttk.Button(window, text='Start', command=start_flash, state='disabled')
 Start_Flash_Button.grid(row=8, column=8, columnspan=2, sticky='ew', pady=5)
 
-# Creates the "Reset" Button
-Reset_Button = ttk.Button(window, text="Reset", command=reset)
+# Creates the 'Reset' Button
+Reset_Button = ttk.Button(window, text='Reset', command=reset)
 Reset_Button.grid(row=8, column=10, columnspan=2, sticky='we', pady=5, padx=5)
 
 # Creates the Odin Archive Check-boxes
@@ -955,19 +1027,19 @@ USERDATA_Checkbox = ttk.Checkbutton(window, variable=USERDATA_Checkbox_var)
 USERDATA_Checkbox.grid(row=7, column=7)
 
 # Creates the Odin archive Buttons
-BL_Button = ttk.Button(window, text="Bl", command=lambda: open_file('BL'))
+BL_Button = ttk.Button(window, text='Bl', command=lambda: open_file('BL'))
 BL_Button.grid(row=3, column=8, padx='4', sticky='ew')
 
-AP_Button = ttk.Button(window, text="AP", command=lambda: open_file('AP'))
+AP_Button = ttk.Button(window, text='AP', command=lambda: open_file('AP'))
 AP_Button.grid(row=4, column=8, padx='4', sticky='ew')
 
-CP_Button = ttk.Button(window, text="CP", command=lambda: open_file('CP'))
+CP_Button = ttk.Button(window, text='CP', command=lambda: open_file('CP'))
 CP_Button.grid(row=5, column=8, padx='4', sticky='ew')
 
-CSC_Button = ttk.Button(window, text="CSC", command=lambda: open_file('CSC'))
+CSC_Button = ttk.Button(window, text='CSC', command=lambda: open_file('CSC'))
 CSC_Button.grid(row=6, column=8, padx='4', sticky='ew')
 
-USERDATA_Button = ttk.Button(window, text="USERDATA", command=lambda: open_file('USERDATA'))
+USERDATA_Button = ttk.Button(window, text='USERDATA', command=lambda: open_file('USERDATA'))
 USERDATA_Button.grid(row=7, column=8, padx='4', sticky='ew')
 
 # Creates the Odin archive Entries
@@ -1005,20 +1077,20 @@ About_Button.grid(row=2, column=5, sticky='wes', pady=5)
 Settings_Button = ttk.Button(window, text='Settings', command=lambda:toggle_frame('Settings'))
 Settings_Button.grid(row=2, column=3, sticky='wes', pady=5)
 
-# Creates the "Log" frame
+# Creates the 'Log' frame
 Log_Frame = ttk.Frame(window)
 Log_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Log_Frame.grid_columnconfigure(0, weight=1)
 Log_Frame.grid_rowconfigure(0, weight=1)
 
-Output_Text = scrolledtext.ScrolledText(Log_Frame, state="disabled", highlightthickness=0, font=("Monospace", 9))
+Output_Text = scrolledtext.ScrolledText(Log_Frame, state='disabled', highlightthickness=0, font=('Monospace', 9))
 Output_Text.grid(row=0, column=0, rowspan=6, sticky='nesw')
 
-# Creates the "Options" frame and check-boxes
+# Creates the 'Options' frame and check-boxes
 Options_Frame = ttk.Frame(window)
 Options_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
-NOTE_Label = ttk.Label(Options_Frame, text='NOTE: The "T Flash" option is temporarily not supported by Thor GUI.')
+NOTE_Label = ttk.Label(Options_Frame, text='NOTE: The \'T Flash\' option is temporarily not supported by Thor GUI.')
 NOTE_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
 
 TFlash_Option_var = tk.IntVar()
@@ -1028,7 +1100,7 @@ TFlash_Option.grid(row=1, column=0, pady=10, padx=10, sticky='w')
 TFlash_Label = ttk.Label(Options_Frame, text='Writes the bootloader of a working device onto the SD card', cursor='hand2')
 TFlash_Label.grid(row=2, column=0, pady=10, padx=10, sticky='w')
 
-TFlash_Label.bind("<ButtonRelease-1>", lambda e: open_link('https://android.stackexchange.com/questions/196304/what-does-odins-t-flash-option-do'))
+TFlash_Label.bind('<ButtonRelease-1>', lambda e: open_link('https://android.stackexchange.com/questions/196304/what-does-odins-t-flash-option-do'))
 
 EFSClear_Option_var = tk.IntVar()
 EFSClear_Option = ttk.Checkbutton(Options_Frame, variable=EFSClear_Option_var, text='EFS Clear')
@@ -1037,7 +1109,7 @@ EFSClear_Option.grid(row=3, column=0, pady=10, padx=10, sticky='w')
 EFSClear_Label = ttk.Label(Options_Frame, text='Wipes the EFS partition (WARNING: You better know what you\'re doing!)', cursor='hand2')
 EFSClear_Label.grid(row=4, column=0, pady=10, padx=10, sticky='w')
 
-EFSClear_Label.bind("<ButtonRelease-1>", lambda e: open_link('https://android.stackexchange.com/questions/185679/what-is-efs-and-msl-in-android'))
+EFSClear_Label.bind('<ButtonRelease-1>', lambda e: open_link('https://android.stackexchange.com/questions/185679/what-is-efs-and-msl-in-android'))
 
 BootloaderUpdate_Option_var = tk.IntVar()
 BootloaderUpdate_Option = ttk.Checkbutton(Options_Frame, variable=BootloaderUpdate_Option_var, text='Bootloader Update')
@@ -1056,7 +1128,7 @@ ResetFlashCount_Label.grid(row=8, column=0, pady=10, padx=10, sticky='w')
 Apply_Options_Button = ttk.Button(Options_Frame, text='Apply', command=apply_options, state='disabled')
 Apply_Options_Button.grid(row=9, column=0, pady=10, padx=10, sticky='w')
 
-# Creates the "Pit" frame
+# Creates the 'Pit' frame
 Pit_Frame = ttk.Frame(window)
 Pit_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
@@ -1066,144 +1138,157 @@ Test_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
 Although_Label = ttk.Label(Pit_Frame, text='Pull requests are always welcome though!')
 Although_Label.grid(row=1, column=0, pady=10, padx=10, sticky='w')
 
-# Creates the "Settings" frame
+# Creates the 'Settings' frame
 Settings_Frame = ttk.Frame(window)
 Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Settings_Frame.grid_columnconfigure(0, weight=1)
 
-Theme_Label = ttk.Label(Settings_Frame, text='Appearance', font=("Monospace", 12))
+Theme_Label = ttk.Label(Settings_Frame, text='Appearance', font=('Monospace', 12))
 Theme_Label.grid(row=0, column=0, sticky='w')
 
-if theme == ['light']:
+if theme == 'light':
     other_theme = 'Dark'
-elif theme == ['dark']:
+elif theme == 'dark':
     other_theme = 'Light'
 
-Theme_Toggle = ttk.Checkbutton(Settings_Frame, text=f'{other_theme} theme', style="Switch.TCheckbutton", command=change_theme)
+if tooltips == 'on':
+    other_tooltip = 'off'
+elif tooltips == 'off':
+    other_tooltip = 'on'
+
+Theme_Toggle = ttk.Checkbutton(Settings_Frame, text=f'{other_theme} theme', style='Switch.TCheckbutton', command=change_theme)
 Theme_Toggle.grid(row=1, column=0, sticky='w')
 
-# Creates the "Help" frame
+Tooltip_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Tooltips {other_tooltip}', style='Switch.TCheckbutton', command=change_tooltips)
+Tooltip_Toggle.grid(row=2, column=0, sticky='w')
+
+Tooltip_Label = ttk.Label(Settings_Frame, text='A restart is required to turn off tooltips', font=('Monospace', 8))
+Tooltip_Label.grid(row=3, column=0, sticky='w')
+
+# Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
 Help_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Help_Frame.grid_columnconfigure(0, weight=1)
 
-Help_Label = ttk.Label(Help_Frame, text='\nNeed help?', font=("Monospace", 13), anchor="center")
+Help_Label = ttk.Label(Help_Frame, text='\nNeed help?', font=('Monospace', 13), anchor='center')
 Help_Label.grid(row=0, column=0, sticky='ew')
 
-Get_Help_Text = tk.Text(Help_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+Get_Help_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 Get_Help_Text.grid(row=2, column=0, sticky='ew')
 hyperlink = HyperlinkManager(Get_Help_Text)
-Get_Help_Text.tag_configure("center", justify='center')
-Get_Help_Text.insert(tk.END, "Let me know on ")
-Get_Help_Text.insert(tk.END, "XDA", hyperlink.add(partial(open_link, 'https://forum.xda-developers.com/t/poll-would-a-gui-for-linux-odin4-and-or-thor-be-helpful.4604333/')))
-Get_Help_Text.insert(tk.END, ", or open an issue on ")
-Get_Help_Text.insert(tk.END, "GitHub", hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI')))
-Get_Help_Text.insert(tk.END, ".")
-Get_Help_Text.tag_add("center", "1.0", "end")
+Get_Help_Text.tag_configure('center', justify='center')
+Get_Help_Text.insert(tk.END, 'Let me know on ')
+Get_Help_Text.insert(tk.END, 'XDA', hyperlink.add(partial(open_link, 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/')))
+Get_Help_Text.insert(tk.END, ', or open an issue on ')
+Get_Help_Text.insert(tk.END, 'GitHub', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI')))
+Get_Help_Text.insert(tk.END, '.')
+Get_Help_Text.tag_add('center', '1.0', 'end')
 Get_Help_Text.config(state=tk.DISABLED)
 
-Help_Label_2 = ttk.Label(Help_Frame, text='\nFound an issue?', font=("Monospace", 13), anchor="center")
+Help_Label_2 = ttk.Label(Help_Frame, text='\nFound an issue?', font=('Monospace', 13), anchor='center')
 Help_Label_2.grid(row=4, column=0, sticky='ew')
 
-Report_Text = tk.Text(Help_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+Report_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 Report_Text.grid(row=5, column=0, sticky='ew')
 hyperlink = HyperlinkManager(Report_Text)
-Report_Text.tag_configure("center", justify='center')
-Report_Text.insert(tk.END, "If it isn't listed ")
-Report_Text.insert(tk.END, "here", hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI#known-bugs')))
-Report_Text.insert(tk.END, ", you can ")
-Report_Text.insert(tk.END, "report it", hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=')))
-Report_Text.insert(tk.END, ".")
-Report_Text.tag_add("center", "1.0", "end")
+Report_Text.tag_configure('center', justify='center')
+Report_Text.insert(tk.END, 'If it isn\'t listed ')
+Report_Text.insert(tk.END, 'here', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI#known-bugs')))
+Report_Text.insert(tk.END, ', you can ')
+Report_Text.insert(tk.END, 'report it', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI/issues/new/choose')))
+Report_Text.insert(tk.END, '.')
+Report_Text.tag_add('center', '1.0', 'end')
 Report_Text.config(state=tk.DISABLED)
 
-# Creates the "About" frame
+# Creates the 'About' frame
 About_Frame = ttk.Frame(window)
 About_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 About_Frame.grid_columnconfigure(0, weight=1)
 
-Thor_GUI_Label = ttk.Label(About_Frame, text='\nThor GUI', font=("Monospace", 13), anchor="center")
+Thor_GUI_Label = ttk.Label(About_Frame, text='\nThor GUI', font=('Monospace', 13), anchor='center')
 Thor_GUI_Label.grid(sticky='ew')
 
-Thor_GUI_Label_2 = ttk.Label(About_Frame, text=f'{version}', font=('Monospace', 11), anchor="center")
+Thor_GUI_Label_2 = ttk.Label(About_Frame, text=f'{version}', font=('Monospace', 11), anchor='center')
 Thor_GUI_Label_2.grid(sticky='ew')
 
-Thor_GUI_Label_3 = ttk.Label(About_Frame, text='A GUI for the Thor Flash Utility', font=('Monospace', 11), anchor="center")
+Thor_GUI_Label_3 = ttk.Label(About_Frame, text='A GUI for the Thor Flash Utility', font=('Monospace', 11), anchor='center')
 Thor_GUI_Label_3.grid(sticky='ew')
 
-Thor_GUI_Websites_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+Thor_GUI_Websites_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 Thor_GUI_Websites_Text.grid(sticky='ew')
 hyperlink = HyperlinkManager(Thor_GUI_Websites_Text)
-Thor_GUI_Websites_Text.tag_configure("center", justify='center')
-Thor_GUI_Websites_Text.insert(tk.END, "GitHub", hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI')))
-Thor_GUI_Websites_Text.insert(tk.END, ", ")
-Thor_GUI_Websites_Text.insert(tk.END, "XDA", hyperlink.add(partial(open_link, 'https://forum.xda-developers.com/t/poll-would-a-gui-for-linux-odin4-and-or-thor-be-helpful.4604333/')))
-Thor_GUI_Websites_Text.tag_add("center", "1.0", "end")
+Thor_GUI_Websites_Text.tag_configure('center', justify='center')
+Thor_GUI_Websites_Text.insert(tk.END, 'GitHub', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI')))
+Thor_GUI_Websites_Text.insert(tk.END, ', ')
+Thor_GUI_Websites_Text.insert(tk.END, 'XDA', hyperlink.add(partial(open_link, 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/')))
+Thor_GUI_Websites_Text.tag_add('center', '1.0', 'end')
 Thor_GUI_Websites_Text.config(state=tk.DISABLED)
 
-Thor_GUI_Label_4 = ttk.Label(About_Frame, text='Built around the:', font=('Monospace', 11), anchor="center")
+Thor_GUI_Label_4 = ttk.Label(About_Frame, text='Built around the:', font=('Monospace', 11), anchor='center')
 Thor_GUI_Label_4.grid(sticky='ew')
 
-Thor_GUI_Label_5 = ttk.Label(About_Frame, text='\nThor Flash Utility', font=("Monospace", 13), anchor="center")
+Thor_GUI_Label_5 = ttk.Label(About_Frame, text='\nThor Flash Utility', font=('Monospace', 13), anchor='center')
 Thor_GUI_Label_5.grid(sticky='ew')
 
-Thor_GUI_Label_6 = ttk.Label(About_Frame, text='v1.0.4', font=('Monospace', 11), anchor="center")
+Thor_GUI_Label_6 = ttk.Label(About_Frame, text='v1.0.4', font=('Monospace', 11), anchor='center')
 Thor_GUI_Label_6.grid(sticky='ew')
 
-Thor_GUI_Label_7 = ttk.Label(About_Frame, text='An alternative to Heimdall', font=('Monospace', 11), anchor="center")
+Thor_GUI_Label_7 = ttk.Label(About_Frame, text='An alternative to Heimdall', font=('Monospace', 11), anchor='center')
 Thor_GUI_Label_7.grid(sticky='ew')
 
-Thor_Websites_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+Thor_Websites_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 Thor_Websites_Text.grid(sticky='ew')
 hyperlink = HyperlinkManager(Thor_Websites_Text)
-Thor_Websites_Text.tag_configure("center", justify='center')
-Thor_Websites_Text.insert(tk.END, "GitHub", hyperlink.add(partial(open_link, 'https://github.com/Samsung-Loki/Thor')))
-Thor_Websites_Text.insert(tk.END, ", ")
-Thor_Websites_Text.insert(tk.END, "XDA", hyperlink.add(partial(open_link, 'https://forum.xda-developers.com/t/dev-thor-flash-utility-the-new-samsung-flash-tool.4597355/')))
-Thor_Websites_Text.tag_add("center", "1.0", "end")
+Thor_Websites_Text.tag_configure('center', justify='center')
+Thor_Websites_Text.insert(tk.END, 'GitHub', hyperlink.add(partial(open_link, 'https://github.com/Samsung-Loki/Thor')))
+Thor_Websites_Text.insert(tk.END, ', ')
+Thor_Websites_Text.insert(tk.END, 'XDA', hyperlink.add(partial(open_link, 'https://forum.xda-developers.com/t/dev-thor-flash-utility-the-new-samsung-flash-tool.4597355/')))
+Thor_Websites_Text.tag_add('center', '1.0', 'end')
 Thor_Websites_Text.config(state=tk.DISABLED)
 
-Thor_GUI_Label_7 = ttk.Label(About_Frame, text='\nCredits:', font=('Monospace', 13), anchor="center")
+Thor_GUI_Label_7 = ttk.Label(About_Frame, text='\nCredits:', font=('Monospace', 13), anchor='center')
 Thor_GUI_Label_7.grid(sticky='ew')
 
-TheAirBlow_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+TheAirBlow_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 TheAirBlow_Text.grid(sticky='ew')
 hyperlink = HyperlinkManager(TheAirBlow_Text)
-TheAirBlow_Text.tag_configure("center", justify='center')
-TheAirBlow_Text.insert(tk.END, "TheAirBlow", hyperlink.add(partial(open_link, 'https://github.com/TheAirBlow')))
-TheAirBlow_Text.insert(tk.END, " for Thor Flash Utility")
-TheAirBlow_Text.tag_add("center", "1.0", "end")
+TheAirBlow_Text.tag_configure('center', justify='center')
+TheAirBlow_Text.insert(tk.END, 'TheAirBlow', hyperlink.add(partial(open_link, 'https://github.com/TheAirBlow')))
+TheAirBlow_Text.insert(tk.END, ' for the ')
+TheAirBlow_Text.insert(tk.END, 'Thor Flash Utility')
+TheAirBlow_Text.tag_add('center', '1.0', 'end')
 TheAirBlow_Text.config(state=tk.DISABLED)
 
-rdbende_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+rdbende_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 rdbende_Text.grid(sticky='ew')
 hyperlink = HyperlinkManager(rdbende_Text)
-rdbende_Text.tag_configure("center", justify='center')
-rdbende_Text.insert(tk.END, "rdbende", hyperlink.add(partial(open_link, 'https://github.com/rdbende')))
-rdbende_Text.insert(tk.END, " for the Sun Valley tkk theme")
-rdbende_Text.tag_add("center", "1.0", "end")
+rdbende_Text.tag_configure('center', justify='center')
+rdbende_Text.insert(tk.END, 'rdbende', hyperlink.add(partial(open_link, 'https://github.com/rdbende')))
+rdbende_Text.insert(tk.END, ' for the ')
+rdbende_Text.insert(tk.END, 'Sun Valley tkk theme', hyperlink.add(partial(open_link, 'https://github.com/rdbende/Sun-Valley-ttk-theme')))
+rdbende_Text.tag_add('center', '1.0', 'end')
 rdbende_Text.config(state=tk.DISABLED)
 
-ethical_haquer_Text = tk.Text(About_Frame, font=("Monospace", 11), height=1, bd=0, highlightthickness=0, wrap="word")
+ethical_haquer_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 ethical_haquer_Text.grid(sticky='ew')
 hyperlink = HyperlinkManager(ethical_haquer_Text)
-ethical_haquer_Text.tag_configure("center", justify='center')
-ethical_haquer_Text.insert(tk.END, "Myself, ")
-ethical_haquer_Text.insert(tk.END, "ethical_haquer", hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer')))
-ethical_haquer_Text.insert(tk.END, ", for Thor GUI")
-ethical_haquer_Text.tag_add("center", "1.0", "end")
+ethical_haquer_Text.tag_configure('center', justify='center')
+ethical_haquer_Text.insert(tk.END, 'Myself, ')
+ethical_haquer_Text.insert(tk.END, 'ethical_haquer', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer')))
+ethical_haquer_Text.insert(tk.END, ', for Thor GUI')
+ethical_haquer_Text.tag_add('center', '1.0', 'end')
 ethical_haquer_Text.config(state=tk.DISABLED)
 
-Disclaimer_Label = ttk.Label(About_Frame, text='\n\nThis program comes with absolutely no warranty.', font=("Monospace", 9), anchor="center")
+Disclaimer_Label = ttk.Label(About_Frame, text='\n\nThis program comes with absolutely no warranty.', font=('Monospace', 9), anchor='center')
 Disclaimer_Label.grid(sticky='ew')
 
-Disclaimer_Label = ttk.Label(About_Frame, text='See the GNU General Public License, version 3 or later for details.\n', font=("Monospace", 9), anchor="center")
+Disclaimer_Label = ttk.Label(About_Frame, text='See the GNU General Public License, version 3 or later for details.\n', font=('Monospace', 9), anchor='center')
 Disclaimer_Label.grid(sticky='ew')
 
-Disclaimer_Label = ttk.Label(About_Frame, text='Thor Flash Utility comes with absolutely no warranty.', font=("Monospace", 9), anchor="center")
+Disclaimer_Label = ttk.Label(About_Frame, text='Thor Flash Utility comes with absolutely no warranty.', font=('Monospace', 9), anchor='center')
 Disclaimer_Label.grid(sticky='ew')
 
-Disclaimer_Label = ttk.Label(About_Frame, text='See the Mozilla Public License, version 2 or later for details.', font=("Monospace", 9), anchor="center")
+Disclaimer_Label = ttk.Label(About_Frame, text='See the Mozilla Public License, version 2 or later for details.', font=('Monospace', 9), anchor='center')
 Disclaimer_Label.grid(sticky='ew')
 
 # Configures the tags for coloring the output text
@@ -1215,17 +1300,21 @@ Output_Text.tag_configure('green_italic', foreground='#26A269', font=('Monospace
 Output_Text.tag_configure('orange', foreground='#E9AD0C')
 Output_Text.tag_configure('dark_blue', foreground='#2A7BDE')
 
-# Raises the "Log" frame to top on start-up
+# Raises the 'Log' frame to top on start-up
 toggle_frame('Log')
 
 # Binds the on_window_close function to the window's close event
-window.protocol("WM_DELETE_WINDOW", on_window_close)
+window.protocol('WM_DELETE_WINDOW', on_window_close)
 
 # Sets what theme to use
-if theme == ['light']:
+if theme == 'light':
     sv_ttk.use_light_theme()
-elif theme == ['dark']:
+elif theme == 'dark':
     sv_ttk.use_dark_theme()
+
+# Creates tooltips for buttons and things
+if tooltips == 'on':
+    create_tooltips()
 
 # Runs the Tkinter event loop
 window.mainloop()
