@@ -65,7 +65,6 @@ Functional:
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
-+ The text in the "Connect Device" and "Force Stop" windows is not in the middle.
 
 ## Implemented Thor features
 
@@ -111,12 +110,18 @@ pip install pexpect
 pip install sv-ttk
 ```
 
+### tkinter-tooltip
+
+```
+pip install tkinter-tooltip
+```
+
 ## Installation
 
 + First, make sure you have the above prerequisites.
 + Download the latest Thor GUI release from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it, and open the Thor_GUI.py file with a text editor.
-+ You need to edit line 38 of the file.
++ You need to edit line 40 of the file.
 + Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from the "Linux.zip").
 + Save your changes to the file, and run:
 
