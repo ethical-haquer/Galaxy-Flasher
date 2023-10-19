@@ -4,7 +4,7 @@
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/0592c939-58eb-42b6-a7ff-f7274f7820cb">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5e180060-1595-44fa-91af-e261586c24c0">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b97628ef-a932-4ef3-8bdf-cc3005895a83">
   <img alt="Screenshot of Thor GUI">
 </picture>
@@ -17,7 +17,7 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
   "Options" Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/03246c37-4d9a-462b-9968-23b6e01ad036">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/ab9d9c64-5230-4d14-8186-8f41fc7b33e9">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/e2f51f25-e682-48f9-97ad-0f8d189ca460">
     <img alt="Options Tab">
   </picture>
@@ -30,10 +30,18 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
     <img alt="Command Entry">
   </picture>
   <br>
+  "Connect Device" Window:
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d4574054-5f7f-4c8a-9d4c-4de41c3690fd">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d4574054-5f7f-4c8a-9d4c-4de41c3690fd">
+    <img alt="Connect Device Window">
+  </picture>
+  <br>
   "Select Partitions" Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/fd1419dc-0d3c-47e4-a37e-c188e0c702d5">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/620d05e8-872e-44d7-946e-fca7bf80e311">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/83a61e3c-09d7-41a5-8178-124abc6fc623">
     <img alt="Select Partitions Window">
   </picture>
@@ -41,7 +49,7 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
   "Verify Flash" Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/db33a809-6a95-4585-bcec-26a95c0c5127">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/7d3d6e6c-af3c-48eb-bd31-263741b3f5b7">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/48a7da84-1474-4d09-9b9d-ae2a74d02100">
     <img alt="Verify Flash Window">
   </picture>
