@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import tkinter as tk
 from tkinter import scrolledtext
-from tkinter import messagebox
 from tkinter import filedialog
 import pexpect
 from threading import Thread
@@ -35,14 +34,13 @@ from tkinter import ttk
 import pickle
 import sys
 from tktooltip import ToolTip
-
-# The path to 'TheAirBlow.Thor.Shell.dll', including the filename itself. Example: '/home/billy25/Thor/TheAirBlow.Thor.Shell.dll'.
-path_to_thor = '/PATH/TO/TheAirBlow.Thor.Shell.dll'
+from tkinterdnd2 import DND_FILES, TkinterDnD
+import platform
 
 # There is no need to edit this line anymore ;)
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-version = 'Alpha v0.3.2'
+version = 'Alpha v0.4.0'
 
 currently_running = False
 odin_running = False
@@ -51,6 +49,9 @@ connection = False
 tag = 'green'
 graphical_flash = False
 prompt_available = False
+sudo_prompt_available = False
+OS = platform.system()
+architecture = platform.machine()
 
 successful_commands = []
 
@@ -68,80 +69,121 @@ print(f'''
 
 # This loads the 'thor_gui_settings.pkl' file, which contains variables
 if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
-    filed_version,theme,tooltips = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
-    if not filed_version == version:
+    f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
+    filed_version = pickle.load(f2)
+    f2.close()
+    if filed_version != version:
         print(f'The found \'thor_gui_settings.pkl\' file was not created by this version of Thor_GUI, so Thor GUI is updating it.')
-        filed_version = version
-        pickle.dump([filed_version,theme,tooltips], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
+# Fake Thor GUI version for testing
+        if filed_version == 'Alpha v0.3.3':
+            filed_version = version
+            sudo = 'off'
+            first_run = True
+
+            f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
+            filed_version = pickle.load(f2)
+            theme = pickle.load(f2)
+            tooltips = pickle.load(f2)
+            first_run = pickle.load(f2)
+            f2.close()
+
+            f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
+            pickle.dump(filed_version, f1)
+            pickle.dump(theme, f1)
+            pickle.dump(tooltips, f1)
+            pickle.dump(sudo, f1)
+            pickle.dump(first_run, f1)
+            f1.close()
 else:
     print(f'The \'thor_gui_settings.pkl\' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.')
     filed_version = version
     theme = 'light'
     tooltips = 'on'
-    pickle.dump([filed_version,theme,tooltips], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
-filed_version,theme,tooltips = pickle.load(open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb'))
+    sudo = 'off'
+    first_run = True
+    f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
+    pickle.dump(filed_version, f1)
+    pickle.dump(theme, f1)
+    pickle.dump(tooltips, f1)
+    pickle.dump(sudo, f1)
+    pickle.dump(first_run, f1)
+    f1.close()
+
+f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
+filed_version = pickle.load(f2)
+theme = pickle.load(f2)
+tooltips = pickle.load(f2)
+sudo = pickle.load(f2)
+first_run = pickle.load(f2)
+f2.close()
 
 # This starts and stops Thor
 def start_thor():
-    global Thor, output_thread, currently_running, prompt_available
+    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message
     try:
         if currently_running:
             on_window_close()
         elif not currently_running:
-            Thor = pexpect.spawn(f'dotnet {path_to_thor}', timeout=None, encoding='utf-8')
+            if sudo == 'off':
+                if architecture == 'x86_64':
+                    Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                elif architecture == 'arm64':
+                    Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+            elif sudo == 'on':
+                if architecture == 'x86_64':
+                    Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                elif architecture == 'arm64':
+                    Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
             currently_running = True
             Start_Button.configure(text='Stop Thor')
+            change_tooltip(Start_Button, 'Stop Thor')
             print('Started Thor')
     except pexpect.exceptions.TIMEOUT:
             print('A Timeout Occurred in start_thor')
     except Exception as e:
         print(f'An exception occurred in start_thor: {e}')
 
-# What most commands go through
-def send_command(command):
-    global Thor, successful_commands, prompt_available
+# What most Thor commands go through
+def send_command(command, case='normal'):
+    global Thor, successful_commands, prompt_available, sudo_prompt_available
     if currently_running:
         try:
             if 'exit' in command or 'quit' in command:
                 print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.')
             else:
                 if prompt_available == True:
+                    if case == 'normal' or case == 'entry':
+                        Thor.sendline(command)
+                        Output_Text.see(tk.END)
+                        successful_commands.append(command)
+                        print(f'Sent command: \'{command}\'')
+                elif sudo_prompt_available == True:
+                    sudo_prompt_available = False
+                    Thor.sendline(command)
+                    Output_Text.see(tk.END)
+                    successful_commands.append('{password}')
+                    print('Sent command: \'{password}\'')
+                    Command_Entry.delete(0, tk.END)
+                    Command_Entry.configure(show='')
+                elif clean_line.endswith('[y/n] (n):') and case == 'entry':
                     Thor.sendline(command)
                     Output_Text.see(tk.END)
                     successful_commands.append(command)
                     print(f'Sent command: \'{command}\'')
                 else:
-                    print(f'Couldn\'t send the command: \'{command}\', as the \'shell>\' prompt wasn\'t available')
+                    if case == 'entry':
+                        print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')
+                    else:
+                        print(f'Couldn\'t send the command: \'{command}\', as the \'shell>\' prompt wasn\'t available')
         except Exception as e:
             print(f'An exception occurred in send_command: {e}')
 
-# What commands from the Command Entry go through, allowing more than just 'shell>' as the prompt
-def other_send_command(command):
-    global Thor, successful_commands, prompt_available
-    if currently_running:
-        try:
-            if 'exit' in command or 'quit' in command:
-                print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.')
-            else:
-                if prompt_available == True or clean_line.endswith('[y/n] (n):'):
-                    Thor.sendline(command)
-                    Output_Text.see(tk.END)
-                    successful_commands.append(command)
-                    print(f'Sent command: \'{command}\'')
-                else:
-                    print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')
-        except Exception as e:
-            print(f'An exception occurred in other_send_command: {e}')
-
 # Perhaps the most important part of the program, along with scan_output - Handles displaying the output from Thor, while scan_output calls other functions when it detects certain lines in the output
 def update_output():
-    global last_lines
-    global tag
-    global connection
-    global clean_line
+    global last_lines, tag, connection, clean_line
     last_lines = deque(maxlen=300)
     output_buffer = ''
     output_text_lines = []
@@ -200,12 +242,15 @@ def update_output():
         sleep(0.1)
 
 def scan_output():
-    global graphical_flash, last_lines, clean_line, archive_name, odin_archives, prompt_available, first_prompt
+    global graphical_flash, last_lines, clean_line, archive_name, odin_archives, prompt_available, sudo_prompt_available, first_prompt
     try:
         prompt_available = False
         if 'shell>' in clean_line:
             set_thor('on')
             prompt_available = True
+        elif '[sudo]' in clean_line:
+            set_sudo()
+            sudo_prompt_available = True
         elif 'Successfully began an Odin session!' in clean_line:
             set_odin('on')
         elif 'Successfully disconnected the device!' in clean_line:
@@ -259,6 +304,8 @@ def scan_output():
                 ResetFlashCount_Option_var = ttk.IntVar(value=False)
             if 'Option \'Reset Flash Count\' is set to \'True\'' in clean_line:
                 ResetFlashCount_Option_var = ttk.IntVar(value=True)
+        elif 'Failed to open the device for RW: Permission denied (13)' in clean_line:
+            run_function(show_message('Oops!', 'Thor just said:\n\'Failed to open the device for RW: Permission denied (13)\'.\n\nA possible fix is to:\n1. Go to the Settings Tab,\n2. Toggle on \'Run Thor with sudo\',\n3. Restart Thor GUI,\n4. Try connecting again.\n\nIf it still doesn\'t work, feel free to let me know!', [{'text': 'OK', 'fg': 'black'}], (460, 252)))
     except Exception as e:
         print(f'An exception occurred in scan_output: \'{e}\'')
 
@@ -337,37 +384,54 @@ def set_widget_state(*args, state='normal', text=None):
         if text is not None:
             widget.configure(text=text)
 
+# Creates the tooltips
 def create_tooltips():
     delay = 0.25
-    ToolTip(Start_Button, msg="Start/Stop Thor", delay=delay)
-    ToolTip(Connect_Button, msg="Connect/Disconnect a device in download mode", delay=delay)
-    ToolTip(Begin_Button, msg="Start/Stop an Odin session", delay=delay)
-    ToolTip(Command_Entry, msg="You can enter a Thor command here,\nand press enter to send it", delay=delay)
-    ToolTip(Enter_Button, msg="Send Thor an 'Enter'", delay=delay)
-    ToolTip(Space_Button, msg="Send Thor a 'Space'", delay=delay)
-    ToolTip(Page_Up_Button, msg="Send Thor a 'Page Up'", delay=delay)
-    ToolTip(Page_Down_Button, msg="Send Thor a 'Page Down'", delay=delay)
-    ToolTip(BL_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
-    ToolTip(AP_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
-    ToolTip(CP_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
-    ToolTip(CSC_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
-    ToolTip(USERDATA_Checkbox, msg="The Odin archives selected with these check-boxes will be flashed", delay=delay)
-    ToolTip(BL_Button, msg="Select a BL file", delay=delay)
-    ToolTip(AP_Button, msg="Select an AP file", delay=delay)
-    ToolTip(CP_Button, msg="Select a CP file", delay=delay)
-    ToolTip(CSC_Button, msg="Select a CSC file", delay=delay)
-    ToolTip(USERDATA_Button, msg="Select a USERDATA file", delay=delay)
-    ToolTip(Log_Button, msg="'Log' Tab", delay=delay)
-    ToolTip(Options_Button, msg="'Options' Tab", delay=delay)
-    ToolTip(Pit_Button, msg="'Pit' Tab", delay=delay)
-    ToolTip(Settings_Button, msg="'Settings' Tab", delay=delay)
-    ToolTip(Help_Button, msg="'Help' Tab", delay=delay)
-    ToolTip(About_Button, msg="'About' Tab", delay=delay)
-    ToolTip(Apply_Options_Button, msg="Apply the above options", delay=delay)
-    ToolTip(Theme_Toggle, msg="Toggle theme", delay=delay)
-    ToolTip(Tooltip_Toggle, msg="Toggle tooltips", delay=delay)
-    ToolTip(Start_Flash_Button, msg="Start a flash", delay=delay)
-    ToolTip(Reset_Button, msg="Reset the options in the 'Options' tab to default, and clear the Odin archive check-boxes and archive entries", delay=delay)
+    ToolTip(Start_Button, msg='Start Thor', delay=delay)
+    ToolTip(Connect_Button, msg='Connect/Disconnect a device in download mode', delay=delay)
+    ToolTip(Begin_Button, msg='Start/Stop an Odin session', delay=delay)
+    ToolTip(Command_Entry, msg='You can enter a Thor command here,\nand press enter to send it', delay=delay)
+    ToolTip(Enter_Button, msg='Send Thor an \'Enter\'', delay=delay)
+    ToolTip(Space_Button, msg='Send Thor a \'Space\'', delay=delay)
+    ToolTip(Page_Up_Button, msg='Send Thor a \'Page Up\'', delay=delay)
+    ToolTip(Page_Down_Button, msg='Send Thor a \'Page Down\'', delay=delay)
+    ToolTip(BL_Checkbox, msg='The Odin archives selected with these check-boxes will be flashed', delay=delay)
+    ToolTip(AP_Checkbox, msg='The Odin archives selected with these check-boxes will be flashed', delay=delay)
+    ToolTip(CP_Checkbox, msg='The Odin archives selected with these check-boxes will be flashed', delay=delay)
+    ToolTip(CSC_Checkbox, msg='The Odin archives selected with these check-boxes will be flashed', delay=delay)
+    ToolTip(USERDATA_Checkbox, msg='The Odin archives selected with these check-boxes will be flashed', delay=delay)
+    ToolTip(BL_Button, msg='Select a BL file', delay=delay)
+    ToolTip(AP_Button, msg='Select an AP file', delay=delay)
+    ToolTip(CP_Button, msg='Select a CP file', delay=delay)
+    ToolTip(CSC_Button, msg='Select a CSC file', delay=delay)
+    ToolTip(USERDATA_Button, msg='Select a USERDATA file', delay=delay)
+    ToolTip(BL_Entry, msg='Drag and drop a BL file here, or paste it\'s path', delay=delay)
+    ToolTip(AP_Entry, msg='Drag and drop an AP file here, or paste it\'s path', delay=delay)
+    ToolTip(CP_Entry, msg='Drag and drop a CP file here, or paste it\'s path', delay=delay)
+    ToolTip(CSC_Entry, msg='Drag and drop a CSC file here, or paste it\'s path', delay=delay)
+    ToolTip(USERDATA_Entry, msg='Drag and drop a USERDATA file here, or paste it\'s path', delay=delay)
+    ToolTip(Log_Button, msg='Log Tab', delay=delay)
+    ToolTip(Options_Button, msg='Options Tab', delay=delay)
+    ToolTip(Pit_Button, msg='Pit Tab', delay=delay)
+    ToolTip(Settings_Button, msg='Settings Tab', delay=delay)
+    ToolTip(Help_Button, msg='Help Tab', delay=delay)
+    ToolTip(About_Button, msg='About Tab', delay=delay)
+    ToolTip(Apply_Options_Button, msg='Apply the above options', delay=delay)
+    ToolTip(Theme_Toggle, msg='Toggle Theme', delay=delay)
+    ToolTip(Tooltip_Toggle, msg='Toggle Tooltips', delay=delay)
+    ToolTip(Sudo_Toggle, msg='Toggle running Thor with/without sudo', delay=delay)
+    ToolTip(Start_Flash_Button, msg='Start a flash', delay=delay)
+    ToolTip(Reset_Button, msg='Reset the options in the Options Tab to defaults, and clear the Odin archive check-boxes and archive entries', delay=delay)
+
+# Changes a tooltip
+def change_tooltip(widget, message):
+    delay = 0.25
+    ToolTip(widget, msg=message, delay=delay)
+
+# Tells the program when the user is running Thor with sudo and needs to enter their password
+def set_sudo():
+    Command_Entry.configure(show='*')
+    set_widget_state(Command_Entry)
 
 # Tells the program whether Thor is running or not
 def set_thor(value):
@@ -431,59 +495,6 @@ def toggle_odin():
                 send_command('end')
     except Exception as e:
         print(f'An exception occurred in toggle_odin: {e}')
-
-# Runs the 'flashTar' command when the 'Start' button is clicked
-def start_flash():
-    global currently_running, odin_archives, graphical_flash
-    try:
-        checkboxes = [
-            (BL_Checkbox_var, BL_Entry, 'BL'),
-            (AP_Checkbox_var, AP_Entry, 'AP'),
-            (CP_Checkbox_var, CP_Entry, 'CP'),
-            (CSC_Checkbox_var, CSC_Entry, 'CSC'),
-            (USERDATA_Checkbox_var, USERDATA_Entry, 'USERDATA')
-        ]
-        odin_archives = []
-        unique_directories = set()
-
-        def validate_file(file_path, file_type):
-            if os.path.exists(file_path):
-                if file_path.endswith(('.tar', '.zip', '.md5')):
-                    return True
-                else:
-                    print(f'Invalid {file_type} file selected - Files must be .tar, .zip, or .md5')
-                    show_message('Invalid file', f'Files must be .tar, .zip, or .md5', [{'text': 'OK'}], window_size=(400, 200))
-            else:
-                print(f'Invalid {file_type} file selected - The file does not exist')
-                show_message('Invalid file', f'The selected {file_type} file does not exist', [{'text': 'OK'}], window_size=(400, 200))
-            return False
-
-        for checkbox_var, entry, file_type in checkboxes:
-            if checkbox_var.get():
-                file_path = entry.get()
-                if not validate_file(file_path, file_type):
-                    return False
-                odin_archives.append(file_path)
-                unique_directories.add(os.path.dirname(file_path))
-
-        if len(odin_archives) == 0:
-            print('No files were selected - Please select at least one file')
-            show_message('No files selected', 'Please select at least one file', [{'text': 'OK', 'fg': 'black'}], window_size=(400, 200))
-            return False
-
-        if len(unique_directories) > 1:
-            print('Invalid files - All selected files must be in the same directory')
-            show_message('Invalid files', 'All selected files must be in the same directory', [{'text': 'OK', 'fg': 'black'}], window_size=(400, 200))
-            return False
-
-        common_directory = unique_directories.pop()
-        graphical_flash = True
-        send_command(f'flashTar {common_directory}')
-
-    except Exception as e:
-        print(f'An exception occurred in start_flash: {e}')
-
-    return True
 
 # Sets the 'Options' back to default and resets the Odin archive Check-buttons/Entries
 def reset():
@@ -551,6 +562,114 @@ def apply_options():
 # Runs functions in the main thread
 def run_function(function, *args):
     window.after(0, function, *args)
+
+# Runs the 'flashTar' command when the 'Start' button is clicked
+def start_flash():
+    global currently_running, odin_archives, graphical_flash
+    try:
+        checkboxes = [
+            (BL_Checkbox_var, BL_Entry, 'BL'),
+            (AP_Checkbox_var, AP_Entry, 'AP'),
+            (CP_Checkbox_var, CP_Entry, 'CP'),
+            (CSC_Checkbox_var, CSC_Entry, 'CSC'),
+            (USERDATA_Checkbox_var, USERDATA_Entry, 'USERDATA')
+        ]
+        odin_archives = []
+        unique_directories = set()
+
+        def validate_file(file_path, file_type):
+            if os.path.exists(file_path):
+                if file_path.endswith(('.tar', '.zip', '.md5')):
+                    return True
+                else:
+                    print(f'Invalid {file_type} file selected - Files must be .tar, .zip, or .md5')
+                    show_message('Invalid file', f'Files must be .tar, .zip, or .md5', [{'text': 'OK'}], window_size=(400, 100))
+            else:
+                print(f'Invalid {file_type} file selected - The file does not exist')
+                show_message('Invalid file', f'The selected {file_type} file does not exist', [{'text': 'OK'}], window_size=(400, 100))
+            return False
+
+        for checkbox_var, entry, file_type in checkboxes:
+            if checkbox_var.get():
+                file_path = entry.get()
+                if not validate_file(file_path, file_type):
+                    return False
+                odin_archives.append(file_path)
+                unique_directories.add(os.path.dirname(file_path))
+
+        if len(odin_archives) == 0:
+            print('No files were selected - Please select at least one file')
+            show_message('No files selected', 'Please select at least one file', [{'text': 'OK', 'fg': 'black'}], window_size=(400, 100))
+            return False
+
+        if len(unique_directories) > 1:
+            print('Invalid files - All selected files must be in the same directory')
+            show_message('Invalid files', 'All selected files must be in the same directory', [{'text': 'OK', 'fg': 'black'}], window_size=(400, 100))
+            return False
+
+        common_directory = unique_directories.pop()
+        graphical_flash = True
+        send_command(f'flashTar {common_directory}')
+
+    except Exception as e:
+        print(f'An exception occurred in start_flash: {e}')
+
+    return True
+
+# Opens message-boxes - Used by start_flash
+def show_message(title, message, buttons, window_size=(300, 100)):
+    global Message_Window
+
+    Message_Window = tk.Toplevel(window)
+    Message_Window.title(title)
+    Message_Window.wm_transient(window)
+    Message_Window.grab_set()
+    Message_Window.update_idletasks()
+
+    width, height = window_size
+    x = window.winfo_rootx() + (window.winfo_width() - width) // 2
+    y = window.winfo_rooty() + (window.winfo_height() - height) // 2
+    Message_Window.geometry(f'{width}x{height}+{x}+{y}')
+    Message_Window.grid_columnconfigure(0, weight=1)
+#    Message_Window.grid_rowconfigure(0, weight=1)
+
+    message_label = ttk.Label(Message_Window, text=message, anchor='center')
+    message_label.grid(sticky='we', pady=20)
+
+    row = 1
+    for button in buttons:
+        button_text = button.get('text', 'OK')
+        button_fg = button.get('fg', 'black')
+        button_command = button.get('command', Message_Window.destroy)
+        Button_Widget = ttk.Button(Message_Window, text=button_text, command=button_command)
+        Button_Widget.grid(row=row, pady=5)
+        row = row + 1
+
+# Opens the file picker when an Odin archive button is clicked
+def open_file(type):
+    try:
+        file_path = filedialog.askopenfilename(title=f'Select the {type} file', initialdir='~', filetypes=[(f'{type} file', '.tar .zip .md5')])
+        if file_path:
+            if type == 'BL':
+                BL_Entry.delete(0, 'end')
+                BL_Entry.insert(0, file_path)
+            elif type == 'AP':
+                AP_Entry.delete(0, 'end')
+                AP_Entry.insert(0, file_path)
+            elif type == 'CP':
+                CP_Entry.delete(0, 'end')
+                CP_Entry.insert(0, file_path)
+            elif type == 'CSC':
+                CSC_Entry.delete(0, 'end')
+                CSC_Entry.insert(0, file_path)
+            elif type == 'USERDATA':
+                USERDATA_Entry.delete(0, 'end')
+                USERDATA_Entry.insert(0, file_path)
+            print(f'Selected {type}: \'{file_path}\' with file picker')
+    except ttk.TclError:
+        print('Thor GUI was closed with the file picker still open - Don\'t do that. :)')
+    except Exception as e:
+        print(f'An exception occurred in open_file: {e}')
 
 # Handles asking the user if they'd like to connect to a device
 def select_device():
@@ -776,63 +895,6 @@ def verify_flash():
     except Exception as e:
         print(f'An exception occurred in verify_flash: {e}')
 
-# Opens file picker when Odin archive button is clicked
-def open_file(type):
-    try:
-        file_path = filedialog.askopenfilename(title=f'Select the {type} file', initialdir='~', filetypes=[(f'{type} file', '.tar .zip .md5')])
-        if file_path:
-            if type == 'BL':
-                BL_Entry.delete(0, 'end')
-                BL_Entry.insert(0, file_path)
-            elif type == 'AP':
-                AP_Entry.delete(0, 'end')
-                AP_Entry.insert(0, file_path)
-            elif type == 'CP':
-                CP_Entry.delete(0, 'end')
-                CP_Entry.insert(0, file_path)
-            elif type == 'CSC':
-                CSC_Entry.delete(0, 'end')
-                CSC_Entry.insert(0, file_path)
-            elif type == 'USERDATA':
-                USERDATA_Entry.delete(0, 'end')
-                USERDATA_Entry.insert(0, file_path)
-            print(f'Selected {type}: \'{file_path}\' with file picker')
-    except ttk.TclError:
-        print('Thor GUI was closed with the file picker still open - Don\'t do that. :)')
-    except Exception as e:
-        print(f'An exception occurred in open_file: {e}')
-
-# Opens message-boxes - Used primarily by start_flash, but is also used by on_window_close
-def show_message(title, message, buttons, window_size=(300, 200)):
-    global Message_Window
-
-    Message_Window = tk.Toplevel(window)
-    Message_Window.title(title)
-    Message_Window.wm_transient(window)
-    Message_Window.grab_set()
-    Message_Window.update_idletasks()
-
-    width, height = window_size
-    x = window.winfo_rootx() + (window.winfo_width() - width) // 2
-    y = window.winfo_rooty() + (window.winfo_height() - height) // 2
-    Message_Window.geometry(f'{width}x{height}+{x}+{y}')
-    Message_Window.grid_columnconfigure(0, weight=1)
-#    Message_Window.grid_rowconfigure(0, weight=1)
-
-    message_label = ttk.Label(Message_Window, text=message, anchor='center')
-    message_label.grid(sticky='we', pady=20)
-
-    row = 1
-    for button in buttons:
-        button_text = button.get('text', 'OK')
-        button_fg = button.get('fg', 'black')
-        button_command = button.get('command', Message_Window.destroy)
-        button_widget = ttk.Button(Message_Window, text=button_text, command=button_command)
-        button_widget.grid(row=row, pady=5)
-        row = row + 1
-
-    Message_Window.mainloop()
-
 # Opens websites
 def open_link(link):
     webbrowser.open(link)
@@ -868,25 +930,93 @@ class HyperlinkManager:
                 self.links[tag]()
                 return
 
-def change_theme():
-    if sv_ttk.get_theme() == 'dark':
-        theme = 'light'
-        sv_ttk.use_light_theme()
-    elif sv_ttk.get_theme() == 'light':
-        theme = 'dark'
-        sv_ttk.use_dark_theme()
-    pickle.dump([filed_version,theme,tooltips], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
+def bind_file_drop(widget):
+    widget.drop_target_register(DND_FILES)
+    widget.dnd_bind('<<Drop>>', lambda e: [widget.delete(0, 'end'), widget.insert(tk.END, e.data)])
 
-def change_tooltips():
-    global tooltips
-    if tooltips == 'on':
-        tooltips = 'off'
-    elif tooltips == 'off':
-        tooltips = 'on'
-        create_tooltips()
-    pickle.dump([filed_version,theme,tooltips], open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb'))
+def change_variable(variable):
+    global theme, tooltips, sudo
+    if variable == 'theme':
+        if sv_ttk.get_theme() == 'dark':
+            theme = 'light'
+            sv_ttk.use_light_theme()
+        elif sv_ttk.get_theme() == 'light':
+            theme = 'dark'
+            sv_ttk.use_dark_theme()
+    elif variable == 'tooltips':
+        if tooltips == 'on':
+            tooltips = 'off'
+        elif tooltips == 'off':
+            tooltips = 'on'
+            create_tooltips()
+    elif variable == 'sudo':
+        if sudo == 'on':
+            sudo = 'off'
+        elif sudo == 'off':
+            sudo = 'on'
 
-# Handles stopping everthing when the window is closed, or the 'Stop Thor' button is clicked
+# Creates the start-up window
+def create_startup_window():
+    try:
+        if OS == 'Linux':
+            compatibility_message = 'It looks like you\'re using Linux, so you\'re good to go!'
+        elif OS == 'Windows':
+            compatibility_message = 'It looks like you\'re using Windows, so sadly Thor GUI won\'t work for you.'
+        elif OS == 'Darwin':
+            compatibility_message = 'It looks like you\'re using macOS, so sadly Thor GUI won\'t work for you.'
+        Startup_Window = tk.Toplevel(window)
+        Startup_Window.title('Thor GUI - A GUI for the Thor Flash Utility')
+        Startup_Window.wm_transient(window)
+        Startup_Window.grab_set()
+        Startup_Window.update_idletasks()
+        Startup_Window.columnconfigure(0, weight=1)
+        Startup_Window.columnconfigure(1, weight=1)
+
+        Label = ttk.Label(Startup_Window, text='Welcome to Thor GUI!', font=('Monospace', 11), anchor='center')
+        Label.grid(row=0, column=0, columnspan=2, pady=9)
+
+        Label2 = ttk.Label(Startup_Window, text='If you\'re not sure how to use Thor GUI, click the \'Help\' tab.', font=('Monospace', 11), anchor='center')
+        Label2.grid(row=2, column=0, columnspan=2, pady=9)
+
+        Label3 = ttk.Label(Startup_Window, text='For info about Thor GUI, click the \'About\' tab.', font=('Monospace', 11), anchor='center')
+        Label3.grid(row=1, column=0, columnspan=2, pady=9)
+
+        Label4 = ttk.Label(Startup_Window, text='Thor GUI currently only supports Linux.', font=('Monospace', 11), anchor='center')
+        Label4.grid(row=3, column=0, columnspan=2, pady=9)
+
+        Label5 = ttk.Label(Startup_Window, text=compatibility_message, font=('Monospace', 11), anchor='center')
+        Label5.grid(row=4, column=0, columnspan=2, pady=9)
+
+        Label6 = ttk.Label(Startup_Window, text='Click \'Close\' to close this window, or \'Cancel\' to close Thor GUI.', font=('Monospace', 11), anchor='center')
+        Label6.grid(row=6, column=0, columnspan=2, pady=9)
+
+        def send_cancel():
+            Startup_Window.destroy()
+            on_window_close()
+
+        def send_close():
+            global first_run
+            first_run = False
+            print(first_run)
+            Startup_Window.destroy()
+
+        Cancel_Button = ttk.Button(Startup_Window, text='Cancel', command=send_cancel)
+        Cancel_Button.grid(row=7, column=0, sticky='we', pady=5, padx=(5,2.5))
+
+        Close_Button = ttk.Button(Startup_Window, text='Close', command=send_close)
+        Close_Button.grid(row=7, column=1, sticky='we', pady=5, padx=(2.5,5))
+
+        width = 640
+        height = 257
+        x = window.winfo_rootx() + (window.winfo_width() - width) // 2
+        y = window.winfo_rooty() + (window.winfo_height() - height) // 2
+        Startup_Window.geometry(f'{width}x{height}+{x}+{y}')
+
+        Startup_Window.mainloop()
+    except Exception as e:
+        print(f'An exception occurred in create_startup_window: {e}')
+
+# Handles stopping everything when the window is closed, or the 'Stop Thor' button is clicked
 def on_window_close():
     global Thor, currently_running, output_thread, prompt_available, Message_Window
     try:
@@ -900,6 +1030,13 @@ def on_window_close():
             output_thread.join(timeout=0.5)  # Wait for the output thread to finish with a timeout
             Force_Close_Window.destroy()
             print('Stopping Thor GUI...')
+            f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
+            pickle.dump(filed_version, f1)
+            pickle.dump(theme, f1)
+            pickle.dump(tooltips, f1)
+            pickle.dump(sudo, f1)
+            pickle.dump(first_run, f1)
+            f1.close()
             window.destroy()
         if currently_running:
             if prompt_available == True:
@@ -911,6 +1048,13 @@ def on_window_close():
                 print('Stopped Thor')
                 output_thread.join(timeout=0.5)  # Wait for the output thread to finish with a timeout
                 print('Stopping Thor GUI...')
+                f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
+                pickle.dump(filed_version, f1)
+                pickle.dump(theme, f1)
+                pickle.dump(tooltips, f1)
+                pickle.dump(sudo, f1)
+                pickle.dump(first_run, f1)
+                f1.close()
                 window.destroy()
             elif prompt_available == False:
                 Force_Close_Window = tk.Toplevel(window)
@@ -941,16 +1085,26 @@ def on_window_close():
         else:
             window.after_cancel(start_flash)
             print('Stopping Thor GUI...')
+            f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
+            pickle.dump(filed_version, f1)
+            pickle.dump(theme, f1)
+            pickle.dump(tooltips, f1)
+            pickle.dump(sudo, f1)
+            pickle.dump(first_run, f1)
+            f1.close()
             window.destroy()
     except Exception as e:
         print(f'An exception occurred in on_window_close: {e}')
 
 # Creates the Tkinter window
-window = tk.Tk(className='Thor GUI')
+window = TkinterDnD.Tk(className='Thor GUI')
 window.title(f'Thor GUI - {version}')
 
 # Sets the window size
 window.geometry('985x600')
+
+window.withdraw() #hide the window
+window.after(0,window.deiconify) #as soon as possible (after app starts) show again
 
 # Sets the row and column widths
 window.grid_rowconfigure(3, weight=1)
@@ -979,7 +1133,7 @@ Connect_Button.grid(row=0,column=9, sticky='we', pady=5)
 # Creates the Command Entry
 Command_Entry = ttk.Entry(window, state='disabled')
 Command_Entry.grid(row=1, column=8, columnspan=4, padx=5, sticky='nesw')
-Command_Entry.bind('<Return>', lambda event: other_send_command(Command_Entry.get()))
+Command_Entry.bind('<Return>', lambda event: send_command(Command_Entry.get(), 'entry'))
 
 # Creates the 'Enter' Button
 Enter_Button = ttk.Button(window, text='Enter', command=lambda: Thor.send('\n'), state='disabled')
@@ -1045,18 +1199,23 @@ USERDATA_Button.grid(row=7, column=8, padx='4', sticky='ew')
 # Creates the Odin archive Entries
 BL_Entry = ttk.Entry(window)
 BL_Entry.grid(row=3, column=9, columnspan=3, sticky='we', padx=5)
+bind_file_drop(BL_Entry)
 
 AP_Entry = ttk.Entry(window)
 AP_Entry.grid(row=4, column=9, columnspan=3, sticky='we', padx=5)
+bind_file_drop(AP_Entry)
 
 CP_Entry = ttk.Entry(window)
 CP_Entry.grid(row=5, column=9, columnspan=3, sticky='we', padx=5)
+bind_file_drop(CP_Entry)
 
 CSC_Entry = ttk.Entry(window)
 CSC_Entry.grid(row=6, column=9, columnspan=3, sticky='we', padx=5)
+bind_file_drop(CSC_Entry)
 
 USERDATA_Entry = ttk.Entry(window)
 USERDATA_Entry.grid(row=7, column=9, columnspan=3, sticky='we', padx=5)
+bind_file_drop(USERDATA_Entry)
 
 # Creates the five Frame Buttons
 Log_Button = ttk.Button(window, text='Log', command=lambda:toggle_frame('Log'))
@@ -1083,7 +1242,7 @@ Log_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Log_Frame.grid_columnconfigure(0, weight=1)
 Log_Frame.grid_rowconfigure(0, weight=1)
 
-Output_Text = scrolledtext.ScrolledText(Log_Frame, state='disabled', highlightthickness=0, font=('Monospace', 9))
+Output_Text = scrolledtext.ScrolledText(Log_Frame, state='disabled', highlightthickness=0, font=('Monospace', 9), borderwidth=0)
 Output_Text.grid(row=0, column=0, rowspan=6, sticky='nesw')
 
 # Creates the 'Options' frame and check-boxes
@@ -1156,25 +1315,52 @@ if tooltips == 'on':
 elif tooltips == 'off':
     other_tooltip = 'on'
 
-Theme_Toggle = ttk.Checkbutton(Settings_Frame, text=f'{other_theme} theme', style='Switch.TCheckbutton', command=change_theme)
+if sudo == 'on':
+    other_sudo = 'without'
+elif sudo == 'off':
+    other_sudo = 'with'
+
+Theme_Toggle = ttk.Checkbutton(Settings_Frame, text=f'{other_theme} theme', style='Switch.TCheckbutton', command=lambda: change_variable('theme'))
 Theme_Toggle.grid(row=1, column=0, sticky='w')
 
-Tooltip_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Tooltips {other_tooltip}', style='Switch.TCheckbutton', command=change_tooltips)
+Tooltip_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Tooltips {other_tooltip}', style='Switch.TCheckbutton', command=lambda: change_variable('tooltips'))
 Tooltip_Toggle.grid(row=2, column=0, sticky='w')
 
-Tooltip_Label = ttk.Label(Settings_Frame, text='A restart is required to turn off tooltips', font=('Monospace', 8))
+Tooltip_Label = ttk.Label(Settings_Frame, text='A restart is required to turn off tooltips\n', font=('Monospace', 8))
 Tooltip_Label.grid(row=3, column=0, sticky='w')
+
+Thor_Label = ttk.Label(Settings_Frame, text='Thor', font=('Monospace', 12))
+Thor_Label.grid(row=4, column=0, sticky='w')
+
+Sudo_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Run Thor {other_sudo} sudo', style='Switch.TCheckbutton', command=lambda: change_variable('sudo'))
+Sudo_Toggle.grid(row=5, column=0, sticky='w')
+
+Sudo_Label = ttk.Label(Settings_Frame, text='A restart is required if Thor is already running', font=('Monospace', 8))
+Sudo_Label.grid(row=6, column=0, sticky='w')
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
 Help_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Help_Frame.grid_columnconfigure(0, weight=1)
 
-Help_Label = ttk.Label(Help_Frame, text='\nNeed help?', font=('Monospace', 13), anchor='center')
+Help_Label = ttk.Label(Help_Frame, text='\nNot sure how to use Thor GUI?', font=('Monospace', 13), anchor='center')
 Help_Label.grid(row=0, column=0, sticky='ew')
 
+Usage_Help_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
+Usage_Help_Text.grid(row=1, column=0, sticky='ew')
+hyperlink = HyperlinkManager(Usage_Help_Text)
+Usage_Help_Text.tag_configure('center', justify='center')
+Usage_Help_Text.insert(tk.END, 'Check out ')
+Usage_Help_Text.insert(tk.END, 'the Usage Guide', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI#usage')))
+Usage_Help_Text.insert(tk.END, '.')
+Usage_Help_Text.tag_add('center', '1.0', 'end')
+Usage_Help_Text.config(state=tk.DISABLED)
+
+Help_Label_2 = ttk.Label(Help_Frame, text='\nNeed help?', font=('Monospace', 13), anchor='center')
+Help_Label_2.grid(row=2, column=0, sticky='ew')
+
 Get_Help_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-Get_Help_Text.grid(row=2, column=0, sticky='ew')
+Get_Help_Text.grid(row=3, column=0, sticky='ew')
 hyperlink = HyperlinkManager(Get_Help_Text)
 Get_Help_Text.tag_configure('center', justify='center')
 Get_Help_Text.insert(tk.END, 'Let me know on ')
@@ -1185,8 +1371,8 @@ Get_Help_Text.insert(tk.END, '.')
 Get_Help_Text.tag_add('center', '1.0', 'end')
 Get_Help_Text.config(state=tk.DISABLED)
 
-Help_Label_2 = ttk.Label(Help_Frame, text='\nFound an issue?', font=('Monospace', 13), anchor='center')
-Help_Label_2.grid(row=4, column=0, sticky='ew')
+Help_Label_3 = ttk.Label(Help_Frame, text='\nFound an issue?', font=('Monospace', 13), anchor='center')
+Help_Label_3.grid(row=4, column=0, sticky='ew')
 
 Report_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 Report_Text.grid(row=5, column=0, sticky='ew')
@@ -1307,14 +1493,15 @@ toggle_frame('Log')
 window.protocol('WM_DELETE_WINDOW', on_window_close)
 
 # Sets what theme to use
-if theme == 'light':
-    sv_ttk.use_light_theme()
-elif theme == 'dark':
-    sv_ttk.use_dark_theme()
+sv_ttk.set_theme(theme)
 
 # Creates tooltips for buttons and things
 if tooltips == 'on':
     create_tooltips()
+
+# Shows the setup window if first_run == True
+if first_run == True:
+    window.after(0,create_startup_window)
 
 # Runs the Tkinter event loop
 window.mainloop()
