@@ -112,9 +112,9 @@ pip install tkinter-tooltip
 
 ### tkinterDnD
 
-'''
+```
 pip install python-tkdnd
-'''
+```
 
 ## Installation
 
