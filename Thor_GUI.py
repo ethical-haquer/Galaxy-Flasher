@@ -51,6 +51,7 @@ graphical_flash = False
 prompt_available = False
 sudo_prompt_available = False
 OS = platform.system()
+architecture = platform.machine()
 
 successful_commands = []
 
@@ -73,7 +74,7 @@ if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
     f2.close()
     if filed_version != version:
         print(f'The found \'thor_gui_settings.pkl\' file was not created by this version of Thor_GUI, so Thor GUI is updating it.')
-        # Fake Thor GUI version for testing
+# Fake Thor GUI version for testing
         if filed_version == 'Alpha v0.3.3':
             filed_version = version
             sudo = 'off'
@@ -118,20 +119,27 @@ f2.close()
 
 # This starts and stops Thor
 def start_thor():
-    global Thor, output_thread, currently_running, prompt_available, sudo
+    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message
     try:
         if currently_running:
             on_window_close()
         elif not currently_running:
             if sudo == 'off':
-                Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                if architecture == 'x86_64':
+                    Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                elif architecture == 'arm64':
+                    Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
             elif sudo == 'on':
-                Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                if architecture == 'x86_64':
+                    Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                elif architecture == 'arm64':
+                    Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
             currently_running = True
             Start_Button.configure(text='Stop Thor')
+            change_tooltip(Start_Button, 'Stop Thor')
             print('Started Thor')
     except pexpect.exceptions.TIMEOUT:
             print('A Timeout Occurred in start_thor')
@@ -296,6 +304,8 @@ def scan_output():
                 ResetFlashCount_Option_var = ttk.IntVar(value=False)
             if 'Option \'Reset Flash Count\' is set to \'True\'' in clean_line:
                 ResetFlashCount_Option_var = ttk.IntVar(value=True)
+        elif 'Failed to open the device for RW: Permission denied (13)' in clean_line:
+            run_function(show_message('Oops!', 'Thor just said:\n\'Failed to open the device for RW: Permission denied (13)\'.\n\nA possible fix is to:\n1. Go to the Settings Tab,\n2. Toggle on \'Run Thor with sudo\',\n3. Restart Thor GUI,\n4. Try connecting again.\n\nIf it still doesn\'t work, feel free to let me know!', [{'text': 'OK', 'fg': 'black'}], (460, 252)))
     except Exception as e:
         print(f'An exception occurred in scan_output: \'{e}\'')
 
@@ -377,7 +387,7 @@ def set_widget_state(*args, state='normal', text=None):
 # Creates the tooltips
 def create_tooltips():
     delay = 0.25
-    ToolTip(Start_Button, msg='Start/Stop Thor', delay=delay)
+    ToolTip(Start_Button, msg='Start Thor', delay=delay)
     ToolTip(Connect_Button, msg='Connect/Disconnect a device in download mode', delay=delay)
     ToolTip(Begin_Button, msg='Start/Stop an Odin session', delay=delay)
     ToolTip(Command_Entry, msg='You can enter a Thor command here,\nand press enter to send it', delay=delay)
@@ -407,12 +417,11 @@ def create_tooltips():
     ToolTip(Help_Button, msg='Help Tab', delay=delay)
     ToolTip(About_Button, msg='About Tab', delay=delay)
     ToolTip(Apply_Options_Button, msg='Apply the above options', delay=delay)
-    ToolTip(Theme_Toggle, msg='Toggle theme light/dark', delay=delay)
-    ToolTip(Tooltip_Toggle, msg='Toggle tooltips on/off', delay=delay)
+    ToolTip(Theme_Toggle, msg='Toggle Theme', delay=delay)
+    ToolTip(Tooltip_Toggle, msg='Toggle Tooltips', delay=delay)
     ToolTip(Sudo_Toggle, msg='Toggle running Thor with/without sudo', delay=delay)
     ToolTip(Start_Flash_Button, msg='Start a flash', delay=delay)
     ToolTip(Reset_Button, msg='Reset the options in the Options Tab to defaults, and clear the Odin archive check-boxes and archive entries', delay=delay)
-
 
 # Changes a tooltip
 def change_tooltip(widget, message):
@@ -635,8 +644,6 @@ def show_message(title, message, buttons, window_size=(300, 100)):
         Button_Widget = ttk.Button(Message_Window, text=button_text, command=button_command)
         Button_Widget.grid(row=row, pady=5)
         row = row + 1
-
-    Message_Window.mainloop()
 
 # Opens the file picker when an Odin archive button is clicked
 def open_file(type):
@@ -1319,22 +1326,41 @@ Theme_Toggle.grid(row=1, column=0, sticky='w')
 Tooltip_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Tooltips {other_tooltip}', style='Switch.TCheckbutton', command=lambda: change_variable('tooltips'))
 Tooltip_Toggle.grid(row=2, column=0, sticky='w')
 
-Tooltip_Label = ttk.Label(Settings_Frame, text='A restart is required to turn off tooltips', font=('Monospace', 8))
+Tooltip_Label = ttk.Label(Settings_Frame, text='A restart is required to turn off tooltips\n', font=('Monospace', 8))
 Tooltip_Label.grid(row=3, column=0, sticky='w')
 
+Thor_Label = ttk.Label(Settings_Frame, text='Thor', font=('Monospace', 12))
+Thor_Label.grid(row=4, column=0, sticky='w')
+
 Sudo_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Run Thor {other_sudo} sudo', style='Switch.TCheckbutton', command=lambda: change_variable('sudo'))
-Sudo_Toggle.grid(row=4, column=0, sticky='w')
+Sudo_Toggle.grid(row=5, column=0, sticky='w')
+
+Sudo_Label = ttk.Label(Settings_Frame, text='A restart is required if Thor is already running', font=('Monospace', 8))
+Sudo_Label.grid(row=6, column=0, sticky='w')
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
 Help_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Help_Frame.grid_columnconfigure(0, weight=1)
 
-Help_Label = ttk.Label(Help_Frame, text='\nNeed help?', font=('Monospace', 13), anchor='center')
+Help_Label = ttk.Label(Help_Frame, text='\nNot sure how to use Thor GUI?', font=('Monospace', 13), anchor='center')
 Help_Label.grid(row=0, column=0, sticky='ew')
 
+Usage_Help_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
+Usage_Help_Text.grid(row=1, column=0, sticky='ew')
+hyperlink = HyperlinkManager(Usage_Help_Text)
+Usage_Help_Text.tag_configure('center', justify='center')
+Usage_Help_Text.insert(tk.END, 'Check out ')
+Usage_Help_Text.insert(tk.END, 'the Usage Guide', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI#usage')))
+Usage_Help_Text.insert(tk.END, '.')
+Usage_Help_Text.tag_add('center', '1.0', 'end')
+Usage_Help_Text.config(state=tk.DISABLED)
+
+Help_Label_2 = ttk.Label(Help_Frame, text='\nNeed help?', font=('Monospace', 13), anchor='center')
+Help_Label_2.grid(row=2, column=0, sticky='ew')
+
 Get_Help_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-Get_Help_Text.grid(row=2, column=0, sticky='ew')
+Get_Help_Text.grid(row=3, column=0, sticky='ew')
 hyperlink = HyperlinkManager(Get_Help_Text)
 Get_Help_Text.tag_configure('center', justify='center')
 Get_Help_Text.insert(tk.END, 'Let me know on ')
@@ -1345,8 +1371,8 @@ Get_Help_Text.insert(tk.END, '.')
 Get_Help_Text.tag_add('center', '1.0', 'end')
 Get_Help_Text.config(state=tk.DISABLED)
 
-Help_Label_2 = ttk.Label(Help_Frame, text='\nFound an issue?', font=('Monospace', 13), anchor='center')
-Help_Label_2.grid(row=4, column=0, sticky='ew')
+Help_Label_3 = ttk.Label(Help_Frame, text='\nFound an issue?', font=('Monospace', 13), anchor='center')
+Help_Label_3.grid(row=4, column=0, sticky='ew')
 
 Report_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
 Report_Text.grid(row=5, column=0, sticky='ew')
