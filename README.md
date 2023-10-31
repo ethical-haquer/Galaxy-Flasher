@@ -88,23 +88,9 @@ Aesthetic:
 
 ## Planned improvements
 
-+ Built in installer and setup for .NET and Thor.
 + A more extensive Settings
 
 ## Prerequisites
-
-### Thor
-
-+ Install the .NET 7 Runtime. Instructions to do so can be found [here](https://learn.microsoft.com/en-us/dotnet/core/install/) (under the "Linux" section).
-> [!NOTE]
-> The .NET Framework is propreitary.
-+ Install Thor. Download the "Linux.zip" file from [here](https://github.com/Samsung-Loki/Thor/releases/tag/1.0.4).
-+ Next, unzip the "Linux.zip" file somewhere, and run:
-
-  ```
-  PATH/TO/TheAirBlow.Thor.Shell
-  ```
-+ If Thor runs, you're ready to move on!
 
 ### Pexpect
 
@@ -124,14 +110,18 @@ pip install sv-ttk
 pip install tkinter-tooltip
 ```
 
+### tkinterDnD
+
+```
+pip install python-tkdnd
+```
+
 ## Installation
 
 + First, make sure you have the above prerequisites.
 + Download the latest Thor GUI release from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
-+ Once it's downloaded, extract it, and open the Thor_GUI.py file with a text editor.
-+ You need to edit line 40 of the file.
-+ Replace "PATH/TO/TheAirBlow.Thor.Shell.dll" with the correct path to the .dll file (The one from the "Linux.zip").
-+ Save your changes to the file, and run:
++ Once it's downloaded, extract it.
++ Then run:
 
   ```
   python3 PATH/TO/Thor_GUI.py
