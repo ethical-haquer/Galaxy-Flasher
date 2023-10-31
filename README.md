@@ -110,6 +110,12 @@ pip install sv-ttk
 pip install tkinter-tooltip
 ```
 
+### tkinterDnD
+
+'''
+pip install python-tkdnd
+'''
+
 ## Installation
 
 + First, make sure you have the above prerequisites.
