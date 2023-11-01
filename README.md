@@ -151,7 +151,7 @@ pip install python-tkdnd
 ## Installation
 
 + First, make sure you have the above prerequisites.
-+ Download the latest "thor_gui-...-....zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
++ Download the latest "thor_gui-os-version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it.
 + Then run:
 
@@ -223,6 +223,7 @@ https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5df866bb-74d1-40ba-b
 Here are some ways you can help me improve/finish Thor GUI:
 + Find and report bugs. If you find an issue that isn't listed above in "Known Bugs", please let me know!
 + Improve the code. Pull requests are always welcome!
++ Suggest an improvement by opening a [feature request](https://github.com/ethical-haquer/Thor_GUI/issues/new/choose)!
 
 ## Credits
 
