@@ -4,8 +4,8 @@
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5e180060-1595-44fa-91af-e261586c24c0">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b97628ef-a932-4ef3-8bdf-cc3005895a83">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b8e7a504-6d43-4cac-a7de-f3d957b31391">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/326fba9b-89fe-4967-8b79-de7544373537">
   <img alt="Screenshot of Thor GUI">
 </picture>
 <details>
@@ -14,12 +14,44 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
   <b>NOTE:</b> This section is a work-in-progress
   <br>
   <br>
-  "Options" Tab:
+  Options Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/ab9d9c64-5230-4d14-8186-8f41fc7b33e9">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/e2f51f25-e682-48f9-97ad-0f8d189ca460">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d7624e29-6d1a-4626-837d-f21ec9304140">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/dad26804-0c18-41e5-86a9-2dacd107f18f">
     <img alt="Options Tab">
+  </picture>
+  <br>
+  Pit Tab:
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/89c3e1ab-4d69-4d39-8da9-c26907675390">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4f5bdf5e-7ecd-43dc-af92-126d442820d0">
+    <img alt="Pit Tab">
+  </picture>
+  <br>
+  Settings Tab:
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/2034dddc-fe24-4819-8c07-11f2bec85c1b">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/8a1a3712-394f-4d9c-b84e-b2eaa151a5f7">
+    <img alt="Settings Tab">
+  </picture>
+  <br>
+  Help Tab:
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b988cf6f-8f73-4cff-a50c-371dc781aa49">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/0d697247-1c1e-4769-9f15-e6b01c580cc6">
+    <img alt="Help Tab">
+  </picture>
+  <br>
+  About Tab:
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/795acfc2-404f-4e74-9acf-3a269b7119dd">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d16c0e4d-65a7-46f8-b976-b34b7c57a116">
+    <img alt="About Tab">
   </picture>
   <br>
   Command Entry:
