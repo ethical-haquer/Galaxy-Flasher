@@ -151,7 +151,7 @@ pip install python-tkdnd
 ## Installation
 
 + First, make sure you have the above prerequisites.
-+ Download the latest "thor_gui-os-version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
++ Download the latest "thor-gui-os-version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it.
 + Then run:
 
