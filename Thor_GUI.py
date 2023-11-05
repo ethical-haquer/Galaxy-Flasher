@@ -37,11 +37,9 @@ from tktooltip import ToolTip
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import platform
 
-# There is no need to edit this line anymore ;)
+version = 'Alpha v0.4.1'
+
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
-
-version = 'Alpha v0.4.0'
-
 currently_running = False
 odin_running = False
 Thor = None
@@ -50,7 +48,7 @@ tag = 'green'
 graphical_flash = False
 prompt_available = False
 sudo_prompt_available = False
-OS = platform.system()
+operating_system = platform.system()
 architecture = platform.machine()
 
 successful_commands = []
@@ -74,16 +72,16 @@ if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
     f2.close()
     if filed_version != version:
         print(f'The found \'thor_gui_settings.pkl\' file was not created by this version of Thor_GUI, so Thor GUI is updating it.')
-# Fake Thor GUI version for testing
-        if filed_version == 'Alpha v0.3.3':
+        if filed_version == 'Alpha v0.4.0':
             filed_version = version
-            sudo = 'off'
-            first_run = True
+            initial_directory = '~'
 
             f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
-            filed_version = pickle.load(f2)
+            # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
+            filed_version_2 = pickle.load(f2)
             theme = pickle.load(f2)
             tooltips = pickle.load(f2)
+            sudo = pickle.load(f2)
             first_run = pickle.load(f2)
             f2.close()
 
@@ -92,6 +90,7 @@ if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
             pickle.dump(theme, f1)
             pickle.dump(tooltips, f1)
             pickle.dump(sudo, f1)
+            pickle.dump(initial_directory, f1)
             pickle.dump(first_run, f1)
             f1.close()
 else:
@@ -100,12 +99,14 @@ else:
     theme = 'light'
     tooltips = 'on'
     sudo = 'off'
+    initial_directory = '~'
     first_run = True
     f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
     pickle.dump(filed_version, f1)
     pickle.dump(theme, f1)
     pickle.dump(tooltips, f1)
     pickle.dump(sudo, f1)
+    pickle.dump(initial_directory, f1)
     pickle.dump(first_run, f1)
     f1.close()
 
@@ -114,6 +115,7 @@ filed_version = pickle.load(f2)
 theme = pickle.load(f2)
 tooltips = pickle.load(f2)
 sudo = pickle.load(f2)
+initial_directory = pickle.load(f2)
 first_run = pickle.load(f2)
 f2.close()
 
@@ -153,6 +155,7 @@ def send_command(command, case='normal'):
         try:
             if 'exit' in command or 'quit' in command:
                 print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.')
+                show_message('Unsupported command', 'Sadly, stopping Thor independently is currently not supported by Thor GUI.\nTo stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.', [{'text': 'OK', 'fg': 'black'}], window_size=(740, 117))
             else:
                 if prompt_available == True:
                     if case == 'normal' or case == 'entry':
@@ -388,8 +391,8 @@ def set_widget_state(*args, state='normal', text=None):
 def create_tooltips():
     delay = 0.25
     ToolTip(Start_Button, msg='Start Thor', delay=delay)
-    ToolTip(Connect_Button, msg='Connect/Disconnect a device in download mode', delay=delay)
-    ToolTip(Begin_Button, msg='Start/Stop an Odin session', delay=delay)
+    ToolTip(Connect_Button, msg='Connect a device in download mode', delay=delay)
+    ToolTip(Begin_Button, msg='Start an Odin session', delay=delay)
     ToolTip(Command_Entry, msg='You can enter a Thor command here,\nand press enter to send it', delay=delay)
     ToolTip(Enter_Button, msg='Send Thor an \'Enter\'', delay=delay)
     ToolTip(Space_Button, msg='Send Thor a \'Space\'', delay=delay)
@@ -420,6 +423,7 @@ def create_tooltips():
     ToolTip(Theme_Toggle, msg='Toggle Theme', delay=delay)
     ToolTip(Tooltip_Toggle, msg='Toggle Tooltips', delay=delay)
     ToolTip(Sudo_Toggle, msg='Toggle running Thor with/without sudo', delay=delay)
+    ToolTip(Default_Directory_Entry, msg='The file picker will open to this directory', delay=delay)
     ToolTip(Start_Flash_Button, msg='Start a flash', delay=delay)
     ToolTip(Reset_Button, msg='Reset the options in the Options Tab to defaults, and clear the Odin archive check-boxes and archive entries', delay=delay)
 
@@ -447,12 +451,14 @@ def set_connect(value):
     if value == 'on':
         if connection == False:
             set_widget_state(Connect_Button, text='Disconnect')
+            change_tooltip(Connect_Button, 'Disconnect a device in download mode')
             Begin_Button.configure(state='normal')
             connection = True
     elif value == 'off':
         if connection == True:
             set_odin('off')
             Connect_Button.configure(text='Connect device')
+            change_tooltip(Connect_Button, 'Connect a device in download mode')
             Begin_Button.configure(state='disabled')
             connection = False
 
@@ -462,11 +468,13 @@ def set_odin(value):
     if value == 'on':
         if odin_running == False:
             Begin_Button.configure(text='End Odin Protocol')
+            change_tooltip(Begin_Button, 'Stop an Odin session')
             set_widget_state(Apply_Options_Button, Start_Flash_Button)
             odin_running = True
     elif value == 'off':
         if odin_running == True:
             Begin_Button.configure(text='Start Odin Protocol')
+            change_tooltip(Begin_Button, 'Start an Odin session')
             set_widget_state(Apply_Options_Button, Start_Flash_Button, state='disabled')
             odin_running == False
 
@@ -647,25 +655,35 @@ def show_message(title, message, buttons, window_size=(300, 100)):
 
 # Opens the file picker when an Odin archive button is clicked
 def open_file(type):
+    global initial_directory
     try:
-        file_path = filedialog.askopenfilename(title=f'Select the {type} file', initialdir='~', filetypes=[(f'{type} file', '.tar .zip .md5')])
-        if file_path:
-            if type == 'BL':
-                BL_Entry.delete(0, 'end')
-                BL_Entry.insert(0, file_path)
-            elif type == 'AP':
-                AP_Entry.delete(0, 'end')
-                AP_Entry.insert(0, file_path)
-            elif type == 'CP':
-                CP_Entry.delete(0, 'end')
-                CP_Entry.insert(0, file_path)
-            elif type == 'CSC':
-                CSC_Entry.delete(0, 'end')
-                CSC_Entry.insert(0, file_path)
-            elif type == 'USERDATA':
-                USERDATA_Entry.delete(0, 'end')
-                USERDATA_Entry.insert(0, file_path)
-            print(f'Selected {type}: \'{file_path}\' with file picker')
+        initialdir = Default_Directory_Entry.get()
+        if initialdir == '~' or os.path.isdir(initialdir) == True:
+            initial_directory = initialdir
+            if type == 'AP':
+                file_path = filedialog.askopenfilename(title=f'Select an {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
+            else:
+                file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
+            if file_path:
+                if type == 'BL':
+                    BL_Entry.delete(0, 'end')
+                    BL_Entry.insert(0, file_path)
+                elif type == 'AP':
+                    AP_Entry.delete(0, 'end')
+                    AP_Entry.insert(0, file_path)
+                elif type == 'CP':
+                    CP_Entry.delete(0, 'end')
+                    CP_Entry.insert(0, file_path)
+                elif type == 'CSC':
+                    CSC_Entry.delete(0, 'end')
+                    CSC_Entry.insert(0, file_path)
+                elif type == 'USERDATA':
+                    USERDATA_Entry.delete(0, 'end')
+                    USERDATA_Entry.insert(0, file_path)
+                print(f'Selected {type}: \'{file_path}\' with file picker')
+        else:
+            print(f'Invalid directory - The directory: \'{initialdir}\' does not exist. You can change your initial file picker directory by going to: Settings - Flashing - Initial file picker directory')
+            show_message('Invalid directory', f'The directory: \'{initialdir}\' does not exist\nYou can change your initial file picker directory by going to:\nSettings - Flashing - Initial file picker directory', [{'text': 'OK', 'fg': 'black'}], window_size=(480, 140))
     except ttk.TclError:
         print('Thor GUI was closed with the file picker still open - Don\'t do that. :)')
     except Exception as e:
@@ -939,10 +957,9 @@ def change_variable(variable):
     if variable == 'theme':
         if sv_ttk.get_theme() == 'dark':
             theme = 'light'
-            sv_ttk.use_light_theme()
         elif sv_ttk.get_theme() == 'light':
             theme = 'dark'
-            sv_ttk.use_dark_theme()
+        sv_ttk.set_theme(theme)
     elif variable == 'tooltips':
         if tooltips == 'on':
             tooltips = 'off'
@@ -958,11 +975,11 @@ def change_variable(variable):
 # Creates the start-up window
 def create_startup_window():
     try:
-        if OS == 'Linux':
+        if operating_system == 'Linux':
             compatibility_message = 'It looks like you\'re using Linux, so you\'re good to go!'
-        elif OS == 'Windows':
+        elif operating_system == 'Windows':
             compatibility_message = 'It looks like you\'re using Windows, so sadly Thor GUI won\'t work for you.'
-        elif OS == 'Darwin':
+        elif operating_system == 'Darwin':
             compatibility_message = 'It looks like you\'re using macOS, so sadly Thor GUI won\'t work for you.'
         Startup_Window = tk.Toplevel(window)
         Startup_Window.title('Thor GUI - A GUI for the Thor Flash Utility')
@@ -997,7 +1014,6 @@ def create_startup_window():
         def send_close():
             global first_run
             first_run = False
-            print(first_run)
             Startup_Window.destroy()
 
         Cancel_Button = ttk.Button(Startup_Window, text='Cancel', command=send_cancel)
@@ -1035,6 +1051,7 @@ def on_window_close():
             pickle.dump(theme, f1)
             pickle.dump(tooltips, f1)
             pickle.dump(sudo, f1)
+            pickle.dump(initial_directory, f1)
             pickle.dump(first_run, f1)
             f1.close()
             window.destroy()
@@ -1053,6 +1070,7 @@ def on_window_close():
                 pickle.dump(theme, f1)
                 pickle.dump(tooltips, f1)
                 pickle.dump(sudo, f1)
+                pickle.dump(initial_directory, f1)
                 pickle.dump(first_run, f1)
                 f1.close()
                 window.destroy()
@@ -1090,6 +1108,7 @@ def on_window_close():
             pickle.dump(theme, f1)
             pickle.dump(tooltips, f1)
             pickle.dump(sudo, f1)
+            pickle.dump(initial_directory, f1)
             pickle.dump(first_run, f1)
             f1.close()
             window.destroy()
@@ -1103,8 +1122,9 @@ window.title(f'Thor GUI - {version}')
 # Sets the window size
 window.geometry('985x600')
 
-window.withdraw() #hide the window
-window.after(0,window.deiconify) #as soon as possible (after app starts) show again
+# Hide the window, and then show it as soon as possible - Without this, there's a weird
+window.withdraw()
+window.after(0,window.deiconify)
 
 # Sets the row and column widths
 window.grid_rowconfigure(3, weight=1)
@@ -1123,7 +1143,7 @@ Start_Button = ttk.Button(window, text='Start Thor', command=start_thor)
 Start_Button.grid(row=0, column=8, padx=5, sticky='ew')
 
 # Creates the 'Begin Odin' Button
-Begin_Button = ttk.Button(window, text='Begin Odin Protocol', command=toggle_odin, state='disabled')
+Begin_Button = ttk.Button(window, text='Start Odin Protocol', command=toggle_odin, state='disabled')
 Begin_Button.grid(row=0, column=10, columnspan=2, sticky='we', pady=5, padx=5)
 
 # Creates the 'Connect' Button
@@ -1321,22 +1341,32 @@ elif sudo == 'off':
     other_sudo = 'with'
 
 Theme_Toggle = ttk.Checkbutton(Settings_Frame, text=f'{other_theme} theme', style='Switch.TCheckbutton', command=lambda: change_variable('theme'))
-Theme_Toggle.grid(row=1, column=0, sticky='w')
+Theme_Toggle.grid(row=1, column=0, padx=10, sticky='w')
 
 Tooltip_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Tooltips {other_tooltip}', style='Switch.TCheckbutton', command=lambda: change_variable('tooltips'))
-Tooltip_Toggle.grid(row=2, column=0, sticky='w')
+Tooltip_Toggle.grid(row=2, column=0, padx=10, sticky='w')
 
 Tooltip_Label = ttk.Label(Settings_Frame, text='A restart is required to turn off tooltips\n', font=('Monospace', 8))
-Tooltip_Label.grid(row=3, column=0, sticky='w')
+Tooltip_Label.grid(row=3, column=0, padx=15, sticky='w')
 
 Thor_Label = ttk.Label(Settings_Frame, text='Thor', font=('Monospace', 12))
 Thor_Label.grid(row=4, column=0, sticky='w')
 
 Sudo_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Run Thor {other_sudo} sudo', style='Switch.TCheckbutton', command=lambda: change_variable('sudo'))
-Sudo_Toggle.grid(row=5, column=0, sticky='w')
+Sudo_Toggle.grid(row=5, column=0, padx=10, sticky='w')
 
-Sudo_Label = ttk.Label(Settings_Frame, text='A restart is required if Thor is already running', font=('Monospace', 8))
-Sudo_Label.grid(row=6, column=0, sticky='w')
+Sudo_Label = ttk.Label(Settings_Frame, text='A restart is required if Thor is already running\n', font=('Monospace', 8))
+Sudo_Label.grid(row=6, column=0, padx=15, sticky='w')
+
+Flashing_Label = ttk.Label(Settings_Frame, text='Flashing', font=('Monospace', 12))
+Flashing_Label.grid(row=7, column=0, sticky='w')
+
+Default_Directory_Label = ttk.Label(Settings_Frame, text='Initial file picker directory:', font=('Monospace', 9))
+Default_Directory_Label.grid(row=8, column=0, pady=5, padx=15, sticky='w')
+
+Default_Directory_Entry = ttk.Entry(Settings_Frame)
+Default_Directory_Entry.grid(row=9, column=0, padx=(15, 120), sticky='we')
+Default_Directory_Entry.insert(tk.END, initial_directory)
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
@@ -1465,7 +1495,7 @@ ethical_haquer_Text.insert(tk.END, ', for Thor GUI')
 ethical_haquer_Text.tag_add('center', '1.0', 'end')
 ethical_haquer_Text.config(state=tk.DISABLED)
 
-Disclaimer_Label = ttk.Label(About_Frame, text='\n\nThis program comes with absolutely no warranty.', font=('Monospace', 9), anchor='center')
+Disclaimer_Label = ttk.Label(About_Frame, text='\n\nThor GUI comes with absolutely no warranty.', font=('Monospace', 9), anchor='center')
 Disclaimer_Label.grid(sticky='ew')
 
 Disclaimer_Label = ttk.Label(About_Frame, text='See the GNU General Public License, version 3 or later for details.\n', font=('Monospace', 9), anchor='center')
