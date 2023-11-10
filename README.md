@@ -143,10 +143,10 @@ pip install sv-ttk
 pip install tkinter-tooltip
 ```
 
-### tkinterDnD
+### tkinterdnd2
 
 ```
-pip install python-tkdnd
+pip install tkinterdnd2-universal
 ```
 
 ## Installation
