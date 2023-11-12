@@ -93,7 +93,7 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and possibly unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
@@ -105,6 +105,14 @@ Functional:
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
+
+## Supported platforms
+
+- [x] Linux x64
+- [x] Linux arm64 (not fully tested)
+- [ ] Windows
+- [ ] macOS
+
 
 ## Implemented Thor features
 
@@ -120,7 +128,6 @@ Aesthetic:
 
 ## Planned improvements
 
-+ A more extensive Settings
 + Windows and macOS support
 
 ## Prerequisites
@@ -147,6 +154,12 @@ pip install tkinter-tooltip
 
 ```
 pip install tkinterdnd2-universal
+```
+
+### To install all of the above
+
+```
+pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal
 ```
 
 ## Installation
