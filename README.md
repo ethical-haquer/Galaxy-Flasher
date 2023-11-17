@@ -100,6 +100,7 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Thor GUI's:
 
 Functional:
++ On aarch64 (such as Raspberry Pi OS 64 bit), clicking start Thor results in a continous string of error messages, and Thor GUI has to be force stopped. This issue can be fixed with a one-liner.
 + Currently, the only interactive Thor commands (ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
 + Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104). The work-around is to click and drag the pointer over the files and diectories displayed, which will turn them blue, and therefore readable.
 
