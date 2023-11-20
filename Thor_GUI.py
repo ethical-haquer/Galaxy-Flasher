@@ -37,7 +37,7 @@ from tktooltip import ToolTip
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import platform
 
-version = 'Alpha v0.4.1'
+version = 'Alpha v0.4.2'
 
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 currently_running = False
@@ -75,6 +75,8 @@ if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
         if filed_version == 'Alpha v0.4.0':
             filed_version = version
             initial_directory = '~'
+            thor = "internal"
+            thor_directory = "~"
 
             f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
             # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
@@ -92,6 +94,33 @@ if os.path.isfile(f'{path_to_thor_gui}/thor_gui_settings.pkl'):
             pickle.dump(sudo, f1)
             pickle.dump(initial_directory, f1)
             pickle.dump(first_run, f1)
+            pickle.dump(thor, f1)
+            pickle.dump(thor_directory, f1)
+            f1.close()
+        elif filed_version == "Alpha v0.4.1":
+            filed_version = version
+            thor = "internal"
+            thor_directory = "~"
+
+            f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
+            # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
+            filed_version_2 = pickle.load(f2)
+            theme = pickle.load(f2)
+            tooltips = pickle.load(f2)
+            sudo = pickle.load(f2)
+            initial_directory = pickle.load(f2)
+            first_run = pickle.load(f2)
+            f2.close()
+
+            f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
+            pickle.dump(filed_version, f1)
+            pickle.dump(theme, f1)
+            pickle.dump(tooltips, f1)
+            pickle.dump(sudo, f1)
+            pickle.dump(initial_directory, f1)
+            pickle.dump(first_run, f1)
+            pickle.dump(thor, f1)
+            pickle.dump(thor_directory, f1)
             f1.close()
 else:
     print(f'The \'thor_gui_settings.pkl\' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.')
@@ -101,6 +130,8 @@ else:
     sudo = 'off'
     initial_directory = '~'
     first_run = True
+    thor = "internal"
+    thor_directory = "~"
     f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
     pickle.dump(filed_version, f1)
     pickle.dump(theme, f1)
@@ -108,6 +139,8 @@ else:
     pickle.dump(sudo, f1)
     pickle.dump(initial_directory, f1)
     pickle.dump(first_run, f1)
+    pickle.dump(thor, f1)
+    pickle.dump(thor_directory, f1)
     f1.close()
 
 f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
@@ -117,25 +150,55 @@ tooltips = pickle.load(f2)
 sudo = pickle.load(f2)
 initial_directory = pickle.load(f2)
 first_run = pickle.load(f2)
+thor = pickle.load(f2)
+thor_directory = pickle.load(f2)
 f2.close()
 
 # This starts and stops Thor
 def start_thor():
-    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message
+    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message, thor, thor_directory
     try:
         if currently_running:
             on_window_close()
         elif not currently_running:
-            if sudo == 'off':
-                if architecture == 'x86_64':
-                    Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-                elif architecture == 'arm64':
-                    Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-            elif sudo == 'on':
-                if architecture == 'x86_64':
-                    Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-                elif architecture == 'arm64':
-                    Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+            if thor == "internal":
+                if sudo == 'off':
+                    if architecture == 'x86_64':
+                        Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                    elif architecture == 'arm64' or architecture == "aarch64":
+                        Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                    else:
+                        print(f"The {architecture} architecture is currently not supported by Thor GUI. If you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.")
+                        show_message('Unsupported architecture', f'The {architecture} architecture is currently not supported by Thor GUI.\nIf you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.', [{'text': 'OK', 'fg': 'black'}], window_size=(700, 140))
+                        return
+                elif sudo == 'on':
+                    if architecture == 'x86_64':
+                        Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                    elif architecture == 'arm64' or architecture == "aarch64":
+                        Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                    else:
+                        print(f"The {architecture} architecture is currently not supported by Thor GUI. If you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.")
+                        show_message('Unsupported architecture', f'The {architecture} architecture is currently not supported by Thor GUI.\nIf you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.', [{'text': 'OK', 'fg': 'black'}], window_size=(700, 140))
+                        return
+            elif thor == "external":
+                thor_path = Thor_Entry.get()
+                if thor_path[-1] != "/":
+                    thor_path = thor_path + "/"
+                if thor_path == '~' or os.path.isdir(thor_path) == True:
+                    if os.path.isfile(f'{thor_path}/TheAirBlow.Thor.Shell'):
+                        thor_directory = thor_path
+                    else:
+                        print(f'Invalid Path to Thor - The directory: "{thor_path}" does not contain a Thor build, in particular the "TheAirBlow.Thor.Shell" file. You can set the path to your external Thor build by going to: Settings - Thor - Path to external Thor build')
+                        show_message('Invalid Path to Thor', f'The directory: \'{thor_path}\' does not contain a Thor build, in particular the\n"TheAirBlow.Thor.Shell" file.\nYou can set the path to your external Thor build by going to:\nSettings - Thor - Path to external Thor build', [{'text': 'OK', 'fg': 'black'}], window_size=(500, 160))
+                        return
+                else:
+                    print(f'Invalid Path to Thor - The directory: \'{thor_path}\' does not exist. You can set the path to your external Thor build by going to: Settings - Thor - Path to external Thor build')
+                    show_message('Invalid Path to Thor', f'The directory: \'{thor_path}\' does not exist.\nYou can set the path to your external Thor build by going to:\nSettings - Thor - Path to external Thor build', [{'text': 'OK', 'fg': 'black'}], window_size=(500, 140))
+                    return
+                if sudo == 'off':
+                    Thor = pexpect.spawn(f'{thor_directory}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                elif sudo == 'on':
+                    Thor = pexpect.spawn(f'sudo {thor_directory}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
@@ -144,7 +207,7 @@ def start_thor():
             change_tooltip(Start_Button, 'Stop Thor')
             print('Started Thor')
     except pexpect.exceptions.TIMEOUT:
-            print('A Timeout Occurred in start_thor')
+        print('A Timeout Occurred in start_thor')
     except Exception as e:
         print(f'An exception occurred in start_thor: {e}')
 
@@ -422,6 +485,8 @@ def create_tooltips():
     ToolTip(Apply_Options_Button, msg='Apply the above options', delay=delay)
     ToolTip(Theme_Toggle, msg='Toggle Theme', delay=delay)
     ToolTip(Tooltip_Toggle, msg='Toggle Tooltips', delay=delay)
+    ToolTip(Thor_Toggle, msg='Toggle using an internal/external Thor build', delay=delay)
+    ToolTip(Thor_Entry, msg="Thor GUI will look for the external Thor build in this directory", delay=delay)
     ToolTip(Sudo_Toggle, msg='Toggle running Thor with/without sudo', delay=delay)
     ToolTip(Default_Directory_Entry, msg='The file picker will open to this directory', delay=delay)
     ToolTip(Start_Flash_Button, msg='Start a flash', delay=delay)
@@ -435,6 +500,7 @@ def change_tooltip(widget, message):
 # Tells the program when the user is running Thor with sudo and needs to enter their password
 def set_sudo():
     Command_Entry.configure(show='*')
+    Command_Entry.focus_set()
     set_widget_state(Command_Entry)
 
 # Tells the program whether Thor is running or not
@@ -953,7 +1019,7 @@ def bind_file_drop(widget):
     widget.dnd_bind('<<Drop>>', lambda e: [widget.delete(0, 'end'), widget.insert(tk.END, e.data)])
 
 def change_variable(variable):
-    global theme, tooltips, sudo
+    global theme, tooltips, sudo, thor
     if variable == 'theme':
         if sv_ttk.get_theme() == 'dark':
             theme = 'light'
@@ -971,6 +1037,13 @@ def change_variable(variable):
             sudo = 'off'
         elif sudo == 'off':
             sudo = 'on'
+    elif variable == 'thor':
+        if thor == 'internal':
+            thor = 'external'
+            Thor_Entry.configure(state='normal')
+        elif thor == 'external':
+            thor = 'internal'
+            Thor_Entry.configure(state='disabled')
 
 # Creates the start-up window
 def create_startup_window():
@@ -1053,6 +1126,8 @@ def on_window_close():
             pickle.dump(sudo, f1)
             pickle.dump(initial_directory, f1)
             pickle.dump(first_run, f1)
+            pickle.dump(thor, f1)
+            pickle.dump(thor_directory, f1)
             f1.close()
             window.destroy()
         if currently_running:
@@ -1072,6 +1147,8 @@ def on_window_close():
                 pickle.dump(sudo, f1)
                 pickle.dump(initial_directory, f1)
                 pickle.dump(first_run, f1)
+                pickle.dump(thor, f1)
+                pickle.dump(thor_directory, f1)
                 f1.close()
                 window.destroy()
             elif prompt_available == False:
@@ -1110,6 +1187,8 @@ def on_window_close():
             pickle.dump(sudo, f1)
             pickle.dump(initial_directory, f1)
             pickle.dump(first_run, f1)
+            pickle.dump(thor, f1)
+            pickle.dump(thor_directory, f1)
             f1.close()
             window.destroy()
     except Exception as e:
@@ -1339,6 +1418,11 @@ if sudo == 'on':
     other_sudo = 'without'
 elif sudo == 'off':
     other_sudo = 'with'
+    
+if thor == "internal":
+    other_thor = "an external"
+elif thor == "external":
+    other_thor = "the internal"
 
 Theme_Toggle = ttk.Checkbutton(Settings_Frame, text=f'{other_theme} theme', style='Switch.TCheckbutton', command=lambda: change_variable('theme'))
 Theme_Toggle.grid(row=1, column=0, padx=10, sticky='w')
@@ -1352,20 +1436,32 @@ Tooltip_Label.grid(row=3, column=0, padx=15, sticky='w')
 Thor_Label = ttk.Label(Settings_Frame, text='Thor', font=('Monospace', 12))
 Thor_Label.grid(row=4, column=0, sticky='w')
 
+Thor_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Use {other_thor} Thor build', style='Switch.TCheckbutton', command=lambda: change_variable('thor'))
+Thor_Toggle.grid(row=5, column=0, padx=10, sticky='w')
+
+Thor_Directory_Label = ttk.Label(Settings_Frame, text='Path to external Thor build:', font=('Monospace', 9))
+Thor_Directory_Label.grid(row=6, column=0, pady=5, padx=15, sticky='w')
+
+Thor_Entry = ttk.Entry(Settings_Frame)
+Thor_Entry.grid(row=7, column=0, padx=(15, 120), sticky='we')
+Thor_Entry.insert(tk.END, thor_directory)
+if thor == "internal":
+    Thor_Entry.configure(state="disabled")
+
 Sudo_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Run Thor {other_sudo} sudo', style='Switch.TCheckbutton', command=lambda: change_variable('sudo'))
-Sudo_Toggle.grid(row=5, column=0, padx=10, sticky='w')
+Sudo_Toggle.grid(row=8, column=0, padx=10, sticky='w')
 
 Sudo_Label = ttk.Label(Settings_Frame, text='A restart is required if Thor is already running\n', font=('Monospace', 8))
-Sudo_Label.grid(row=6, column=0, padx=15, sticky='w')
+Sudo_Label.grid(row=9, column=0, padx=15, sticky='w')
 
 Flashing_Label = ttk.Label(Settings_Frame, text='Flashing', font=('Monospace', 12))
-Flashing_Label.grid(row=7, column=0, sticky='w')
+Flashing_Label.grid(row=10, column=0, sticky='w')
 
 Default_Directory_Label = ttk.Label(Settings_Frame, text='Initial file picker directory:', font=('Monospace', 9))
-Default_Directory_Label.grid(row=8, column=0, pady=5, padx=15, sticky='w')
+Default_Directory_Label.grid(row=11, column=0, pady=5, padx=15, sticky='w')
 
 Default_Directory_Entry = ttk.Entry(Settings_Frame)
-Default_Directory_Entry.grid(row=9, column=0, padx=(15, 120), sticky='we')
+Default_Directory_Entry.grid(row=12, column=0, padx=(15, 120), sticky='we')
 Default_Directory_Entry.insert(tk.END, initial_directory)
 
 # Creates the 'Help' frame
