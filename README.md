@@ -11,7 +11,7 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 <details>
   <summary><b>Screenshots</b></summary>
   <br>
-  <b>NOTE:</b> This section is a work-in-progress
+  <b>NOTE:</b> These screenshots may not be of the latest version. I really need to automate creating them...
   <br>
   <br>
   Options Tab:
@@ -105,6 +105,7 @@ Functional:
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
++ After using Thor GUI on different devices, I've realized that I need to just specify a padding for text in windows, instead of specifing the exact size in pixels. Currently you may notice that the bottom part of certain message windows gets cut-off, and the text in the About Tab may be slightly too low.
 
 ## Supported platforms
 
@@ -129,6 +130,8 @@ Aesthetic:
 ## Planned improvements
 
 + Windows and macOS support
++ Drag and drop support for the "Path to external Thor build" and "Initial file picker directory" entries.
++ Cut down on duplicate code.
 
 ## Prerequisites
 
