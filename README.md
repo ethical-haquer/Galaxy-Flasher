@@ -11,7 +11,7 @@ A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 <details>
   <summary><b>Screenshots</b></summary>
   <br>
-  <b>NOTE:</b> These screenshots may not be of the latest version. I really need to automate creating them...
+  <b>NOTE:</b> These screenshots may not be up-to-date. I really need to automate creating them...
   <br>
   <br>
   Options Tab:
@@ -181,8 +181,7 @@ pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal
 > If you encounter any issues, or have any questions, just let me know and I'll be glad to help. 🙂
 
 ## Usage
-**NOTE:** This section is a work-in-progress
-
+**NOTE:** This screen-recording is not up-to-date. I really need to automate creating it...
 https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5df866bb-74d1-40ba-b5b0-571ed88d68a3
 
 <details>
