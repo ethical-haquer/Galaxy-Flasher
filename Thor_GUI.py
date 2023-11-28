@@ -37,7 +37,7 @@ from tktooltip import ToolTip
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import platform
 
-version = 'Alpha v0.4.2'
+version = 'Alpha v0.4.3'
 
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 currently_running = False
@@ -1194,6 +1194,25 @@ def on_window_close():
     except Exception as e:
         print(f'An exception occurred in on_window_close: {e}')
 
+def create_label(name, master, text, font=('Monospace', 11), sticky='we', padx=0, pady=0, anchor='center'):
+    label = name + '_Label'
+    label = ttk.Label(master, text=text, font=font, anchor=anchor)
+    label.grid(sticky=sticky, padx=padx, pady=pady)
+
+def create_text(name, master, lines, font=('Monospace', 11)):
+    text = name + '_Text'
+    text = tk.Text(master, font=font, height=1, bd=0, highlightthickness=0, wrap='word')
+    text.grid(sticky='ew')
+    hyperlink = HyperlinkManager(text)
+    text.tag_configure('center', justify='center')
+    for line, link in lines:
+        if link != None:
+            text.insert(tk.END, line, hyperlink.add(partial(open_link, link)))
+        else:
+            text.insert(tk.END, line)
+    text.tag_add('center', '1.0', 'end')
+    text.config(state=tk.DISABLED)
+
 # Creates the Tkinter window
 window = TkinterDnD.Tk(className='Thor GUI')
 window.title(f'Thor GUI - {version}')
@@ -1390,19 +1409,20 @@ Apply_Options_Button.grid(row=9, column=0, pady=10, padx=10, sticky='w')
 Pit_Frame = ttk.Frame(window)
 Pit_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
-Test_Label = ttk.Label(Pit_Frame, text='Just a test :)')
+Test_Label = ttk.Label(Pit_Frame, text='000 Just a test :)')
 Test_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
+create_label('Test', Pit_Frame, 'Just a test :)', sticky='w', padx=10, pady=10)
 
-Although_Label = ttk.Label(Pit_Frame, text='Pull requests are always welcome though!')
+Although_Label = ttk.Label(Pit_Frame, text='000 Pull requests are always welcome though!')
 Although_Label.grid(row=1, column=0, pady=10, padx=10, sticky='w')
+#create_label('Flashing', Settings_Frame, 'Flashing', ('Monospace', 12), 'w')
 
 # Creates the 'Settings' frame
 Settings_Frame = ttk.Frame(window)
 Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Settings_Frame.grid_columnconfigure(0, weight=1)
 
-Theme_Label = ttk.Label(Settings_Frame, text='Appearance', font=('Monospace', 12))
-Theme_Label.grid(row=0, column=0, sticky='w')
+create_label('Theme', Settings_Frame, 'Appearance', ('Monospace', 12), 'w')
 
 if theme == 'light':
     other_theme = 'Dark'
@@ -1430,17 +1450,14 @@ Theme_Toggle.grid(row=1, column=0, padx=10, sticky='w')
 Tooltip_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Tooltips {other_tooltip}', style='Switch.TCheckbutton', command=lambda: change_variable('tooltips'))
 Tooltip_Toggle.grid(row=2, column=0, padx=10, sticky='w')
 
-Tooltip_Label = ttk.Label(Settings_Frame, text='A restart is required to turn off tooltips\n', font=('Monospace', 8))
-Tooltip_Label.grid(row=3, column=0, padx=15, sticky='w')
+create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15)
 
-Thor_Label = ttk.Label(Settings_Frame, text='Thor', font=('Monospace', 12))
-Thor_Label.grid(row=4, column=0, sticky='w')
+create_label('Thor', Settings_Frame, 'Thor', ('Monospace', 12), 'w')
 
 Thor_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Use {other_thor} Thor build', style='Switch.TCheckbutton', command=lambda: change_variable('thor'))
 Thor_Toggle.grid(row=5, column=0, padx=10, sticky='w')
 
-Thor_Directory_Label = ttk.Label(Settings_Frame, text='Path to external Thor build:', font=('Monospace', 9))
-Thor_Directory_Label.grid(row=6, column=0, pady=5, padx=15, sticky='w')
+create_label('Thor_Directory', Settings_Frame, 'Path to external Thor build:', ('Monospace', 9), 'w', 15, 5)
 
 Thor_Entry = ttk.Entry(Settings_Frame)
 Thor_Entry.grid(row=7, column=0, padx=(15, 120), sticky='we')
@@ -1451,14 +1468,11 @@ if thor == "internal":
 Sudo_Toggle = ttk.Checkbutton(Settings_Frame, text=f'Run Thor {other_sudo} sudo', style='Switch.TCheckbutton', command=lambda: change_variable('sudo'))
 Sudo_Toggle.grid(row=8, column=0, padx=10, sticky='w')
 
-Sudo_Label = ttk.Label(Settings_Frame, text='A restart is required if Thor is already running\n', font=('Monospace', 8))
-Sudo_Label.grid(row=9, column=0, padx=15, sticky='w')
+create_label('Sudo', Settings_Frame, 'A restart is required if Thor is already running\n', ('Monospace', 8), 'w', 15)
 
-Flashing_Label = ttk.Label(Settings_Frame, text='Flashing', font=('Monospace', 12))
-Flashing_Label.grid(row=10, column=0, sticky='w')
+create_label('Flashing', Settings_Frame, 'Flashing', ('Monospace', 12), 'w')
 
-Default_Directory_Label = ttk.Label(Settings_Frame, text='Initial file picker directory:', font=('Monospace', 9))
-Default_Directory_Label.grid(row=11, column=0, pady=5, padx=15, sticky='w')
+create_label('Default_Directory', Settings_Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5)
 
 Default_Directory_Entry = ttk.Entry(Settings_Frame)
 Default_Directory_Entry.grid(row=12, column=0, padx=(15, 120), sticky='we')
@@ -1469,139 +1483,92 @@ Help_Frame = ttk.Frame(window)
 Help_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Help_Frame.grid_columnconfigure(0, weight=1)
 
-Help_Label = ttk.Label(Help_Frame, text='\nNot sure how to use Thor GUI?', font=('Monospace', 13), anchor='center')
-Help_Label.grid(row=0, column=0, sticky='ew')
+create_label('Help', Help_Frame, '\nNot sure how to use Thor GUI?', ('Monospace', 13))
 
-Usage_Help_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-Usage_Help_Text.grid(row=1, column=0, sticky='ew')
-hyperlink = HyperlinkManager(Usage_Help_Text)
-Usage_Help_Text.tag_configure('center', justify='center')
-Usage_Help_Text.insert(tk.END, 'Check out ')
-Usage_Help_Text.insert(tk.END, 'the Usage Guide', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI#usage')))
-Usage_Help_Text.insert(tk.END, '.')
-Usage_Help_Text.tag_add('center', '1.0', 'end')
-Usage_Help_Text.config(state=tk.DISABLED)
+create_text('Usage_Help_Text', Help_Frame, [
+    ('Check out ', None),
+    ('the Usage Guide', 'https://github.com/ethical-haquer/Thor_GUI#usage'),
+    ('.', None)
+])
 
-Help_Label_2 = ttk.Label(Help_Frame, text='\nNeed help?', font=('Monospace', 13), anchor='center')
-Help_Label_2.grid(row=2, column=0, sticky='ew')
+create_label('Help_2', Help_Frame, '\nNeed help?', ('Monospace', 13))
 
-Get_Help_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-Get_Help_Text.grid(row=3, column=0, sticky='ew')
-hyperlink = HyperlinkManager(Get_Help_Text)
-Get_Help_Text.tag_configure('center', justify='center')
-Get_Help_Text.insert(tk.END, 'Let me know on ')
-Get_Help_Text.insert(tk.END, 'XDA', hyperlink.add(partial(open_link, 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/')))
-Get_Help_Text.insert(tk.END, ', or open an issue on ')
-Get_Help_Text.insert(tk.END, 'GitHub', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI')))
-Get_Help_Text.insert(tk.END, '.')
-Get_Help_Text.tag_add('center', '1.0', 'end')
-Get_Help_Text.config(state=tk.DISABLED)
+create_text('Get_Help', Help_Frame, [
+    ('Let me know on ', None),
+    ('XDA', 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/'),
+    (', or open an issue on ', None),
+    ('GitHub', 'https://github.com/ethical-haquer/Thor_GUI'),
+    ('.', None)
+])
 
-Help_Label_3 = ttk.Label(Help_Frame, text='\nFound an issue?', font=('Monospace', 13), anchor='center')
-Help_Label_3.grid(row=4, column=0, sticky='ew')
+create_label('Help_3', Help_Frame, '\nFound an issue?', ('Monospace', 13))
 
-Report_Text = tk.Text(Help_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-Report_Text.grid(row=5, column=0, sticky='ew')
-hyperlink = HyperlinkManager(Report_Text)
-Report_Text.tag_configure('center', justify='center')
-Report_Text.insert(tk.END, 'If it isn\'t listed ')
-Report_Text.insert(tk.END, 'here', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI#known-bugs')))
-Report_Text.insert(tk.END, ', you can ')
-Report_Text.insert(tk.END, 'report it', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI/issues/new/choose')))
-Report_Text.insert(tk.END, '.')
-Report_Text.tag_add('center', '1.0', 'end')
-Report_Text.config(state=tk.DISABLED)
+create_text('Report', Help_Frame, [
+    ("If it isn't listed ", None),
+    ('here', 'https://github.com/ethical-haquer/Thor_GUI#known-bugs'),
+    (', you can ', None),
+    ('report it', 'https://github.com/ethical-haquer/Thor_GUI/issues/new/choose'),
+    ('.', None)
+])
 
 # Creates the 'About' frame
 About_Frame = ttk.Frame(window)
 About_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 About_Frame.grid_columnconfigure(0, weight=1)
 
-Thor_GUI_Label = ttk.Label(About_Frame, text='\nThor GUI', font=('Monospace', 13), anchor='center')
-Thor_GUI_Label.grid(sticky='ew')
+create_label('Thor_GUI', About_Frame, 'Thor GUI', ('Monospace', 13))
 
-Thor_GUI_Label_2 = ttk.Label(About_Frame, text=f'{version}', font=('Monospace', 11), anchor='center')
-Thor_GUI_Label_2.grid(sticky='ew')
+create_label('Thor_GUI_Version', About_Frame, f'{version}')
 
-Thor_GUI_Label_3 = ttk.Label(About_Frame, text='A GUI for the Thor Flash Utility', font=('Monospace', 11), anchor='center')
-Thor_GUI_Label_3.grid(sticky='ew')
+create_label('Thor_GUI_Description', About_Frame, 'A GUI for the Thor Flash Utility')
 
-Thor_GUI_Websites_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-Thor_GUI_Websites_Text.grid(sticky='ew')
-hyperlink = HyperlinkManager(Thor_GUI_Websites_Text)
-Thor_GUI_Websites_Text.tag_configure('center', justify='center')
-Thor_GUI_Websites_Text.insert(tk.END, 'GitHub', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer/Thor_GUI')))
-Thor_GUI_Websites_Text.insert(tk.END, ', ')
-Thor_GUI_Websites_Text.insert(tk.END, 'XDA', hyperlink.add(partial(open_link, 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/')))
-Thor_GUI_Websites_Text.tag_add('center', '1.0', 'end')
-Thor_GUI_Websites_Text.config(state=tk.DISABLED)
+create_text('Thor_GUI_Websites', About_Frame, [
+    ('GitHub', 'https://github.com/ethical-haquer/Thor_GUI'),
+    (', ', None),
+    ('XDA', 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/')
+])
 
-Thor_GUI_Label_4 = ttk.Label(About_Frame, text='Built around the:', font=('Monospace', 11), anchor='center')
-Thor_GUI_Label_4.grid(sticky='ew')
+create_label('Built_Around', About_Frame, 'Built around the:')
 
-Thor_GUI_Label_5 = ttk.Label(About_Frame, text='\nThor Flash Utility', font=('Monospace', 13), anchor='center')
-Thor_GUI_Label_5.grid(sticky='ew')
+create_label('Thor', About_Frame, '\nThor Flash Utility', ('Monospace', 13))
 
-Thor_GUI_Label_6 = ttk.Label(About_Frame, text='v1.0.4', font=('Monospace', 11), anchor='center')
-Thor_GUI_Label_6.grid(sticky='ew')
+create_label('Thor_Version', About_Frame, 'v1.0.4')
 
-Thor_GUI_Label_7 = ttk.Label(About_Frame, text='An alternative to Heimdall', font=('Monospace', 11), anchor='center')
-Thor_GUI_Label_7.grid(sticky='ew')
+create_label('Thor_Description', About_Frame, 'An alternative to Heimdall')
 
-Thor_Websites_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-Thor_Websites_Text.grid(sticky='ew')
-hyperlink = HyperlinkManager(Thor_Websites_Text)
-Thor_Websites_Text.tag_configure('center', justify='center')
-Thor_Websites_Text.insert(tk.END, 'GitHub', hyperlink.add(partial(open_link, 'https://github.com/Samsung-Loki/Thor')))
-Thor_Websites_Text.insert(tk.END, ', ')
-Thor_Websites_Text.insert(tk.END, 'XDA', hyperlink.add(partial(open_link, 'https://forum.xda-developers.com/t/dev-thor-flash-utility-the-new-samsung-flash-tool.4597355/')))
-Thor_Websites_Text.tag_add('center', '1.0', 'end')
-Thor_Websites_Text.config(state=tk.DISABLED)
+create_text('Thor_Websites', About_Frame, [
+    ('GitHub', 'https://github.com/Samsung-Loki/Thor'),
+    (', ', None),
+    ('XDA', 'https://forum.xda-developers.com/t/dev-thor-flash-utility-the-new-samsung-flash-tool.4597355/')
+])
 
-Thor_GUI_Label_7 = ttk.Label(About_Frame, text='\nCredits:', font=('Monospace', 13), anchor='center')
-Thor_GUI_Label_7.grid(sticky='ew')
+create_label('Credits', About_Frame, '\nCredits:', ('Monospace', 13))
 
-TheAirBlow_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-TheAirBlow_Text.grid(sticky='ew')
-hyperlink = HyperlinkManager(TheAirBlow_Text)
-TheAirBlow_Text.tag_configure('center', justify='center')
-TheAirBlow_Text.insert(tk.END, 'TheAirBlow', hyperlink.add(partial(open_link, 'https://github.com/TheAirBlow')))
-TheAirBlow_Text.insert(tk.END, ' for the ')
-TheAirBlow_Text.insert(tk.END, 'Thor Flash Utility')
-TheAirBlow_Text.tag_add('center', '1.0', 'end')
-TheAirBlow_Text.config(state=tk.DISABLED)
+create_text('TheAirBlow', About_Frame, [
+    ('TheAirBlow', 'https://github.com/TheAirBlow'),
+    (' for the ', None),
+    ('Thor Flash Utility', None)
+])
 
-rdbende_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-rdbende_Text.grid(sticky='ew')
-hyperlink = HyperlinkManager(rdbende_Text)
-rdbende_Text.tag_configure('center', justify='center')
-rdbende_Text.insert(tk.END, 'rdbende', hyperlink.add(partial(open_link, 'https://github.com/rdbende')))
-rdbende_Text.insert(tk.END, ' for the ')
-rdbende_Text.insert(tk.END, 'Sun Valley tkk theme', hyperlink.add(partial(open_link, 'https://github.com/rdbende/Sun-Valley-ttk-theme')))
-rdbende_Text.tag_add('center', '1.0', 'end')
-rdbende_Text.config(state=tk.DISABLED)
+create_text('rdbende', About_Frame, [
+    ('rdbende', 'https://github.com/rdbende'),
+    (' for the ', None),
+    ('Sun Valley tkk theme', 'https://github.com/rdbende/Sun-Valley-ttk-theme')
+])
 
-ethical_haquer_Text = tk.Text(About_Frame, font=('Monospace', 11), height=1, bd=0, highlightthickness=0, wrap='word')
-ethical_haquer_Text.grid(sticky='ew')
-hyperlink = HyperlinkManager(ethical_haquer_Text)
-ethical_haquer_Text.tag_configure('center', justify='center')
-ethical_haquer_Text.insert(tk.END, 'Myself, ')
-ethical_haquer_Text.insert(tk.END, 'ethical_haquer', hyperlink.add(partial(open_link, 'https://github.com/ethical-haquer')))
-ethical_haquer_Text.insert(tk.END, ', for Thor GUI')
-ethical_haquer_Text.tag_add('center', '1.0', 'end')
-ethical_haquer_Text.config(state=tk.DISABLED)
+create_text('ethical_haquer', About_Frame, [
+    ('Myself, ', None),
+    ('ethical_haquer', 'https://github.com/ethical-haquer'),
+    (', for Thor GUI', None)
+])
 
-Disclaimer_Label = ttk.Label(About_Frame, text='\n\nThor GUI comes with absolutely no warranty.', font=('Monospace', 9), anchor='center')
-Disclaimer_Label.grid(sticky='ew')
+create_label('Disclaimer', About_Frame, '\nThor GUI comes with absolutely no warranty.', ('Monospace', 9))
 
-Disclaimer_Label = ttk.Label(About_Frame, text='See the GNU General Public License, version 3 or later for details.\n', font=('Monospace', 9), anchor='center')
-Disclaimer_Label.grid(sticky='ew')
+create_label('Disclaimer_2', About_Frame, 'See the GNU General Public License, version 3 or later for details.', ('Monospace', 9))
 
-Disclaimer_Label = ttk.Label(About_Frame, text='Thor Flash Utility comes with absolutely no warranty.', font=('Monospace', 9), anchor='center')
-Disclaimer_Label.grid(sticky='ew')
+create_label('Disclaimer_3', About_Frame, '\nThor Flash Utility comes with absolutely no warranty.', ('Monospace', 9))
 
-Disclaimer_Label = ttk.Label(About_Frame, text='See the Mozilla Public License, version 2 or later for details.', font=('Monospace', 9), anchor='center')
-Disclaimer_Label.grid(sticky='ew')
+create_label('Disclaimer_4', About_Frame, 'See the Mozilla Public License, version 2 or later for details.', ('Monospace', 9))
 
 # Configures the tags for coloring the output text
 Output_Text.tag_configure('green', foreground='#26A269')
