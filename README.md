@@ -136,6 +136,26 @@ Aesthetic:
 
 ## Prerequisites
 
+### Python
+
+If you're on Linux, you probably already have Python installed. Look [here](https://wiki.python.org/moin/BeginnersGuide/Download) if you don't.
+
+### Tkinter
+
+You probably already have Tkinter installed, but if you get "ModuleNotFoundError: No module named 'tkinter'", do this:
+
+Debian-based distros:
+
+```
+sudo apt-get install python3-tk
+```
+
+Fedora:
+
+```
+sudo dnf install python3-tkinter
+```
+
 ### Pexpect
 
 ```
@@ -154,13 +174,13 @@ pip install sv-ttk
 pip install tkinter-tooltip
 ```
 
-### tkinterdnd2
+### tkinterdnd2-universal
 
 ```
 pip install tkinterdnd2-universal
 ```
 
-### To install all of the above
+### To install all of the above Python packages
 
 ```
 pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal
