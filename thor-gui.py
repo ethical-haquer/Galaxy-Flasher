@@ -58,6 +58,7 @@ successful_commands = []
 odin_archives = []
 
 tooltip_dict = {
+    'Start_Button': 'Start Thor',
     'Connect_Button': 'Connect a device in download mode',
     'Begin_Button': 'Start an Odin session',
     'Command_Entry': 'You can enter a Thor command here,\nand press enter to send it',
@@ -225,7 +226,7 @@ def start_thor():
                         return
             elif thor == "external":
                 thor_path = Thor_Entry.get()
-                if thor_path[-1] != "/":
+                if thor_path[-1] != "/" and thor_path != '~':
                     thor_path = thor_path + "/"
                 if thor_path == '~' or os.path.isdir(thor_path) == True:
                     if os.path.isfile(f'{thor_path}/TheAirBlow.Thor.Shell'):
@@ -243,19 +244,20 @@ def start_thor():
                 elif sudo == True:
                     Thor = pexpect.spawn(f'sudo {thor_directory}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
             if Thor == None:
-                print('Thor GUI was unable to start Thor because Thor == None. Feel free to open an issue for this on GiHub. TIA.')
-                      
+                raise Exception('Thor GUI was unable to start Thor because Thor == None. Feel free to open an issue for this on GiHub. TIA.')
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
             currently_running = True
             Start_Button.configure(text='Stop Thor')
-#            change_tooltip(Start_Button, 'Stop Thor')
+            tooltip_manager.change_tooltip(Start_Button, 'Stop Thor')
             print('Started Thor')
     except pexpect.exceptions.TIMEOUT:
-        print('A Timeout Occurred in start_thor')
+        print('A Timeout occurred in start_thor')
+    except pexpect.exceptions.ExceptionPexpect as e:
+        print(f'An Exception occurred in start_thor:\n{e}')
     except Exception as e:
-        print(f'An exception occurred in start_thor: {e}')
+        print(f'An exception occurred in start_thor:\n{e}')
 
 # What most Thor commands go through
 def send_command(command, case='normal'):
@@ -516,14 +518,14 @@ def set_connect(value):
     if value == 'on':
         if connection == False:
             set_widget_state(Connect_Button, text='Disconnect')
-#            change_tooltip(Connect_Button, 'Disconnect a device in download mode')
+            tooltip_manager.change_tooltip(Connect_Button, 'Disconnect a device in download mode')
             Begin_Button.configure(state='normal')
             connection = True
     elif value == 'off':
         if connection == True:
             set_odin('off')
             Connect_Button.configure(text='Connect device')
-#            change_tooltip(Connect_Button, 'Connect a device in download mode')
+            tooltip_manager.change_tooltip(Connect_Button, 'Connect a device in download mode')
             Begin_Button.configure(state='disabled')
             connection = False
 
@@ -533,13 +535,13 @@ def set_odin(value):
     if value == 'on':
         if odin_running == False:
             Begin_Button.configure(text='End Odin Protocol')
-#            change_tooltip(Begin_Button, 'Stop an Odin session')
+            tooltip_manager.change_tooltip(Begin_Button, 'Stop an Odin session')
             set_widget_state(Apply_Options_Button, Start_Flash_Button)
             odin_running = True
     elif value == 'off':
         if odin_running == True:
             Begin_Button.configure(text='Start Odin Protocol')
-#            change_tooltip(Begin_Button, 'Start an Odin session')
+            tooltip_manager.change_tooltip(Begin_Button, 'Start an Odin session')
             set_widget_state(Apply_Options_Button, Start_Flash_Button, state='disabled')
             odin_running == False
 
@@ -724,10 +726,11 @@ def open_file(type):
     try:
         def change_theme():
             sv_ttk.set_theme('dark')
-        sv_ttk.set_theme('light')
+        if theme == 'dark':
+            sv_ttk.set_theme('light')
+            t = Timer(0, change_theme)
+            t.start()
         initialdir = Default_Directory_Entry.get()
-        t = Timer(0, change_theme)
-        t.start()
         if initialdir == '~' or os.path.isdir(initialdir) == True:
             initial_directory = initialdir
             if type == 'AP':
@@ -758,8 +761,10 @@ def open_file(type):
 #            show_message('Invalid directory', f"The directory: '{initialdir}' does not exist\nYou can change your initial file picker directory by going to:\nSettings - Flashing - Initial file picker directory", window_size=(480, 140))
 #    except ttk.TclError:
 #        print('Thor GUI was closed with the file picker still open - Don't do that. :)')
-    except Exception as e:
-        print(f'An exception occurred in open_file: {e}')
+    except pexpect.exceptions.TIMEOUT:
+        print('A Timeout occurred in start_thor')
+#    except Exception as e:
+#        print(f'An exception occurred in open_file: {e}')
 
 # Handles asking the user if they'd like to connect to a device
 def select_device():
@@ -1222,7 +1227,10 @@ class ToolTipManager:
         for widget in self.needed_tooltips:
             msg='Tooltips will be disabled after a restart'
             if msg:
-                ToolTip(widget, msg=msg, delay=0.25, width=len(msg) * 10)
+                ToolTip(widget, msg=msg, delay=self.tooltip_delay, width=len(msg) * 10)
+
+    def change_tooltip(self, widget, msg):
+        ToolTip(widget, msg=msg, delay=self.tooltip_delay, width=len(msg) * 10)    
 
 # Creates buttons - My first-ever class :)
 class Button():
@@ -1286,7 +1294,7 @@ class Entry():
 
 # Creates checkbuttons
 class Checkbutton():
-    def __init__(self, name: str, master: ttk.Frame, variable,
+    def __init__(self, name: str, master: ttk.Frame, command, variable,
         text: str = None,
         style: str = None,
         state: str = 'normal', 
@@ -1299,6 +1307,7 @@ class Checkbutton():
 
         self.name = name + '_Checkbutton'
         self.master = master
+        self.command = command
         self.variable = variable
         self.text = text
         self.style = style
@@ -1311,7 +1320,7 @@ class Checkbutton():
         self.columnspan = columnspan
         self.tooltip_delay = 0.25
         self.tooltip_manager = tooltip_manager
-        self.checkbutton = ttk.Checkbutton(self.master, variable=self.variable, state=self.state)
+        self.checkbutton = ttk.Checkbutton(self.master, command=self.command, variable=self.variable, state=self.state)
         if self.text is not None and self.text[0] is not None:
             self.checkbutton.config(text=self.text)
         if self.style is not None and self.style[0] is not None:
@@ -1321,6 +1330,9 @@ class Checkbutton():
 
     def __getattr__(self, attr):
         return getattr(self.checkbutton, attr)
+
+# Creates labels
+
 
 # Creates labels, will be replaced with a class
 def create_label(name, master, text, font=('Monospace', 11), sticky='we', padx=0, pady=0, anchor='center'):
@@ -1374,8 +1386,8 @@ Command_Entry = Entry('Command', window, 'disabled', 8, 1, 'nesw', 5, 0, 4)
 Command_Entry.bind('<Return>', lambda event: send_command(Command_Entry.get(), 'entry'))
 Enter_Button = Button('Enter', window, 'Enter', lambda: Thor.send('\n'), 'disabled', 8, 2, 'ew', 5)
 Space_Button = Button('Space', window, 'Space', lambda: Thor.send('\x20'), 'disabled', 9, 2, 'ew', (0, 5))
-Page_Up_Button = Button('Page_Up', window, 'PgUp', lambda: Thor.send('\x1b[A'), 'disabled', 10, 2, 'ew')
-Page_Down_Button = Button('Page_Down', window, 'PgDn', lambda: Thor.send('\x1b[B'), 'disabled', 11, 2, 'ew')
+Page_Up_Button = Button('Page_Up', window, 'PgUp', lambda: Thor.send('\x1b[A'), 'disabled', 10, 2, 'ew', 0)
+Page_Down_Button = Button('Page_Down', window, 'PgDn', lambda: Thor.send('\x1b[B'), 'disabled', 11, 2, 'ew', 5)
 
 Start_Flash_Button = Button('Start_Flash', window, 'Start', start_flash, 'disabled', 8, 8, 'ew', 0, 5, 2)
 Reset_Button =Button('Reset', window, 'Reset', reset, 'normal', 10, 8, 'we', 5, 5, 2)
@@ -1387,11 +1399,11 @@ CP_Checkbutton_var = tk.IntVar()
 CSC_Checkbutton_var = tk.IntVar()
 USERDATA_Checkbutton_var = tk.IntVar()
 
-BL_Checkbutton = Checkbutton('BL', window, BL_Checkbutton_var, state='normal', column=7, row=3)
-AP_Checkbutton = Checkbutton('AP', window, AP_Checkbutton_var, state='normal', column=7, row=4)
-CP_Checkbutton = Checkbutton('CP', window, CP_Checkbutton_var, state='normal', column=7, row=5)
-CSC_Checkbutton = Checkbutton('CSC', window, CSC_Checkbutton_var, state='normal', column=7, row=6)
-USERDATA_Checkbutton = Checkbutton('USERDATA', window, USERDATA_Checkbutton_var, state='normal', column=7, row=7)
+BL_Checkbutton = Checkbutton('BL', window, None, BL_Checkbutton_var, state='normal', column=7, row=3)
+AP_Checkbutton = Checkbutton('AP', window, None, AP_Checkbutton_var, state='normal', column=7, row=4)
+CP_Checkbutton = Checkbutton('CP', window, None, CP_Checkbutton_var, state='normal', column=7, row=5)
+CSC_Checkbutton = Checkbutton('CSC', window, None, CSC_Checkbutton_var, state='normal', column=7, row=6)
+USERDATA_Checkbutton = Checkbutton('USERDATA', window, None, USERDATA_Checkbutton_var, state='normal', column=7, row=7)
 
 # Creates the Odin archive Buttons
 BL_Button = Button('BL', window, 'BL', lambda: open_file('BL'), 'normal', 8 , 3, 'we', 4)
@@ -1515,17 +1527,15 @@ if thor == "internal":
 elif thor == "external":
     other_thor = "the internal"
 
-Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: change_variable('theme'), other_theme + ' theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'we', 10)
+Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: change_variable('theme'), None, other_theme + ' theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10)
 
-Tooltip_Checkbutton = ttk.Checkbutton(Settings_Frame, text=f'Tooltips {other_tooltip}', style='Switch.TCheckbutton', command=lambda: change_variable('tooltips'))
-Tooltip_Checkbutton.grid(row=2, column=0, padx=10, sticky='w')
+Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: change_variable('tooltips'), None, 'Tooltips ' + other_tooltip, 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
 
 create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15)
 
 create_label('Thor', Settings_Frame, 'Thor', ('Monospace', 12), 'w')
 
-Thor_Checkbutton = ttk.Checkbutton(Settings_Frame, text=f'Use {other_thor} Thor build', style='Switch.TCheckbutton', command=lambda: change_variable('thor'))
-Thor_Checkbutton.grid(row=5, column=0, padx=10, sticky='w')
+Thor_Checkbutton = Checkbutton('Thor', Settings_Frame, lambda: change_variable('thor'), None, 'Use ' + other_thor + ' Thor build', 'Switch.TCheckbutton', 'normal', 0, 5, 'w', 10)
 
 create_label('Thor_Directory', Settings_Frame, 'Path to external Thor build:', ('Monospace', 9), 'w', 15, 5)
 
@@ -1534,8 +1544,7 @@ Thor_Entry.insert(tk.END, thor_directory)
 if thor == "internal":
     Thor_Entry.configure(state="disabled")
 
-Sudo_Checkbutton = ttk.Checkbutton(Settings_Frame, text=f'Run Thor {other_sudo} sudo', style='Switch.TCheckbutton', command=lambda: change_variable('sudo'))
-Sudo_Checkbutton.grid(row=8, column=0, padx=10, sticky='w')
+Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: change_variable('sudo'), None, 'Run Thor ' + other_sudo + ' sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10)
 
 create_label('Sudo', Settings_Frame, 'A restart is required if Thor is already running\n', ('Monospace', 8), 'w', 15)
 
