@@ -39,7 +39,7 @@ import platform
 from threading import Timer
 import typing as typ
 
-version = 'Alpha v0.5.0'
+version = 'Alpha v0.4.3'
 
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 currently_running = False
