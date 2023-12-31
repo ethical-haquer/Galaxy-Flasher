@@ -121,6 +121,7 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.pkl'):
             initial_directory = '~'
             thor = "internal"
             thor_directory = "~"
+            keep_dark_term = False
 
             f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
             # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
@@ -140,11 +141,13 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.pkl'):
             pickle.dump(first_run, f1)
             pickle.dump(thor, f1)
             pickle.dump(thor_directory, f1)
+            pickle.dump(keep_dark_term, f1)
             f1.close()
         elif filed_version == "Alpha v0.4.1":
             filed_version = version
             thor = "internal"
             thor_directory = "~"
+            keep_dark_term = False
 
             f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
             # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
@@ -165,6 +168,32 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.pkl'):
             pickle.dump(first_run, f1)
             pickle.dump(thor, f1)
             pickle.dump(thor_directory, f1)
+            pickle.dump(keep_dark_term, f1)
+            f1.close()
+        elif filed_version == "Alpha v0.4.2":
+            filed_version = version
+            keep_dark_term = False
+
+            f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
+            # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
+            filed_version_2 = pickle.load(f2)
+            theme = pickle.load(f2)
+            tooltips = pickle.load(f2)
+            sudo = pickle.load(f2)
+            initial_directory = pickle.load(f2)
+            first_run = pickle.load(f2)
+            f2.close()
+
+            f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
+            pickle.dump(filed_version, f1)
+            pickle.dump(theme, f1)
+            pickle.dump(tooltips, f1)
+            pickle.dump(sudo, f1)
+            pickle.dump(initial_directory, f1)
+            pickle.dump(first_run, f1)
+            pickle.dump(thor, f1)
+            pickle.dump(thor_directory, f1)
+            pickle.dump(keep_dark_term, f1)
             f1.close()
 else:
     print(f"The 'thor-gui-settings.pkl' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.")
@@ -176,6 +205,7 @@ else:
     first_run = True
     thor = "internal"
     thor_directory = "~"
+    keep_dark_term = False
     f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
     pickle.dump(filed_version, f1)
     pickle.dump(theme, f1)
@@ -185,6 +215,7 @@ else:
     pickle.dump(first_run, f1)
     pickle.dump(thor, f1)
     pickle.dump(thor_directory, f1)
+    pickle.dump(keep_dark_term, f1)
     f1.close()
 
 f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
@@ -196,6 +227,7 @@ initial_directory = pickle.load(f2)
 first_run = pickle.load(f2)
 thor = pickle.load(f2)
 thor_directory = pickle.load(f2)
+keep_dark_term = pickle.load(f2)
 f2.close()
 
 # This starts and stops Thor
@@ -1038,6 +1070,8 @@ def change_variable(variable):
         elif sv_ttk.get_theme() == 'light':
             theme = 'dark'
         sv_ttk.set_theme(theme)
+        if keep_dark_term == True and theme == 'light':
+            Output_Text.configure(bg='#1c1c1c')
     elif variable == 'tooltips':
         tooltips = not tooltips
         if tooltips == True:
@@ -1138,6 +1172,7 @@ def on_window_close():
             pickle.dump(first_run, f1)
             pickle.dump(thor, f1)
             pickle.dump(thor_directory, f1)
+            pickle.dump(keep_dark_term, f1)
             f1.close()
             window.destroy()
         if currently_running:
@@ -1159,6 +1194,7 @@ def on_window_close():
                 pickle.dump(first_run, f1)
                 pickle.dump(thor, f1)
                 pickle.dump(thor_directory, f1)
+                pickle.dump(keep_dark_term, f1)
                 f1.close()
                 window.destroy()
             elif prompt_available == False:
@@ -1199,6 +1235,7 @@ def on_window_close():
             pickle.dump(first_run, f1)
             pickle.dump(thor, f1)
             pickle.dump(thor_directory, f1)
+            pickle.dump(keep_dark_term, f1)
             f1.close()
             window.destroy()
     except Exception as e:
@@ -1446,7 +1483,7 @@ Output_Text.grid(row=0, column=0, rowspan=6, sticky='nesw')
 Options_Frame = ttk.Frame(window)
 Options_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
-# Set the tooltip_manager for the Log frame
+# Set the tooltip_manager for the Options frame
 Options_Frame.tooltip_manager = tooltip_manager
 
 NOTE_Label = ttk.Label(Options_Frame, text="NOTE: The 'T Flash' option is temporarily not supported by Thor GUI.")
