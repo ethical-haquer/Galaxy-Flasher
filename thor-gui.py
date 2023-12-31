@@ -89,6 +89,7 @@ tooltip_dict = {
     'About_Button': 'About Tab',
     'Apply_Options_Button': 'Apply the above options',
     'Theme_Checkbutton': 'Toggle Theme',
+    'Dark_Term_Checkbutton': 'Toggle keeping the Log output dark, regardless of theme',
     'Tooltip_Checkbutton': 'Toggle Tooltips',
     'Thor_Checkbutton': 'Toggle using an internal/external Thor build',
     'Thor_Entry': 'Thor GUI will look for the external Thor build in this directory',
@@ -1063,7 +1064,7 @@ def bind_file_drop(widget):
 
 # Changes variables
 def change_variable(variable):
-    global theme, tooltips, sudo, thor
+    global theme, tooltips, sudo, thor, keep_dark_term
     if variable == 'theme':
         if sv_ttk.get_theme() == 'dark':
             theme = 'light'
@@ -1087,6 +1088,13 @@ def change_variable(variable):
         elif thor == 'external':
             thor = 'internal'
             Thor_Entry.configure(state='disabled')
+    elif variable == 'keep_dark_term':
+        keep_dark_term = not keep_dark_term
+        if keep_dark_term == True:
+            Output_Text.configure(bg='#1c1c1c')
+        elif keep_dark_term == False:
+            if theme == 'light':
+                Output_Text.configure(bg='#ffffff')
 
 # Creates the start-up window
 def create_startup_window():
@@ -1563,16 +1571,23 @@ if thor == "internal":
     other_thor = "an external"
 elif thor == "external":
     other_thor = "the internal"
+    
+if keep_dark_term == False:
+    other_term = "Keep"
+elif keep_dark_term == True:
+    other_term = "Don't keep"
 
 Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: change_variable('theme'), None, other_theme + ' theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10)
 
-Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: change_variable('tooltips'), None, 'Tooltips ' + other_tooltip, 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
+Dark_Term_Checkbutton = Checkbutton('Dark_Term', Settings_Frame, lambda: change_variable('keep_dark_term'), None, other_term + ' Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
+
+Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: change_variable('tooltips'), None, 'Tooltips ' + other_tooltip, 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10)
 
 create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15)
 
 create_label('Thor', Settings_Frame, 'Thor', ('Monospace', 12), 'w')
 
-Thor_Checkbutton = Checkbutton('Thor', Settings_Frame, lambda: change_variable('thor'), None, 'Use ' + other_thor + ' Thor build', 'Switch.TCheckbutton', 'normal', 0, 5, 'w', 10)
+Thor_Checkbutton = Checkbutton('Thor', Settings_Frame, lambda: change_variable('thor'), None, 'Use ' + other_thor + ' Thor build', 'Switch.TCheckbutton', 'normal', 0, 6, 'w', 10)
 
 create_label('Thor_Directory', Settings_Frame, 'Path to external Thor build:', ('Monospace', 9), 'w', 15, 5)
 
@@ -1581,7 +1596,7 @@ Thor_Entry.insert(tk.END, thor_directory)
 if thor == "internal":
     Thor_Entry.configure(state="disabled")
 
-Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: change_variable('sudo'), None, 'Run Thor ' + other_sudo + ' sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10)
+Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: change_variable('sudo'), None, 'Run Thor ' + other_sudo + ' sudo', 'Switch.TCheckbutton', 'normal', 0, 9, 'w', 10)
 
 create_label('Sudo', Settings_Frame, 'A restart is required if Thor is already running\n', ('Monospace', 8), 'w', 15)
 
@@ -1589,7 +1604,7 @@ create_label('Flashing', Settings_Frame, 'Flashing', ('Monospace', 12), 'w')
 
 create_label('Default_Directory', Settings_Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5)
 
-Default_Directory_Entry = Entry('Default_Directory', Settings_Frame, 'normal', 0, 12, 'we', (15, 120))
+Default_Directory_Entry = Entry('Default_Directory', Settings_Frame, 'normal', 0, 13, 'we', (15, 120))
 Default_Directory_Entry.insert(tk.END, initial_directory)
 
 # Creates the 'Help' frame
@@ -1701,6 +1716,9 @@ window.protocol('WM_DELETE_WINDOW', on_window_close)
 
 # Sets what theme to use
 sv_ttk.set_theme(theme)
+
+if keep_dark_term == True:
+    Output_Text.configure(bg='#1c1c1c')
 
 # Creates tooltips for buttons and things
 if tooltips == True:
