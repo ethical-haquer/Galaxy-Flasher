@@ -124,7 +124,7 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.pkl'):
             thor_directory = "~"
             keep_dark_term = False
 
-            f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
+            f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
             # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
             filed_version_2 = pickle.load(f2)
             theme = pickle.load(f2)
@@ -133,7 +133,7 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.pkl'):
             first_run = pickle.load(f2)
             f2.close()
 
-            f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
+            f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
             pickle.dump(filed_version, f1)
             pickle.dump(theme, f1)
             pickle.dump(tooltips, f1)
@@ -150,7 +150,7 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.pkl'):
             thor_directory = "~"
             keep_dark_term = False
 
-            f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
+            f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
             # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
             filed_version_2 = pickle.load(f2)
             theme = pickle.load(f2)
@@ -175,7 +175,7 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.pkl'):
             filed_version = version
             keep_dark_term = False
 
-            f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
+            f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
             # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
             filed_version_2 = pickle.load(f2)
             theme = pickle.load(f2)
