@@ -101,7 +101,6 @@ In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues),
 
 Functional:
 + Currently, the only interactive Thor commands (ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
-+ Using the dark theme on X11, the file picker text is white, a well as the background. This is a [known Sun Valley issue](https://github.com/rdbende/Sun-Valley-ttk-theme/issues/104). The work-around is to click and drag the pointer over the files and diectories displayed, which will turn them blue, and therefore readable.
 + On Debian 12, clicking the "Connect" button results in "cannot show selection prompt since the current terminal does not support ansi escape sequences". What causes this error is is currently uknown.
 
 Aesthetic:
@@ -195,7 +194,7 @@ pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal
 + Then run:
 
   ```
-  python3 PATH/TO/Thor_GUI.py
+  python3 PATH/TO/thor-gui.py
   ```
 + If a sweet-looking GUI shows up, then you've finished installing Thor GUI!
 
