@@ -106,6 +106,15 @@ Functional:
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
 + After using Thor GUI on different devices, I've realized that I need to just specify a padding for text in windows, instead of specifing the exact size in pixels. Currently you may notice that the bottom part of certain message windows gets cut-off, and the text in the About Tab may be slightly too low.
++ Not surprisingly, the code I cooked-up as part of v0.2.0 can be improved:
+  <details>
+    <summary><b>Screenshot</b></summary>
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4ebc4b7e-f476-4b39-83a4-d648743eaef2">
+      <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4ebc4b7e-f476-4b39-83a4-d648743eaef2">
+      <img alt="Screenshot">
+    </picture>
+  </details>
 
 ## Supported platforms
 
@@ -127,12 +136,11 @@ Aesthetic:
 - [ ] Dumping a device's partition table into a PIT file
 - [ ] Printing a description of any PIT file
 
-## Planned improvements
+## To-Do
 
-+ Windows and macOS support
-+ Drag and drop support for the "Path to external Thor build" and "Initial file picker directory" entries.
-+ Cut down on duplicate code.
-+ Better documentation
++ Add Windows and macOS support
++ Add Drag and drop support for the "Path to external Thor build" and "Initial file picker directory" entries.
++ Improve documentation
 
 ## Prerequisites
 
