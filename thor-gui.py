@@ -1,6 +1,6 @@
 '''
 Thor GUI - A GUI for the Thor Flash Utility
-Copyright (C) 2023  ethical_haquer
+Copyright (C) 2023-2024 ethical_haquer
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,15 +31,15 @@ import zipfile
 from collections import deque
 import sv_ttk
 from tkinter import ttk
-import pickle
 import sys
 from tktooltip import ToolTip
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import platform
 from threading import Timer
 import typing as typ
+import json
 
-version = 'Alpha v0.4.3'
+version = 'Alpha v0.4.4'
 
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 currently_running = False
@@ -52,6 +52,8 @@ prompt_available = False
 sudo_prompt_available = False
 operating_system = platform.system()
 architecture = platform.machine()
+# Fools Thor into thinking it's being run from xterm, a true one-liner
+os.environ['TERM'] = 'xterm'
 
 successful_commands = []
 
@@ -109,128 +111,78 @@ print(f'''
               {version}
 ''')
 
-# Can be made smaller
-# This loads the 'thor-gui-settings.pkl' file, which contains variables
-if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.pkl'):
-    f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
-    filed_version = pickle.load(f2)
-    f2.close()
+def load_variable_file():
+    global theme, tooltips, sudo, initial_directory, first_run, thor, thor_directory, keep_dark_term
+    print('loading...')
+    with open("thor-gui-settings.json", "r") as f:
+        filed_variables = json.load(f)
+        theme = filed_variables['theme']
+        tooltips = filed_variables['tooltips']
+        sudo = filed_variables['sudo']
+        initial_directory = filed_variables['initial_directory']
+        first_run = filed_variables['first_run']
+        thor = filed_variables['thor']
+        thor_directory = filed_variables['thor_directory']
+        keep_dark_term = filed_variables['keep_dark_term']
+    
+def dump_variable_file():
+    with open("thor-gui-settings.json", "r") as f:
+        filed_variables = json.load(f)
+    filed_variables['version'] = version
+    filed_variables['theme'] = theme
+    filed_variables['tooltips'] = tooltips
+    filed_variables['sudo'] = sudo
+    filed_variables['initial_directory'] = initial_directory
+    filed_variables['first_run'] = first_run
+    filed_variables['thor'] = thor
+    filed_variables['thor_directory'] = thor_directory
+    filed_variables['keep_dark_term'] = keep_dark_term
+    with open('thor-gui-settings.json', 'w') as f:
+        json.dump(filed_variables, f)
+
+def create_variable_file():
+    filed_variables = {
+        'version': version,
+        'theme': 'light',
+        'tooltips': True,
+        'sudo': False,
+        'initial_directory': '~',
+        'first_run': True,
+        'thor': 'internal',
+        'thor_directory': '~',
+        'keep_dark_term': False
+        }
+    with open("thor-gui-settings.json", "w") as f:
+        json.dump(filed_variables, f)
+        
+def recreate_variable_file():
+    with open("thor-gui-settings.json", "r") as f:
+        filed_variables = json.load(f)
+    filed_variables['version'] = version
+    filed_variables['theme'] = 'light'
+    filed_variables['tooltips'] = True
+    filed_variables['sudo'] = False
+    filed_variables['initial_directory'] = '~'
+    filed_variables['first_run'] = True
+    filed_variables['thor'] = 'internal'
+    filed_variables['thor_directory'] = '~'
+    filed_variables['keep_dark_term'] = False
+    with open('thor-gui-settings.json', 'w') as f:
+        json.dump(filed_variables, f)
+
+# This loads the 'thor-gui-settings.json' file, which contains variables
+if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.json'):
+    with open("thor-gui-settings.json", "r") as f:
+        filed_variables = json.load(f)
+        filed_version = filed_variables['version']
     if filed_version != version:
-        print("The found 'thor-gui-settings.pkl' file was not created by this version of Vidar_GUI, so Thor GUI is updating it.")
-        if filed_version == 'Alpha v0.4.0':
-            filed_version = version
-            initial_directory = '~'
-            thor = "internal"
-            thor_directory = "~"
-            keep_dark_term = False
-
-            f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
-            # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
-            filed_version_2 = pickle.load(f2)
-            theme = pickle.load(f2)
-            tooltips = pickle.load(f2)
-            sudo = pickle.load(f2)
-            first_run = pickle.load(f2)
-            f2.close()
-
-            f1 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'wb')
-            pickle.dump(filed_version, f1)
-            pickle.dump(theme, f1)
-            pickle.dump(tooltips, f1)
-            pickle.dump(sudo, f1)
-            pickle.dump(initial_directory, f1)
-            pickle.dump(first_run, f1)
-            pickle.dump(thor, f1)
-            pickle.dump(thor_directory, f1)
-            pickle.dump(keep_dark_term, f1)
-            f1.close()
-        elif filed_version == "Alpha v0.4.1":
-            filed_version = version
-            thor = "internal"
-            thor_directory = "~"
-            keep_dark_term = False
-
-            f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
-            # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
-            filed_version_2 = pickle.load(f2)
-            theme = pickle.load(f2)
-            tooltips = pickle.load(f2)
-            sudo = pickle.load(f2)
-            initial_directory = pickle.load(f2)
-            first_run = pickle.load(f2)
-            f2.close()
-
-            f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
-            pickle.dump(filed_version, f1)
-            pickle.dump(theme, f1)
-            pickle.dump(tooltips, f1)
-            pickle.dump(sudo, f1)
-            pickle.dump(initial_directory, f1)
-            pickle.dump(first_run, f1)
-            pickle.dump(thor, f1)
-            pickle.dump(thor_directory, f1)
-            pickle.dump(keep_dark_term, f1)
-            f1.close()
-        elif filed_version == "Alpha v0.4.2":
-            filed_version = version
-            keep_dark_term = False
-
-            f2 = open(f'{path_to_thor_gui}/thor_gui_settings.pkl', 'rb')
-            # Has to be filed_version_2, otherwise it will overwrite the 'filed_version = version' line above
-            filed_version_2 = pickle.load(f2)
-            theme = pickle.load(f2)
-            tooltips = pickle.load(f2)
-            sudo = pickle.load(f2)
-            initial_directory = pickle.load(f2)
-            first_run = pickle.load(f2)
-            f2.close()
-
-            f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
-            pickle.dump(filed_version, f1)
-            pickle.dump(theme, f1)
-            pickle.dump(tooltips, f1)
-            pickle.dump(sudo, f1)
-            pickle.dump(initial_directory, f1)
-            pickle.dump(first_run, f1)
-            pickle.dump(thor, f1)
-            pickle.dump(thor_directory, f1)
-            pickle.dump(keep_dark_term, f1)
-            f1.close()
+        print("The found 'thor-gui-settings.json' file was not created by this version of Thor GUI, so Thor GUI is re-creating it.")
+        recreate_variable_file()
 else:
     print(f"The 'thor-gui-settings.pkl' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.")
-    filed_version = version
-    theme = 'light'
-    tooltips = True
-    sudo = False
-    initial_directory = '~'
-    first_run = True
-    thor = "internal"
-    thor_directory = "~"
-    keep_dark_term = False
-    f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
-    pickle.dump(filed_version, f1)
-    pickle.dump(theme, f1)
-    pickle.dump(tooltips, f1)
-    pickle.dump(sudo, f1)
-    pickle.dump(initial_directory, f1)
-    pickle.dump(first_run, f1)
-    pickle.dump(thor, f1)
-    pickle.dump(thor_directory, f1)
-    pickle.dump(keep_dark_term, f1)
-    f1.close()
-
-f2 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'rb')
-filed_version = pickle.load(f2)
-theme = pickle.load(f2)
-tooltips = pickle.load(f2)
-sudo = pickle.load(f2)
-initial_directory = pickle.load(f2)
-first_run = pickle.load(f2)
-thor = pickle.load(f2)
-thor_directory = pickle.load(f2)
-keep_dark_term = pickle.load(f2)
-f2.close()
-
+    create_variable_file()
+load_variable_file()
+    
 # This starts and stops Thor
 def start_thor():
     global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message, thor, thor_directory
@@ -291,6 +243,7 @@ def start_thor():
         print(f'An Exception occurred in start_thor:\n{e}')
     except Exception as e:
         print(f'An exception occurred in start_thor:\n{e}')
+
 
 # What most Thor commands go through
 def send_command(command, case='normal'):
@@ -796,8 +749,8 @@ def open_file(type):
 #        print('Thor GUI was closed with the file picker still open - Don't do that. :)')
     except pexpect.exceptions.TIMEOUT:
         print('A Timeout occurred in start_thor')
-#    except Exception as e:
-#        print(f'An exception occurred in open_file: {e}')
+    except Exception as e:
+        print(f'An exception occurred in open_file: {e}')
 
 # Handles asking the user if they'd like to connect to a device
 def select_device():
@@ -1158,10 +1111,11 @@ def create_startup_window():
 
 # Handles stopping everything when the window is closed, or the 'Stop Thor' button is clicked
 def on_window_close():
-    global Thor, currently_running, output_thread, prompt_available, Message_Window
+    global Thor, currently_running, output_thread, prompt_available, Message_Window, version
     try:
+        dump_variable_file()
         def force_stop():
-            global currently_running
+            global currently_running, version
             currently_running = False
             window.after_cancel(start_flash)
             Thor.sendline('exit')
@@ -1171,17 +1125,6 @@ def on_window_close():
             output_thread.join(timeout=0.5)  # Wait for the output thread to finish with a timeout
             Force_Close_Window.destroy()
             print('Stopping Thor GUI...')
-            f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
-            pickle.dump(filed_version, f1)
-            pickle.dump(theme, f1)
-            pickle.dump(tooltips, f1)
-            pickle.dump(sudo, f1)
-            pickle.dump(initial_directory, f1)
-            pickle.dump(first_run, f1)
-            pickle.dump(thor, f1)
-            pickle.dump(thor_directory, f1)
-            pickle.dump(keep_dark_term, f1)
-            f1.close()
             window.destroy()
         if currently_running:
             if prompt_available == True:
@@ -1193,17 +1136,6 @@ def on_window_close():
                 print('Stopped Thor')
                 output_thread.join(timeout=0.5)  # Wait for the output thread to finish with a timeout
                 print('Stopping Thor GUI...')
-                f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
-                pickle.dump(filed_version, f1)
-                pickle.dump(theme, f1)
-                pickle.dump(tooltips, f1)
-                pickle.dump(sudo, f1)
-                pickle.dump(initial_directory, f1)
-                pickle.dump(first_run, f1)
-                pickle.dump(thor, f1)
-                pickle.dump(thor_directory, f1)
-                pickle.dump(keep_dark_term, f1)
-                f1.close()
                 window.destroy()
             elif prompt_available == False:
                 Force_Close_Window = tk.Toplevel(window)
@@ -1234,17 +1166,6 @@ def on_window_close():
         else:
             window.after_cancel(start_flash)
             print('Stopping Thor GUI...')
-            f1 = open(f'{path_to_thor_gui}/thor-gui-settings.pkl', 'wb')
-            pickle.dump(filed_version, f1)
-            pickle.dump(theme, f1)
-            pickle.dump(tooltips, f1)
-            pickle.dump(sudo, f1)
-            pickle.dump(initial_directory, f1)
-            pickle.dump(first_run, f1)
-            pickle.dump(thor, f1)
-            pickle.dump(thor_directory, f1)
-            pickle.dump(keep_dark_term, f1)
-            f1.close()
             window.destroy()
     except Exception as e:
         print(f'An exception occurred in on_window_close: {e}')
@@ -1375,9 +1296,6 @@ class Checkbutton():
 
     def __getattr__(self, attr):
         return getattr(self.checkbutton, attr)
-
-# Creates labels
-
 
 # Creates labels, will be replaced with a class
 def create_label(name, master, text, font=('Monospace', 11), sticky='we', padx=0, pady=0, anchor='center'):
