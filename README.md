@@ -4,8 +4,8 @@
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b8e7a504-6d43-4cac-a7de-f3d957b31391">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/326fba9b-89fe-4967-8b79-de7544373537">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
   <img alt="Screenshot of Thor GUI">
 </picture>
 <details>
