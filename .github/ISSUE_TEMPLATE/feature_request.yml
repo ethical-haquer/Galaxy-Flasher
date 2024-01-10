@@ -32,6 +32,8 @@ body:
       label: Thor GUI version
       description: What version of Thor GUI are you using? (check in the "About" tab)
       options:
+        - Alpha v0.4.4
+        - Alpha v0.4.3
         - Alpha v0.4.2
         - Alpha v0.4.1
         - Alpha v0.4.0
