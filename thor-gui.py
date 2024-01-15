@@ -38,8 +38,9 @@ import platform
 from threading import Timer
 import typing as typ
 import json
+from tkinter import BooleanVar
 
-version = 'Alpha v0.4.4'
+version = 'Alpha v0.4.5'
 
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 currently_running = False
@@ -91,7 +92,7 @@ tooltip_dict = {
     'About_Button': 'About Tab',
     'Apply_Options_Button': 'Apply the above options',
     'Theme_Checkbutton': 'Toggle Theme',
-    'Dark_Term_Checkbutton': 'Toggle keeping the Log output dark, regardless of theme',
+    'Dark_Log_Checkbutton': 'Toggle keeping the Log output dark, regardless of the theme',
     'Tooltip_Checkbutton': 'Toggle Tooltips',
     'Thor_Checkbutton': 'Toggle using an internal/external Thor build',
     'Thor_Entry': 'Thor GUI will look for the external Thor build in this directory',
@@ -112,45 +113,44 @@ print(f'''
 ''')
 
 def load_variable_file():
-    global theme, tooltips, sudo, initial_directory, first_run, thor, thor_directory, keep_dark_term
-    print('loading...')
+    global dark_theme, tooltips, sudo, initial_directory, first_run, external_thor, thor_directory, keep_log_dark
     with open("thor-gui-settings.json", "r") as f:
         filed_variables = json.load(f)
-        theme = filed_variables['theme']
+        dark_theme = filed_variables['dark_theme']
         tooltips = filed_variables['tooltips']
         sudo = filed_variables['sudo']
         initial_directory = filed_variables['initial_directory']
         first_run = filed_variables['first_run']
-        thor = filed_variables['thor']
+        external_thor = filed_variables['external_thor']
         thor_directory = filed_variables['thor_directory']
-        keep_dark_term = filed_variables['keep_dark_term']
+        keep_log_dark = filed_variables['keep_log_dark']
     
 def dump_variable_file():
     with open("thor-gui-settings.json", "r") as f:
         filed_variables = json.load(f)
     filed_variables['version'] = version
-    filed_variables['theme'] = theme
+    filed_variables['dark_theme'] = dark_theme
     filed_variables['tooltips'] = tooltips
     filed_variables['sudo'] = sudo
     filed_variables['initial_directory'] = initial_directory
     filed_variables['first_run'] = first_run
-    filed_variables['thor'] = thor
+    filed_variables['external_thor'] = external_thor
     filed_variables['thor_directory'] = thor_directory
-    filed_variables['keep_dark_term'] = keep_dark_term
+    filed_variables['keep_log_dark'] = keep_log_dark
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
 
 def create_variable_file():
     filed_variables = {
         'version': version,
-        'theme': 'light',
+        'dark_theme': False,
         'tooltips': True,
         'sudo': False,
         'initial_directory': '~',
         'first_run': True,
-        'thor': 'internal',
+        'external_thor': False,
         'thor_directory': '~',
-        'keep_dark_term': False
+        'keep_log_dark': False
         }
     with open("thor-gui-settings.json", "w") as f:
         json.dump(filed_variables, f)
@@ -159,14 +159,14 @@ def recreate_variable_file():
     with open("thor-gui-settings.json", "r") as f:
         filed_variables = json.load(f)
     filed_variables['version'] = version
-    filed_variables['theme'] = 'light'
+    filed_variables['dark_theme'] = False
     filed_variables['tooltips'] = True
     filed_variables['sudo'] = False
     filed_variables['initial_directory'] = '~'
     filed_variables['first_run'] = True
-    filed_variables['thor'] = 'internal'
+    filed_variables['external_thor'] = False
     filed_variables['thor_directory'] = '~'
-    filed_variables['keep_dark_term'] = False
+    filed_variables['keep_log_dark'] = False
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
 
@@ -179,18 +179,18 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.json'):
         print("The found 'thor-gui-settings.json' file was not created by this version of Thor GUI, so Thor GUI is re-creating it.")
         recreate_variable_file()
 else:
-    print(f"The 'thor-gui-settings.pkl' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.")
+    print(f"The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.")
     create_variable_file()
 load_variable_file()
     
 # This starts and stops Thor
 def start_thor():
-    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message, thor, thor_directory
+    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message, external_thor, thor_directory
     try:
         if currently_running:
             on_window_close()
         elif not currently_running:
-            if thor == "internal":
+            if external_thor == False:
                 if sudo == False:
                     if architecture == 'x86_64':
                         Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
@@ -209,7 +209,7 @@ def start_thor():
                         print(f"The {architecture} architecture is currently not supported by Thor GUI. If you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.")
                         show_message('Unsupported architecture', f'The {architecture} architecture is currently not supported by Thor GUI.\nIf you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.', [{'text': 'OK', 'fg': 'black'}], window_size=(700, 140))
                         return
-            elif thor == "external":
+            elif external_thor == True:
                 thor_path = Thor_Entry.get()
                 if thor_path[-1] != "/" and thor_path != '~':
                     thor_path = thor_path + "/"
@@ -670,7 +670,9 @@ def start_flash():
 
         common_directory = unique_directories.pop()
         graphical_flash = True
-        send_command(f'flashTar {common_directory}')
+        # A tip from justaCasulCoder to handle file-paths with spaces
+        #send_command(f'flashTar {common_directory}')
+        send_command(f"flashTar '{common_directory}'")
 
     except Exception as e:
         print(f'An exception occurred in start_flash: {e}')
@@ -712,7 +714,7 @@ def open_file(type):
     try:
         def change_theme():
             sv_ttk.set_theme('dark')
-        if theme == 'dark':
+        if dark_theme == True:
             sv_ttk.set_theme('light')
             t = Timer(0, change_theme)
             t.start()
@@ -742,11 +744,8 @@ def open_file(type):
                 print(f"Selected {type}: '{file_path}' with file picker")
         else:
             print(f"Invalid directory - The directory: '{initialdir}' does not exist. You can change your initial file picker directory by going to: Settings - Flashing - Initial file picker directory")
-# This needs to be worked on...
-#
-#            show_message('Invalid directory', f"The directory: '{initialdir}' does not exist\nYou can change your initial file picker directory by going to:\nSettings - Flashing - Initial file picker directory", window_size=(480, 140))
-#    except ttk.TclError:
-#        print('Thor GUI was closed with the file picker still open - Don't do that. :)')
+    except tk.TclError:
+        pass
     except pexpect.exceptions.TIMEOUT:
         print('A Timeout occurred in start_thor')
     except Exception as e:
@@ -1016,40 +1015,88 @@ def bind_file_drop(widget):
     widget.dnd_bind('<<Drop>>', lambda e: [widget.delete(0, 'end'), widget.insert(tk.END, e.data)])
 
 # Changes variables
-def change_variable(variable):
-    global theme, tooltips, sudo, thor, keep_dark_term
-    if variable == 'theme':
+def toggle_variable(variable):
+    global dark_theme, tooltips, sudo, external_thor, keep_log_dark
+    
+    if variable == 'dark_theme':
+        dark_theme = not dark_theme
         if sv_ttk.get_theme() == 'dark':
-            theme = 'light'
+            sv_ttk.set_theme('light')
         elif sv_ttk.get_theme() == 'light':
-            theme = 'dark'
-        sv_ttk.set_theme(theme)
-        if keep_dark_term == True and theme == 'light':
+            sv_ttk.set_theme('dark')
+        if keep_log_dark == True and dark_theme == False:
             Output_Text.configure(bg='#1c1c1c')
+
     elif variable == 'tooltips':
         tooltips = not tooltips
         if tooltips == True:
             tooltip_manager.create_tooltips()
         elif tooltips == False:
             tooltip_manager.hide_tooltips()
+            
     elif variable == 'sudo':
         sudo = not sudo
-    elif variable == 'thor':
-        if thor == 'internal':
-            thor = 'external'
+        
+    elif variable == 'external_thor':
+        external_thor = not external_thor
+        if external_thor == True:
             Thor_Entry.configure(state='normal')
-        elif thor == 'external':
-            thor = 'internal'
+        elif external_thor == False:
             Thor_Entry.configure(state='disabled')
-    elif variable == 'keep_dark_term':
-        keep_dark_term = not keep_dark_term
-        if keep_dark_term == True:
-            Output_Text.configure(bg='#1c1c1c')
-        elif keep_dark_term == False:
-            if theme == 'light':
-                Output_Text.configure(bg='#ffffff')
 
-# Creates the start-up window
+    elif variable == 'keep_log_dark':
+        keep_log_dark = not keep_log_dark
+        if keep_log_dark == True:
+            Output_Text.configure(bg='#1c1c1c')
+        elif keep_log_dark == False:
+            if dark_theme == False:
+                Output_Text.configure(bg='#ffffff')
+"""
+def toggle_variable(variable):
+    global dark_theme, tooltips, sudo, external_thor, keep_log_dark
+    print('toggle_variable says the variable argument is ' + variable)
+    
+    if variable == 'dark_theme':
+        dark_theme = not dark_theme
+        if sv_ttk.get_theme() == 'dark':
+            sv_ttk.set_theme('light')
+        elif sv_ttk.get_theme() == 'light':
+            sv_ttk.set_theme('dark')
+        if keep_log_dark == True and dark_theme == False:
+            Output_Text.configure(bg='#1c1c1c')
+        Theme_Checkbutton.state(['selected' if dark_theme else '!selected'])
+    
+    elif variable == 'tooltips':
+        tooltips = not tooltips
+        if tooltips == True:
+            tooltip_manager.create_tooltips()
+        elif tooltips == False:
+            tooltip_manager.hide_tooltips()
+        Tooltip_Checkbutton.state(['selected' if tooltips else '!selected'])
+    
+    elif variable == 'sudo':
+        sudo = not sudo
+        Sudo_Checkbutton.state(['selected' if sudo else '!selected'])
+    
+    elif variable == 'external_thor':
+        external_thor = not external_thor
+        if external_thor == False:
+            Thor_Entry.configure(state='normal')
+        elif external_thor == True:
+            Thor_Entry.configure(state='disabled')
+        Thor_Checkbutton.state(['selected' if external_thor else '!selected'])
+    
+    elif variable == 'keep_log_dark':
+        keep_log_dark = not keep_log_dark
+        if keep_log_dark == True:
+            Output_Text.configure(bg='#1c1c1c')
+        elif keep_log_dark == False:
+            if dark_theme == False:
+                Output_Text.configure(bg='#ffffff')
+        Dark_Log_Checkbutton.state(['selected' if keep_log_dark else '!selected'])
+"""
+
+# Creates the start-up window - There's room for improvement
 def create_startup_window():
     try:
         if operating_system == 'Linux':
@@ -1286,7 +1333,8 @@ class Checkbutton():
         self.columnspan = columnspan
         self.tooltip_delay = 0.25
         self.tooltip_manager = tooltip_manager
-        self.checkbutton = ttk.Checkbutton(self.master, command=self.command, variable=self.variable, state=self.state)
+        self.checkbutton = ttk.Checkbutton(self.master, command=self.command, state=self.state)
+        self.checkbutton.config(variable=self.variable, onvalue=True, offvalue=False)
         if self.text is not None and self.text[0] is not None:
             self.checkbutton.config(text=self.text)
         if self.style is not None and self.style[0] is not None:
@@ -1297,13 +1345,13 @@ class Checkbutton():
     def __getattr__(self, attr):
         return getattr(self.checkbutton, attr)
 
-# Creates labels, will be replaced with a class
+# Creates labels
 def create_label(name, master, text, font=('Monospace', 11), sticky='we', padx=0, pady=0, anchor='center'):
     label = name + '_Label'
     label = ttk.Label(master, text=text, font=font, anchor=anchor)
     label.grid(sticky=sticky, padx=padx, pady=pady)
 
-# Creates text, will be replaced with a class
+# Creates text
 def create_text(name, master, lines, font=('Monospace', 11)):
     text = name + '_Text'
     text = tk.Text(master, font=font, height=1, bd=0, highlightthickness=0, wrap='word')
@@ -1409,9 +1457,6 @@ Output_Text.grid(row=0, column=0, rowspan=6, sticky='nesw')
 Options_Frame = ttk.Frame(window)
 Options_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
-# Set the tooltip_manager for the Options frame
-Options_Frame.tooltip_manager = tooltip_manager
-
 NOTE_Label = ttk.Label(Options_Frame, text="NOTE: The 'T Flash' option is temporarily not supported by Thor GUI.")
 NOTE_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
 
@@ -1453,75 +1498,36 @@ Apply_Options_Button = Button('Apply_Options', Options_Frame, 'Apply', apply_opt
 Pit_Frame = ttk.Frame(window)
 Pit_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
-# Set the tooltip_manager for the Pit frame
-Pit_Frame.tooltip_manager = tooltip_manager
-
-Test_Label = ttk.Label(Pit_Frame, text='Just a test :)')
-Test_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
 create_label('Test', Pit_Frame, 'Just a test :)', sticky='w', padx=10, pady=10)
-
-Although_Label = ttk.Label(Pit_Frame, text='Pull requests are always welcome though!')
-Although_Label.grid(row=1, column=0, pady=10, padx=10, sticky='w')
+create_label('Although', Pit_Frame, 'Pull requests are always welcome though!', sticky='w', padx=10, pady=10)
 
 # Creates the 'Settings' frame
 Settings_Frame = ttk.Frame(window)
 Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Settings_Frame.grid_columnconfigure(0, weight=1)
 
+theme_checkbutton_var = BooleanVar(value=dark_theme)
+dark_log_checkbutton_var = BooleanVar(value=keep_log_dark)
+tooltip_checkbutton_var = BooleanVar(value=tooltips)
+thor_checkbutton_var = BooleanVar(value=external_thor)
+sudo_checkbutton_var = BooleanVar(value=sudo)
+
 create_label('Theme', Settings_Frame, 'Appearance', ('Monospace', 12), 'w')
-
-if theme == 'light':
-    other_theme = 'Dark'
-elif theme == 'dark':
-    other_theme = 'Light'
-
-if tooltips == True:
-    other_tooltip = 'off'
-elif tooltips == False:
-    other_tooltip = 'on'
-
-if sudo == True:
-    other_sudo = 'without'
-elif sudo == False:
-    other_sudo = 'with'
-    
-if thor == "internal":
-    other_thor = "an external"
-elif thor == "external":
-    other_thor = "the internal"
-    
-if keep_dark_term == False:
-    other_term = "Keep"
-elif keep_dark_term == True:
-    other_term = "Don't keep"
-
-Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: change_variable('theme'), None, other_theme + ' theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10)
-
-Dark_Term_Checkbutton = Checkbutton('Dark_Term', Settings_Frame, lambda: change_variable('keep_dark_term'), None, other_term + ' Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
-
-Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: change_variable('tooltips'), None, 'Tooltips ' + other_tooltip, 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10)
-
+Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10)
+Dark_Log_Checkbutton = Checkbutton('Dark_Log', Settings_Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, 'Keep Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
+Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10)
 create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15)
-
 create_label('Thor', Settings_Frame, 'Thor', ('Monospace', 12), 'w')
-
-Thor_Checkbutton = Checkbutton('Thor', Settings_Frame, lambda: change_variable('thor'), None, 'Use ' + other_thor + ' Thor build', 'Switch.TCheckbutton', 'normal', 0, 6, 'w', 10)
-
+Thor_Checkbutton = Checkbutton('Thor', Settings_Frame, lambda: toggle_variable('external_thor'), thor_checkbutton_var, 'Use an external Thor build', 'Switch.TCheckbutton', 'normal', 0, 6, 'w', 10)
 create_label('Thor_Directory', Settings_Frame, 'Path to external Thor build:', ('Monospace', 9), 'w', 15, 5)
-
 Thor_Entry = Entry('Thor', Settings_Frame, 'normal', 0, 7, 'we', (15, 120))
 Thor_Entry.insert(tk.END, thor_directory)
-if thor == "internal":
-    Thor_Entry.configure(state="disabled")
-
-Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: change_variable('sudo'), None, 'Run Thor ' + other_sudo + ' sudo', 'Switch.TCheckbutton', 'normal', 0, 9, 'w', 10)
-
+if external_thor == False:
+    Thor_Entry.configure()
+Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 9, 'w', 10)
 create_label('Sudo', Settings_Frame, 'A restart is required if Thor is already running\n', ('Monospace', 8), 'w', 15)
-
 create_label('Flashing', Settings_Frame, 'Flashing', ('Monospace', 12), 'w')
-
 create_label('Default_Directory', Settings_Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5)
-
 Default_Directory_Entry = Entry('Default_Directory', Settings_Frame, 'normal', 0, 13, 'we', (15, 120))
 Default_Directory_Entry.insert(tk.END, initial_directory)
 
@@ -1632,10 +1638,13 @@ toggle_frame('Log')
 # Binds the on_window_close function to the window's close event
 window.protocol('WM_DELETE_WINDOW', on_window_close)
 
-# Sets what theme to use
-sv_ttk.set_theme(theme)
+# Sets what dark_theme to use
+if dark_theme:
+    sv_ttk.set_theme('dark')
+else:
+    sv_ttk.set_theme('light')
 
-if keep_dark_term == True:
+if keep_log_dark == True:
     Output_Text.configure(bg='#1c1c1c')
 
 # Creates tooltips for buttons and things
