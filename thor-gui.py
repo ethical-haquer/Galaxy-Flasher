@@ -16,29 +16,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-import tkinter as tk
-from tkinter import scrolledtext
-from tkinter import filedialog
-import pexpect
-from threading import Thread
-import re
-import webbrowser
-from time import sleep
-import tarfile
 import os
-from functools import partial
-import zipfile
-from collections import deque
-import sv_ttk
-from tkinter import ttk
+import re
 import sys
-from tktooltip import ToolTip
-from tkinterdnd2 import DND_FILES, TkinterDnD
-import platform
-from threading import Timer
 import typing as typ
 import json
-from tkinter import BooleanVar
+import platform
+import tarfile
+import zipfile
+from collections import deque
+from functools import partial
+from threading import Thread, Timer
+from time import sleep
+import pexpect
+import webbrowser
+
+import tkinter as tk
+from tkinter import scrolledtext, filedialog, BooleanVar
+from tkinter import ttk
+from tktooltip import ToolTip
+from tkinterdnd2 import DND_FILES, TkinterDnD
+import sv_ttk
 
 version = 'Alpha v0.4.5'
 
@@ -95,7 +93,7 @@ tooltip_dict = {
     'Dark_Log_Checkbutton': 'Toggle keeping the Log output dark, regardless of the theme',
     'Tooltip_Checkbutton': 'Toggle Tooltips',
     'Thor_Checkbutton': 'Toggle using an internal/external Thor build',
-    'Thor_Entry': 'Thor GUI will look for the external Thor build in this directory',
+    'Thor_Command_Entry': 'The command used to start Thor',
     'Sudo_Checkbutton': 'Toggle running Thor with/without sudo',
     'Default_Directory_Entry': 'The file picker will open to this directory',
     'Start_Flash_Button': 'Start a flash',
@@ -113,7 +111,7 @@ print(f'''
 ''')
 
 def load_variable_file():
-    global dark_theme, tooltips, sudo, initial_directory, first_run, external_thor, thor_directory, keep_log_dark
+    global dark_theme, tooltips, sudo, initial_directory, first_run, thor_executable, thor_command, keep_log_dark
     with open("thor-gui-settings.json", "r") as f:
         filed_variables = json.load(f)
         dark_theme = filed_variables['dark_theme']
@@ -121,8 +119,8 @@ def load_variable_file():
         sudo = filed_variables['sudo']
         initial_directory = filed_variables['initial_directory']
         first_run = filed_variables['first_run']
-        external_thor = filed_variables['external_thor']
-        thor_directory = filed_variables['thor_directory']
+        thor_executable = filed_variables['thor_executable']
+        thor_command = filed_variables['thor_command']
         keep_log_dark = filed_variables['keep_log_dark']
     
 def dump_variable_file():
@@ -134,8 +132,8 @@ def dump_variable_file():
     filed_variables['sudo'] = sudo
     filed_variables['initial_directory'] = initial_directory
     filed_variables['first_run'] = first_run
-    filed_variables['external_thor'] = external_thor
-    filed_variables['thor_directory'] = thor_directory
+    filed_variables['thor_executable'] = thor_executable
+    filed_variables['thor_command'] = thor_command
     filed_variables['keep_log_dark'] = keep_log_dark
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
@@ -145,12 +143,12 @@ def create_variable_file():
         'version': version,
         'dark_theme': False,
         'tooltips': True,
+        'keep_log_dark': False,
         'sudo': False,
         'initial_directory': '~',
         'first_run': True,
-        'external_thor': False,
-        'thor_directory': '~',
-        'keep_log_dark': False
+        'thor_executable': '~',
+        'thor_command': '~'
         }
     with open("thor-gui-settings.json", "w") as f:
         json.dump(filed_variables, f)
@@ -164,8 +162,8 @@ def recreate_variable_file():
     filed_variables['sudo'] = False
     filed_variables['initial_directory'] = '~'
     filed_variables['first_run'] = True
-    filed_variables['external_thor'] = False
-    filed_variables['thor_directory'] = '~'
+    filed_variables['thor_executable'] = '~'
+    filed_variables['thor_command'] = '~'
     filed_variables['keep_log_dark'] = False
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
@@ -182,14 +180,17 @@ else:
     print(f"The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.")
     create_variable_file()
 load_variable_file()
-    
+
 # This starts and stops Thor
 def start_thor():
-    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message, external_thor, thor_directory
+    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message, external_thor, thor_command
     try:
         if currently_running:
             on_window_close()
         elif not currently_running:
+            thor_command = Thor_Command_Entry.get()
+            Thor = pexpect.spawn(f'{thor_command}', timeout=None, encoding='utf-8')
+            """
             if external_thor == False:
                 if sudo == False:
                     if architecture == 'x86_64':
@@ -210,12 +211,12 @@ def start_thor():
                         show_message('Unsupported architecture', f'The {architecture} architecture is currently not supported by Thor GUI.\nIf you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.', [{'text': 'OK', 'fg': 'black'}], window_size=(700, 140))
                         return
             elif external_thor == True:
-                thor_path = Thor_Entry.get()
+                thor_path = Thor_Command_Entry.get()
                 if thor_path[-1] != "/" and thor_path != '~':
                     thor_path = thor_path + "/"
                 if thor_path == '~' or os.path.isdir(thor_path) == True:
                     if os.path.isfile(f'{thor_path}/TheAirBlow.Thor.Shell'):
-                        thor_directory = thor_path
+                        thor_command = thor_path
                     else:
                         print(f'Invalid Path to Thor - The directory: "{thor_path}" does not contain a Thor build, in particular the "TheAirBlow.Thor.Shell" file. You can set the path to your external Thor build by going to: Settings - Thor - Path to external Thor build')
                         show_message('Invalid Path to Thor', f'The directory: \'{thor_path}\' does not contain a Thor build, in particular the\n"TheAirBlow.Thor.Shell" file.\nYou can set the path to your external Thor build by going to:\nSettings - Thor - Path to external Thor build', [{'text': 'OK', 'fg': 'black'}], window_size=(500, 160))
@@ -225,9 +226,10 @@ def start_thor():
                     show_message('Invalid Path to Thor', f'The directory: \'{thor_path}\' does not exist.\nYou can set the path to your external Thor build by going to:\nSettings - Thor - Path to external Thor build', [{'text': 'OK', 'fg': 'black'}], window_size=(500, 140))
                     return
                 if sudo == False:
-                    Thor = pexpect.spawn(f'{thor_directory}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                    Thor = pexpect.spawn(f'{thor_command}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
                 elif sudo == True:
-                    Thor = pexpect.spawn(f'sudo {thor_directory}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+                    Thor = pexpect.spawn(f'sudo {thor_command}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
+            """
             if Thor == None:
                 raise Exception('Thor GUI was unable to start Thor because Thor == None. Feel free to open an issue for this on GiHub. TIA.')
             output_thread = Thread(target=update_output)
@@ -1014,6 +1016,12 @@ def bind_file_drop(widget):
     widget.drop_target_register(DND_FILES)
     widget.dnd_bind('<<Drop>>', lambda e: [widget.delete(0, 'end'), widget.insert(tk.END, e.data)])
 
+def on_entry_change(*args):
+    global thor_executable_entry_var
+    print(str(thor_executable_entry_var.get))
+    thor_executable_entry_var = str(Thor_Executable_Entry.get)
+    print(str(thor_executable_entry_var.get))
+
 # Changes variables
 def toggle_variable(variable):
     global dark_theme, tooltips, sudo, external_thor, keep_log_dark
@@ -1026,24 +1034,7 @@ def toggle_variable(variable):
             sv_ttk.set_theme('dark')
         if keep_log_dark == True and dark_theme == False:
             Output_Text.configure(bg='#1c1c1c')
-
-    elif variable == 'tooltips':
-        tooltips = not tooltips
-        if tooltips == True:
-            tooltip_manager.create_tooltips()
-        elif tooltips == False:
-            tooltip_manager.hide_tooltips()
-            
-    elif variable == 'sudo':
-        sudo = not sudo
         
-    elif variable == 'external_thor':
-        external_thor = not external_thor
-        if external_thor == True:
-            Thor_Entry.configure(state='normal')
-        elif external_thor == False:
-            Thor_Entry.configure(state='disabled')
-
     elif variable == 'keep_log_dark':
         keep_log_dark = not keep_log_dark
         if keep_log_dark == True:
@@ -1051,50 +1042,25 @@ def toggle_variable(variable):
         elif keep_log_dark == False:
             if dark_theme == False:
                 Output_Text.configure(bg='#ffffff')
-"""
-def toggle_variable(variable):
-    global dark_theme, tooltips, sudo, external_thor, keep_log_dark
-    print('toggle_variable says the variable argument is ' + variable)
-    
-    if variable == 'dark_theme':
-        dark_theme = not dark_theme
-        if sv_ttk.get_theme() == 'dark':
-            sv_ttk.set_theme('light')
-        elif sv_ttk.get_theme() == 'light':
-            sv_ttk.set_theme('dark')
-        if keep_log_dark == True and dark_theme == False:
-            Output_Text.configure(bg='#1c1c1c')
-        Theme_Checkbutton.state(['selected' if dark_theme else '!selected'])
-    
+
     elif variable == 'tooltips':
         tooltips = not tooltips
         if tooltips == True:
             tooltip_manager.create_tooltips()
         elif tooltips == False:
             tooltip_manager.hide_tooltips()
-        Tooltip_Checkbutton.state(['selected' if tooltips else '!selected'])
-    
+                
     elif variable == 'sudo':
         sudo = not sudo
-        Sudo_Checkbutton.state(['selected' if sudo else '!selected'])
-    
-    elif variable == 'external_thor':
-        external_thor = not external_thor
-        if external_thor == False:
-            Thor_Entry.configure(state='normal')
-        elif external_thor == True:
-            Thor_Entry.configure(state='disabled')
-        Thor_Checkbutton.state(['selected' if external_thor else '!selected'])
-    
-    elif variable == 'keep_log_dark':
-        keep_log_dark = not keep_log_dark
-        if keep_log_dark == True:
-            Output_Text.configure(bg='#1c1c1c')
-        elif keep_log_dark == False:
-            if dark_theme == False:
-                Output_Text.configure(bg='#ffffff')
-        Dark_Log_Checkbutton.state(['selected' if keep_log_dark else '!selected'])
-"""
+        thor_command_entry_text = Thor_Command_Entry.get()
+        if sudo == True:
+            if not thor_command_entry_text.startswith('sudo'):
+                print('Nope')
+                Thor_Command_Entry.insert(0, "sudo ")
+        elif sudo == False:
+            thor_command_entry_text = thor_command_entry_text.replace("sudo ", "")
+            Thor_Command_Entry.delete(0, tk.END)
+            Thor_Command_Entry.insert(0, thor_command_entry_text)
 
 # Creates the start-up window - There's room for improvement
 def create_startup_window():
@@ -1285,7 +1251,8 @@ class Entry():
         sticky: str = 'we',
         padx: int = 5,
         pady: int = 5, 
-        columnspan: int = 1):
+        columnspan: int = 1,
+        textvariable: str = None):
             
         self.name = name + '_Entry'
         self.master = master
@@ -1296,9 +1263,12 @@ class Entry():
         self.padx = padx
         self.pady = pady
         self.columnspan = columnspan
+        self.textvariable = textvariable
         self.tooltip_delay = 0.25
         self.tooltip_manager = tooltip_manager
         self.entry = ttk.Entry(self.master, state=self.state)
+        if self.textvariable != None:
+            self.entry.configure(textvariable=self.textvariable)
         self.entry.grid(column=self.column, row=self.row, columnspan=self.columnspan, sticky=self.sticky, padx=self.padx, pady=self.pady)
         self.tooltip_manager.add_needed_tooltip(self)
 
@@ -1509,8 +1479,10 @@ Settings_Frame.grid_columnconfigure(0, weight=1)
 theme_checkbutton_var = BooleanVar(value=dark_theme)
 dark_log_checkbutton_var = BooleanVar(value=keep_log_dark)
 tooltip_checkbutton_var = BooleanVar(value=tooltips)
-thor_checkbutton_var = BooleanVar(value=external_thor)
 sudo_checkbutton_var = BooleanVar(value=sudo)
+
+thor_executable_entry_var = tk.StringVar()
+#thor_executable_entry_var.trace("w", on_entry_change)
 
 create_label('Theme', Settings_Frame, 'Appearance', ('Monospace', 12), 'w')
 Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10)
@@ -1518,14 +1490,19 @@ Dark_Log_Checkbutton = Checkbutton('Dark_Log', Settings_Frame, lambda: toggle_va
 Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10)
 create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15)
 create_label('Thor', Settings_Frame, 'Thor', ('Monospace', 12), 'w')
-Thor_Checkbutton = Checkbutton('Thor', Settings_Frame, lambda: toggle_variable('external_thor'), thor_checkbutton_var, 'Use an external Thor build', 'Switch.TCheckbutton', 'normal', 0, 6, 'w', 10)
-create_label('Thor_Directory', Settings_Frame, 'Path to external Thor build:', ('Monospace', 9), 'w', 15, 5)
-Thor_Entry = Entry('Thor', Settings_Frame, 'normal', 0, 7, 'we', (15, 120))
-Thor_Entry.insert(tk.END, thor_directory)
-if external_thor == False:
-    Thor_Entry.configure()
-Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 9, 'w', 10)
-create_label('Sudo', Settings_Frame, 'A restart is required if Thor is already running\n', ('Monospace', 8), 'w', 15)
+
+create_label('Thor_Executable', Settings_Frame, 'Thor executable file (TheAirBlow.Thor.Shell) to use:', ('Monospace', 9), 'w', 15, 5)
+
+Thor_Executable_Entry = Entry('Thor_Executable', Settings_Frame, 'normal', 0, 7, 'we', (15, 120), textvariable=thor_executable_entry_var)
+Thor_Executable_Entry.insert(tk.END, thor_executable)
+
+Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10)
+
+create_label('Thor_Command', Settings_Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 5)
+
+Thor_Command_Entry = Entry('Thor_Command', Settings_Frame, 'normal', 0, 10, 'we', (15, 120))
+Thor_Command_Entry.insert(tk.END, thor_command)
+
 create_label('Flashing', Settings_Frame, 'Flashing', ('Monospace', 12), 'w')
 create_label('Default_Directory', Settings_Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5)
 Default_Directory_Entry = Entry('Default_Directory', Settings_Frame, 'normal', 0, 13, 'we', (15, 120))
@@ -1537,7 +1514,6 @@ Help_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Help_Frame.grid_columnconfigure(0, weight=1)
 
 create_label('Help', Help_Frame, '\nNot sure how to use Thor GUI?', ('Monospace', 13))
-
 create_text('Usage_Help_Text', Help_Frame, [
     ('Check out ', None),
     ('the Usage Guide', 'https://github.com/ethical-haquer/Thor_GUI#usage'),
@@ -1545,7 +1521,6 @@ create_text('Usage_Help_Text', Help_Frame, [
 ])
 
 create_label('Help_2', Help_Frame, '\nNeed help?', ('Monospace', 13))
-
 create_text('Get_Help', Help_Frame, [
     ('Let me know on ', None),
     ('XDA', 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/'),
@@ -1555,7 +1530,6 @@ create_text('Get_Help', Help_Frame, [
 ])
 
 create_label('Help_3', Help_Frame, '\nFound an issue?', ('Monospace', 13))
-
 create_text('Report', Help_Frame, [
     ("If it isn't listed ", None),
     ('here', 'https://github.com/ethical-haquer/Thor_GUI#known-bugs'),
@@ -1570,11 +1544,8 @@ About_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5
 About_Frame.grid_columnconfigure(0, weight=1)
 
 create_label('Thor_GUI', About_Frame, 'Thor GUI', ('Monospace', 13))
-
 create_label('Thor_GUI_Version', About_Frame, f'{version}')
-
 create_label('Thor_GUI_Description', About_Frame, "A GUI for the Thor Flash Utility")
-
 create_text('Thor_GUI_Websites', About_Frame, [
     ('GitHub', 'https://github.com/ethical-haquer/Thor_GUI'),
     (', ', None),
@@ -1582,13 +1553,9 @@ create_text('Thor_GUI_Websites', About_Frame, [
 ])
 
 create_label('Built_Around', About_Frame, 'Built around the:')
-
 create_label('Thor', About_Frame, '\nThor Flash Utility', ('Monospace', 13))
-
 create_label('Thor_Version', About_Frame, 'v1.0.4')
-
 create_label('Thor_Description', About_Frame, 'An alternative to Heimdall')
-
 create_text('Thor_Websites', About_Frame, [
     ('GitHub', 'https://github.com/Samsung-Loki/Thor'),
     (', ', None),
@@ -1596,19 +1563,16 @@ create_text('Thor_Websites', About_Frame, [
 ])
 
 create_label('Credits', About_Frame, '\nCredits:', ('Monospace', 13))
-
 create_text('TheAirBlow', About_Frame, [
     ('TheAirBlow', 'https://github.com/TheAirBlow'),
     (' for the ', None),
     ('Thor Flash Utility', None)
 ])
-
 create_text('rdbende', About_Frame, [
     ('rdbende', 'https://github.com/rdbende'),
     (' for the ', None),
     ('Sun Valley tkk theme', 'https://github.com/rdbende/Sun-Valley-ttk-theme')
 ])
-
 create_text('ethical_haquer', About_Frame, [
     ('Myself, ', None),
     ('ethical_haquer', 'https://github.com/ethical-haquer'),
@@ -1616,11 +1580,8 @@ create_text('ethical_haquer', About_Frame, [
 ])
 
 create_label('Disclaimer', About_Frame, '\nThor GUI comes with absolutely no warranty.', ('Monospace', 9))
-
 create_label('Disclaimer_2', About_Frame, 'See the GNU General Public License, version 3 or later for details.', ('Monospace', 9))
-
 create_label('Disclaimer_3', About_Frame, '\nThor Flash Utility comes with absolutely no warranty.', ('Monospace', 9))
-
 create_label('Disclaimer_4', About_Frame, 'See the Mozilla Public License, version 2 or later for details.', ('Monospace', 9))
 
 # Configures the tags for coloring the output text
