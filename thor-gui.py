@@ -190,46 +190,6 @@ def start_thor():
         elif not currently_running:
             thor_command = Thor_Command_Entry.get()
             Thor = pexpect.spawn(f'{thor_command}', timeout=None, encoding='utf-8')
-            """
-            if external_thor == False:
-                if sudo == False:
-                    if architecture == 'x86_64':
-                        Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-                    elif architecture == 'arm64' or architecture == "aarch64":
-                        Thor = pexpect.spawn(f'{path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-                    else:
-                        print(f"The {architecture} architecture is currently not supported by Thor GUI. If you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.")
-                        show_message('Unsupported architecture', f'The {architecture} architecture is currently not supported by Thor GUI.\nIf you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.', [{'text': 'OK', 'fg': 'black'}], window_size=(700, 140))
-                        return
-                elif sudo == True:
-                    if architecture == 'x86_64':
-                        Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-x64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-                    elif architecture == 'arm64' or architecture == "aarch64":
-                        Thor = pexpect.spawn(f'sudo {path_to_thor_gui}/Thor/linux-arm64/TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-                    else:
-                        print(f"The {architecture} architecture is currently not supported by Thor GUI. If you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.")
-                        show_message('Unsupported architecture', f'The {architecture} architecture is currently not supported by Thor GUI.\nIf you think the {architecture} architecture should be supported, feel free to open a feature request on GitHub.', [{'text': 'OK', 'fg': 'black'}], window_size=(700, 140))
-                        return
-            elif external_thor == True:
-                thor_path = Thor_Command_Entry.get()
-                if thor_path[-1] != "/" and thor_path != '~':
-                    thor_path = thor_path + "/"
-                if thor_path == '~' or os.path.isdir(thor_path) == True:
-                    if os.path.isfile(f'{thor_path}/TheAirBlow.Thor.Shell'):
-                        thor_command = thor_path
-                    else:
-                        print(f'Invalid Path to Thor - The directory: "{thor_path}" does not contain a Thor build, in particular the "TheAirBlow.Thor.Shell" file. You can set the path to your external Thor build by going to: Settings - Thor - Path to external Thor build')
-                        show_message('Invalid Path to Thor', f'The directory: \'{thor_path}\' does not contain a Thor build, in particular the\n"TheAirBlow.Thor.Shell" file.\nYou can set the path to your external Thor build by going to:\nSettings - Thor - Path to external Thor build', [{'text': 'OK', 'fg': 'black'}], window_size=(500, 160))
-                        return
-                else:
-                    print(f'Invalid Path to Thor - The directory: \'{thor_path}\' does not exist. You can set the path to your external Thor build by going to: Settings - Thor - Path to external Thor build')
-                    show_message('Invalid Path to Thor', f'The directory: \'{thor_path}\' does not exist.\nYou can set the path to your external Thor build by going to:\nSettings - Thor - Path to external Thor build', [{'text': 'OK', 'fg': 'black'}], window_size=(500, 140))
-                    return
-                if sudo == False:
-                    Thor = pexpect.spawn(f'{thor_command}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-                elif sudo == True:
-                    Thor = pexpect.spawn(f'sudo {thor_command}TheAirBlow.Thor.Shell', timeout=None, encoding='utf-8')
-            """
             if Thor == None:
                 raise Exception('Thor GUI was unable to start Thor because Thor == None. Feel free to open an issue for this on GiHub. TIA.')
             output_thread = Thread(target=update_output)
@@ -1016,11 +976,22 @@ def bind_file_drop(widget):
     widget.drop_target_register(DND_FILES)
     widget.dnd_bind('<<Drop>>', lambda e: [widget.delete(0, 'end'), widget.insert(tk.END, e.data)])
 
-def on_entry_change(*args):
-    global thor_executable_entry_var
-    print(str(thor_executable_entry_var.get))
-    thor_executable_entry_var = str(Thor_Executable_Entry.get)
-    print(str(thor_executable_entry_var.get))
+def on_thor_executable_entry_change(*args):
+    global thor_executable, thor_executable_entry_var
+    #print(thor_executable_entry_var.get())
+    thor_executable = Thor_Executable_Entry.get()
+    Thor_Command_Entry.delete(0, tk.END)
+    Thor_Command_Entry.insert(0, thor_executable)
+    if sudo == True:
+        Thor_Command_Entry.insert(0, "sudo ")
+
+def on_thor_command_entry_change(*args):
+    global thor_command, thor_command_entry_var, sudo
+    #print(thor_command_entry_var.get())
+    thor_command = Thor_Command_Entry.get()
+    #thor_executable = thor_command.replace("sudo ", "")
+    #Thor_Executable_Entry.delete(0, tk.END)
+    #Thor_Executable_Entry.insert(0, thor_executable)
 
 # Changes variables
 def toggle_variable(variable):
@@ -1054,9 +1025,8 @@ def toggle_variable(variable):
         sudo = not sudo
         thor_command_entry_text = Thor_Command_Entry.get()
         if sudo == True:
-            if not thor_command_entry_text.startswith('sudo'):
-                print('Nope')
-                Thor_Command_Entry.insert(0, "sudo ")
+            if not thor_command_entry_text.startswith('sudo '):
+                Thor_Command_Entry.insert(0, 'sudo ')
         elif sudo == False:
             thor_command_entry_text = thor_command_entry_text.replace("sudo ", "")
             Thor_Command_Entry.delete(0, tk.END)
@@ -1482,7 +1452,10 @@ tooltip_checkbutton_var = BooleanVar(value=tooltips)
 sudo_checkbutton_var = BooleanVar(value=sudo)
 
 thor_executable_entry_var = tk.StringVar()
-#thor_executable_entry_var.trace("w", on_entry_change)
+thor_executable_entry_var.trace("w", on_thor_executable_entry_change)
+
+thor_command_entry_var = tk.StringVar()
+thor_command_entry_var.trace("w", on_thor_command_entry_change)
 
 create_label('Theme', Settings_Frame, 'Appearance', ('Monospace', 12), 'w')
 Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10)
@@ -1500,7 +1473,7 @@ Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('
 
 create_label('Thor_Command', Settings_Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 5)
 
-Thor_Command_Entry = Entry('Thor_Command', Settings_Frame, 'normal', 0, 10, 'we', (15, 120))
+Thor_Command_Entry = Entry('Thor_Command', Settings_Frame, 'normal', 0, 10, 'we', (15, 120), textvariable=thor_command_entry_var)
 Thor_Command_Entry.insert(tk.END, thor_command)
 
 create_label('Flashing', Settings_Frame, 'Flashing', ('Monospace', 12), 'w')
