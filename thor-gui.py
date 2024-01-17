@@ -51,6 +51,15 @@ prompt_available = False
 sudo_prompt_available = False
 operating_system = platform.system()
 architecture = platform.machine()
+if architecture == 'aarch64':
+    simplified_architecture = 'arm64'
+else:
+    simplified_architecture = architecture
+if operating_system == 'Linux':
+    simplified_operating_system = 'linux'
+else:
+    simplified_operating_system = operating_system
+prevent_blowback = False
 # Fools Thor into thinking it's being run from xterm, a true one-liner
 os.environ['TERM'] = 'xterm'
 
@@ -92,7 +101,7 @@ tooltip_dict = {
     'Theme_Checkbutton': 'Toggle Theme',
     'Dark_Log_Checkbutton': 'Toggle keeping the Log output dark, regardless of the theme',
     'Tooltip_Checkbutton': 'Toggle Tooltips',
-    'Thor_Checkbutton': 'Toggle using an internal/external Thor build',
+    'Thor_File_Entry': 'The "TheAirBlow.Thor.Shell" file to use',
     'Thor_Command_Entry': 'The command used to start Thor',
     'Sudo_Checkbutton': 'Toggle running Thor with/without sudo',
     'Default_Directory_Entry': 'The file picker will open to this directory',
@@ -111,7 +120,7 @@ print(f'''
 ''')
 
 def load_variable_file():
-    global dark_theme, tooltips, sudo, initial_directory, first_run, thor_executable, thor_command, keep_log_dark
+    global dark_theme, tooltips, sudo, initial_directory, first_run, thor_file, thor_command, keep_log_dark
     with open("thor-gui-settings.json", "r") as f:
         filed_variables = json.load(f)
         dark_theme = filed_variables['dark_theme']
@@ -119,7 +128,7 @@ def load_variable_file():
         sudo = filed_variables['sudo']
         initial_directory = filed_variables['initial_directory']
         first_run = filed_variables['first_run']
-        thor_executable = filed_variables['thor_executable']
+        thor_file = filed_variables['thor_file']
         thor_command = filed_variables['thor_command']
         keep_log_dark = filed_variables['keep_log_dark']
     
@@ -132,13 +141,24 @@ def dump_variable_file():
     filed_variables['sudo'] = sudo
     filed_variables['initial_directory'] = initial_directory
     filed_variables['first_run'] = first_run
-    filed_variables['thor_executable'] = thor_executable
+    filed_variables['thor_file'] = thor_file
     filed_variables['thor_command'] = thor_command
     filed_variables['keep_log_dark'] = keep_log_dark
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
 
 def create_variable_file():
+    global architecture, operating_system
+    if architecture == 'aarch64':
+        global simplified_architecture
+        simplified_architecture = 'arm64'
+    else:
+        simplified_architecture = architecture
+    if operating_system == 'Linux':
+        global simplified_operating_system
+        simplified_operating_system = 'linux'
+    else:
+        simplified_operating_system = operating_system
     filed_variables = {
         'version': version,
         'dark_theme': False,
@@ -147,8 +167,8 @@ def create_variable_file():
         'sudo': False,
         'initial_directory': '~',
         'first_run': True,
-        'thor_executable': '~',
-        'thor_command': '~'
+        'thor_file': f'{path_to_thor_gui}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell',
+        'thor_command': f'{path_to_thor_gui}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
         }
     with open("thor-gui-settings.json", "w") as f:
         json.dump(filed_variables, f)
@@ -162,7 +182,7 @@ def recreate_variable_file():
     filed_variables['sudo'] = False
     filed_variables['initial_directory'] = '~'
     filed_variables['first_run'] = True
-    filed_variables['thor_executable'] = '~'
+    filed_variables['thor_file'] = '~'
     filed_variables['thor_command'] = '~'
     filed_variables['keep_log_dark'] = False
     with open('thor-gui-settings.json', 'w') as f:
@@ -188,8 +208,13 @@ def start_thor():
         if currently_running:
             on_window_close()
         elif not currently_running:
+            thor_file = Thor_File_Entry.get()
             thor_command = Thor_Command_Entry.get()
-            Thor = pexpect.spawn(f'{thor_command}', timeout=None, encoding='utf-8')
+            expanded_thor_file = os.path.expanduser(thor_file)
+            if os.path.exists(expanded_thor_file):
+                Thor = pexpect.spawn(f'{thor_command}', timeout=None, encoding='utf-8')
+            else:
+                raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used at: 'Settings - Thor - File used'")
             if Thor == None:
                 raise Exception('Thor GUI was unable to start Thor because Thor == None. Feel free to open an issue for this on GiHub. TIA.')
             output_thread = Thread(target=update_output)
@@ -197,7 +222,7 @@ def start_thor():
             output_thread.start()
             currently_running = True
             Start_Button.configure(text='Stop Thor')
-            tooltip_manager.change_tooltip(Start_Button, 'Stop Thor')
+            tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
             print('Started Thor')
     except pexpect.exceptions.TIMEOUT:
         print('A Timeout occurred in start_thor')
@@ -205,7 +230,6 @@ def start_thor():
         print(f'An Exception occurred in start_thor:\n{e}')
     except Exception as e:
         print(f'An exception occurred in start_thor:\n{e}')
-
 
 # What most Thor commands go through
 def send_command(command, case='normal'):
@@ -632,7 +656,7 @@ def start_flash():
 
         common_directory = unique_directories.pop()
         graphical_flash = True
-        # A tip from justaCasulCoder to handle file-paths with spaces
+        # A tip from @justaCasulCoder to handle file-paths with spaces
         #send_command(f'flashTar {common_directory}')
         send_command(f"flashTar '{common_directory}'")
 
@@ -976,22 +1000,50 @@ def bind_file_drop(widget):
     widget.drop_target_register(DND_FILES)
     widget.dnd_bind('<<Drop>>', lambda e: [widget.delete(0, 'end'), widget.insert(tk.END, e.data)])
 
-def on_thor_executable_entry_change(*args):
-    global thor_executable, thor_executable_entry_var
-    #print(thor_executable_entry_var.get())
-    thor_executable = Thor_Executable_Entry.get()
-    Thor_Command_Entry.delete(0, tk.END)
-    Thor_Command_Entry.insert(0, thor_executable)
-    if sudo == True:
-        Thor_Command_Entry.insert(0, "sudo ")
+def on_thor_file_entry_change(*args):
+    global thor_file, thor_file_entry_var, prevent_blowback
+    try:
+        thor_file = Thor_File_Entry.get()
+        expanded_thor_file = os.path.expanduser(thor_file)
+        if '~' in thor_file:
+            prevent_blowback = True
+            Thor_File_Entry.delete(0, tk.END)
+            Thor_File_Entry.insert(0, expanded_thor_file)
+            prevent_blowback = False
+        if prevent_blowback == False:
+            prevent_blowback = True
+            Thor_Command_Entry.delete(0, tk.END)
+            Thor_Command_Entry.insert(0, expanded_thor_file)
+            if sudo == True:
+                Thor_Command_Entry.insert(0, 'sudo ')
+            prevent_blowback = False
+    except NameError:
+        prevent_blowback = False
+        return
 
 def on_thor_command_entry_change(*args):
-    global thor_command, thor_command_entry_var, sudo
-    #print(thor_command_entry_var.get())
-    thor_command = Thor_Command_Entry.get()
-    #thor_executable = thor_command.replace("sudo ", "")
-    #Thor_Executable_Entry.delete(0, tk.END)
-    #Thor_Executable_Entry.insert(0, thor_executable)
+    global thor_command, thor_command_entry_var, sudo, prevent_blowback, sudo_checkbutton_var
+    if prevent_blowback == False:
+        thor_command = Thor_Command_Entry.get()
+        thor_file = thor_command.replace('sudo ', '')
+        expanded_thor_file = os.path.expanduser(thor_file)
+        if '~' in thor_command:
+            prevent_blowback = True
+            Thor_Command_Entry.delete(0, tk.END)
+            Thor_Command_Entry.insert(0, expanded_thor_file)
+            if thor_command.startswith('sudo '):
+                Thor_Command_Entry.insert(0, 'sudo ')
+            prevent_blowback = False
+        if thor_command.startswith('sudo '):
+            sudo = True
+            sudo_checkbutton_var.set(True)
+        else:
+            sudo = False
+            sudo_checkbutton_var.set(False)
+        prevent_blowback = True
+        Thor_File_Entry.delete(0, tk.END)
+        Thor_File_Entry.insert(0, expanded_thor_file)
+        prevent_blowback = False
 
 # Changes variables
 def toggle_variable(variable):
@@ -1003,6 +1055,7 @@ def toggle_variable(variable):
             sv_ttk.set_theme('light')
         elif sv_ttk.get_theme() == 'light':
             sv_ttk.set_theme('dark')
+            Output_Text.configure(bg='#1c1c1c')
         if keep_log_dark == True and dark_theme == False:
             Output_Text.configure(bg='#1c1c1c')
         
@@ -1028,7 +1081,7 @@ def toggle_variable(variable):
             if not thor_command_entry_text.startswith('sudo '):
                 Thor_Command_Entry.insert(0, 'sudo ')
         elif sudo == False:
-            thor_command_entry_text = thor_command_entry_text.replace("sudo ", "")
+            thor_command_entry_text = thor_command_entry_text.replace('sudo ', '')
             Thor_Command_Entry.delete(0, tk.END)
             Thor_Command_Entry.insert(0, thor_command_entry_text)
 
@@ -1105,7 +1158,8 @@ def on_window_close():
             Thor.terminate()
             Thor.wait()
             print('Stopped Thor (possibly forcibly)')
-            output_thread.join(timeout=0.5)  # Wait for the output thread to finish with a timeout
+            window.after_cancel(update_output)
+            output_thread.join(timeout=0.25)  # Wait for the output thread to finish with a timeout
             Force_Close_Window.destroy()
             print('Stopping Thor GUI...')
             window.destroy()
@@ -1117,7 +1171,8 @@ def on_window_close():
                 Thor.terminate()
                 Thor.wait()
                 print('Stopped Thor')
-                output_thread.join(timeout=0.5)  # Wait for the output thread to finish with a timeout
+                window.after_cancel(update_output)
+                output_thread.join(timeout=0.25)  # Wait for the output thread to finish with a timeout
                 print('Stopping Thor GUI...')
                 window.destroy()
             elif prompt_available == False:
@@ -1451,8 +1506,8 @@ dark_log_checkbutton_var = BooleanVar(value=keep_log_dark)
 tooltip_checkbutton_var = BooleanVar(value=tooltips)
 sudo_checkbutton_var = BooleanVar(value=sudo)
 
-thor_executable_entry_var = tk.StringVar()
-thor_executable_entry_var.trace("w", on_thor_executable_entry_change)
+thor_file_entry_var = tk.StringVar()
+thor_file_entry_var.trace("w", on_thor_file_entry_change)
 
 thor_command_entry_var = tk.StringVar()
 thor_command_entry_var.trace("w", on_thor_command_entry_change)
@@ -1464,10 +1519,10 @@ Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: toggle_vari
 create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15)
 create_label('Thor', Settings_Frame, 'Thor', ('Monospace', 12), 'w')
 
-create_label('Thor_Executable', Settings_Frame, 'Thor executable file (TheAirBlow.Thor.Shell) to use:', ('Monospace', 9), 'w', 15, 5)
+create_label('Thor_Executable', Settings_Frame, 'File used:', ('Monospace', 9), 'w', 15, 5)
 
-Thor_Executable_Entry = Entry('Thor_Executable', Settings_Frame, 'normal', 0, 7, 'we', (15, 120), textvariable=thor_executable_entry_var)
-Thor_Executable_Entry.insert(tk.END, thor_executable)
+Thor_File_Entry = Entry('Thor_File', Settings_Frame, 'normal', 0, 7, 'we', (15, 120), textvariable=thor_file_entry_var)
+Thor_File_Entry.insert(tk.END, thor_file)
 
 Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10)
 
