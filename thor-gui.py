@@ -53,6 +53,8 @@ operating_system = platform.system()
 architecture = platform.machine()
 if architecture == 'aarch64':
     simplified_architecture = 'arm64'
+elif architecture == 'x86_64':
+    simplified_architecture = 'x64'
 else:
     simplified_architecture = architecture
 if operating_system == 'Linux':
@@ -106,7 +108,9 @@ tooltip_dict = {
     'Sudo_Checkbutton': 'Toggle running Thor with/without sudo',
     'Default_Directory_Entry': 'The file picker will open to this directory',
     'Start_Flash_Button': 'Start a flash',
-    'Reset_Button': 'Reset the options in the Options Tab to defaults, and clear the Odin archive check-boxes and archive entries'
+    'Reset_Button': 'Reset the options in the Options Tab to defaults, and clear the Odin archive check-boxes and archive entries',
+    'Thor_File_Button': 'Choose a file',
+    'Default_Directory_Button': 'Choose a directory'
 }
 
 print(f'''
@@ -148,17 +152,6 @@ def dump_variable_file():
         json.dump(filed_variables, f)
 
 def create_variable_file():
-    global architecture, operating_system
-    if architecture == 'aarch64':
-        global simplified_architecture
-        simplified_architecture = 'arm64'
-    else:
-        simplified_architecture = architecture
-    if operating_system == 'Linux':
-        global simplified_operating_system
-        simplified_operating_system = 'linux'
-    else:
-        simplified_operating_system = operating_system
     filed_variables = {
         'version': version,
         'dark_theme': False,
@@ -214,9 +207,7 @@ def start_thor():
             if os.path.exists(expanded_thor_file):
                 Thor = pexpect.spawn(f'{thor_command}', timeout=None, encoding='utf-8')
             else:
-                raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used at: 'Settings - Thor - File used'")
-            if Thor == None:
-                raise Exception('Thor GUI was unable to start Thor because Thor == None. Feel free to open an issue for this on GiHub. TIA.')
+                raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - File used")
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
@@ -237,8 +228,8 @@ def send_command(command, case='normal'):
     if currently_running:
         try:
             if 'exit' in command or 'quit' in command:
-                print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.')
-                show_message('Unsupported command', 'Sadly, stopping Thor independently is currently not supported by Thor GUI.\nTo stop Thor, either click the: \'Stop Thor\' button (which will close the window), or close the window.', [{'text': 'OK', 'fg': 'black'}], window_size=(740, 117))
+                print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the \'Stop Thor\' button (which will close the window), or close the window.')
+                show_message('Unsupported command', 'Sadly, stopping Thor independently is currently not supported by Thor GUI.\nTo stop Thor, either click the \'Stop Thor\' button (which will close the window), or close the window.', [{'text': 'OK', 'fg': 'black'}], window_size=(740, 117))
             else:
                 if prompt_available == True:
                     if case == 'normal' or case == 'entry':
@@ -587,22 +578,16 @@ def apply_options():
     reset_flash_count_status = ResetFlashCount_Option_var.get()
 
 #    if tflash_status == 1:
-
     if efs_clear_status == 1:
         Thor.sendline('options efsclear true')
-
     elif efs_clear_status == 0:
         Thor.sendline('options efsclear false')
-
     if bootloader_update_status == 1:
         Thor.sendline('options blupdate true')
-
     elif bootloader_update_status == 0:
         Thor.sendline('options blupdate false')
-
     if reset_flash_count_status == 1:
         Thor.sendline('options resetfc true')
-
     elif reset_flash_count_status == 0:
         Thor.sendline('options resetfc false')
 
@@ -707,12 +692,22 @@ def open_file(type):
         initialdir = Default_Directory_Entry.get()
         if initialdir == '~' or os.path.isdir(initialdir) == True:
             initial_directory = initialdir
-            if type == 'AP':
+            if type == 'Default':
+                file_path = filedialog.askdirectory(title='Select a default directory', initialdir='~')
+            elif type == 'Thor':
+                file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', 'TheAirBlow.Thor.Shell')])
+            elif type == 'AP':
                 file_path = filedialog.askopenfilename(title=f'Select an {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
             else:
                 file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
             if file_path:
-                if type == 'BL':
+                if type == 'Default':
+                    Default_Directory_Entry.delete(0, 'end')
+                    Default_Directory_Entry.insert(0, file_path)
+                elif type == 'Thor':
+                    Thor_File_Entry.delete(0, 'end')
+                    Thor_File_Entry.insert(0, file_path)
+                elif type == 'BL':
                     BL_Entry.delete(0, 'end')
                     BL_Entry.insert(0, file_path)
                 elif type == 'AP':
@@ -727,7 +722,10 @@ def open_file(type):
                 elif type == 'USERDATA':
                     USERDATA_Entry.delete(0, 'end')
                     USERDATA_Entry.insert(0, file_path)
-                print(f"Selected {type}: '{file_path}' with file picker")
+                if type == 'Default':
+                    print(f"Selected default directory: '{file_path}' with file picker")
+                else:
+                    print(f"Selected {type} file: '{file_path}' with file picker")
         else:
             print(f"Invalid directory - The directory: '{initialdir}' does not exist. You can change your initial file picker directory by going to: Settings - Flashing - Initial file picker directory")
     except tk.TclError:
@@ -1341,10 +1339,10 @@ class Checkbutton():
         return getattr(self.checkbutton, attr)
 
 # Creates labels
-def create_label(name, master, text, font=('Monospace', 11), sticky='we', padx=0, pady=0, anchor='center'):
+def create_label(name, master, text, font=('Monospace', 11), sticky='we', padx=0, pady=0, anchor='center', columnspan=1):
     label = name + '_Label'
     label = ttk.Label(master, text=text, font=font, anchor=anchor)
-    label.grid(sticky=sticky, padx=padx, pady=pady)
+    label.grid(sticky=sticky, padx=padx, pady=pady, columnspan=columnspan)
 
 # Creates text
 def create_text(name, master, lines, font=('Monospace', 11)):
@@ -1505,36 +1503,30 @@ theme_checkbutton_var = BooleanVar(value=dark_theme)
 dark_log_checkbutton_var = BooleanVar(value=keep_log_dark)
 tooltip_checkbutton_var = BooleanVar(value=tooltips)
 sudo_checkbutton_var = BooleanVar(value=sudo)
-
 thor_file_entry_var = tk.StringVar()
 thor_file_entry_var.trace("w", on_thor_file_entry_change)
-
 thor_command_entry_var = tk.StringVar()
 thor_command_entry_var.trace("w", on_thor_command_entry_change)
 
 create_label('Theme', Settings_Frame, 'Appearance', ('Monospace', 12), 'w')
-Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10)
+Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10, (5, 0))
 Dark_Log_Checkbutton = Checkbutton('Dark_Log', Settings_Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, 'Keep Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
-Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10)
-create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15)
+Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10, 0)
+create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15, (0, 0), columnspan=2)
 create_label('Thor', Settings_Frame, 'Thor', ('Monospace', 12), 'w')
-
-create_label('Thor_Executable', Settings_Frame, 'File used:', ('Monospace', 9), 'w', 15, 5)
-
-Thor_File_Entry = Entry('Thor_File', Settings_Frame, 'normal', 0, 7, 'we', (15, 120), textvariable=thor_file_entry_var)
+create_label('Thor_File', Settings_Frame, 'The "TheAirBlow.Thor.Shell" file to use:', ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
+Thor_File_Entry = Entry('Thor_File', Settings_Frame, 'normal', 0, 7, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
 Thor_File_Entry.insert(tk.END, thor_file)
-
-Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10)
-
-create_label('Thor_Command', Settings_Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 5)
-
-Thor_Command_Entry = Entry('Thor_Command', Settings_Frame, 'normal', 0, 10, 'we', (15, 120), textvariable=thor_command_entry_var)
+Thor_File_Button = Button('Thor_File', Settings_Frame, 'Choose...', lambda: open_file('Thor'), 'normal', 1, 7, 'w', (0,15), 0)
+Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10, (10, 7))
+create_label('Thor_Command', Settings_Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 0, columnspan=2)
+Thor_Command_Entry = Entry('Thor_Command', Settings_Frame, 'normal', 0, 10, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
 Thor_Command_Entry.insert(tk.END, thor_command)
-
 create_label('Flashing', Settings_Frame, 'Flashing', ('Monospace', 12), 'w')
-create_label('Default_Directory', Settings_Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5)
-Default_Directory_Entry = Entry('Default_Directory', Settings_Frame, 'normal', 0, 13, 'we', (15, 120))
+create_label('Default_Directory', Settings_Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5, columnspan=2)
+Default_Directory_Entry = Entry('Default_Directory', Settings_Frame, 'normal', 0, 13, 'we', (15, 5), 0)
 Default_Directory_Entry.insert(tk.END, initial_directory)
+Default_Directory_Button = Button('Default_Directory', Settings_Frame, 'Choose...', lambda: open_file('Default'), 'normal', 1, 13, 'w', (0, 15), 0)
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
