@@ -117,11 +117,9 @@ Aesthetic:
 
 ## Supported platforms
 
-- [x] Linux x64
-- [x] Linux arm64 (not fully tested)
+- [x] Linux (x64 and arm64)
 - [ ] Windows
 - [ ] macOS
-
 
 ## Implemented Thor features
 
@@ -138,8 +136,8 @@ Aesthetic:
 ## To-Do
 
 + Add Windows and macOS support
-+ Add Drag and drop support for the "Path to external Thor build" and "Initial file picker directory" entries.
 + Improve documentation
++ Automate updating screenshots and screen-recordings (for this README)
 
 ## Prerequisites
 
