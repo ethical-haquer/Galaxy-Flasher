@@ -207,7 +207,74 @@ def start_thor():
             if os.path.exists(expanded_thor_file):
                 Thor = pexpect.spawn(f'{thor_command}', timeout=None, encoding='utf-8')
             else:
-                raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - File used")
+                def send_ok():
+                    Thor_File_Not_Found_Window.destroy()
+
+                widgets = [
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': f"The file '{expanded_thor_file}' doesn't exist",
+                            'font': ('Monospace', 11),
+                            'anchor': 'center'
+                        },
+                        'grid_options': {
+                            'row': 0,
+                            'column': 0,
+                            'columnspan': 2,
+                            'padx': 9,
+                            'pady': 9
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
+                            'font': ('Monospace', 11),
+                            'anchor': 'center'
+                        },
+                        'grid_options': {
+                            'row': 1,
+                            'column': 0,
+                            'columnspan': 2,
+                            'padx': 9,
+                            'pady': 9
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
+                            'font': ('Monospace', 11),
+                            'anchor': 'center'
+                        },
+                        'grid_options': {
+                            'row': 2,
+                            'column': 0,
+                            'columnspan': 2,
+                            'padx': 9,
+                            'pady': 9
+                        }
+                    },
+                    {
+                        'type': 'button',
+                        'options': {
+                            'text': 'OK',
+                            'command': send_ok
+                        },
+                        'grid_options': {
+                            'row': 3,
+                            'column': 0,
+                            'columnspan': 2,
+                            'sticky': 'we',
+                            'padx': 5,
+                            'pady': 5
+                        }
+                    }
+                ]
+
+                Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
+                raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The \"TheAirBlow.Thor.Shell\" file to use")
             output_thread = Thread(target=update_output)
             output_thread.daemon = True
             output_thread.start()
@@ -220,7 +287,7 @@ def start_thor():
     except pexpect.exceptions.ExceptionPexpect as e:
         print(f'An Exception occurred in start_thor:\n{e}')
     except Exception as e:
-        print(f'An exception occurred in start_thor:\n{e}')
+        print(f'An Exception occurred in start_thor:\n{e}')
 
 # What most Thor commands go through
 def send_command(command, case='normal'):
@@ -460,7 +527,7 @@ def set_widget_state(*args, state='normal', text=None):
         widget.configure(state=state, text=text)
         if text is not None:
             widget.configure(text=text)
-            
+
 # Tells the program when the user is running Thor with sudo and needs to enter their password
 def set_sudo():
     Command_Entry.configure(show='*')
@@ -576,7 +643,6 @@ def apply_options():
     efs_clear_status = EFSClear_Option_var.get()
     bootloader_update_status = BootloaderUpdate_Option_var.get()
     reset_flash_count_status = ResetFlashCount_Option_var.get()
-
 #    if tflash_status == 1:
     if efs_clear_status == 1:
         Thor.sendline('options efsclear true')
@@ -665,7 +731,6 @@ def show_message(title, message, buttons, window_size=(300, 100)):
     y = window.winfo_rooty() + (window.winfo_height() - height) // 2
     Message_Window.geometry(f'{width}x{height}+{x}+{y}')
     Message_Window.grid_columnconfigure(0, weight=1)
-#    Message_Window.grid_rowconfigure(0, weight=1)
 
     message_label = ttk.Label(Message_Window, text=message, anchor='center')
     message_label.grid(sticky='we', pady=20)
@@ -673,11 +738,64 @@ def show_message(title, message, buttons, window_size=(300, 100)):
     row = 1
     for button in buttons:
         button_text = button.get('text', 'OK')
-        button_fg = button.get('fg', 'black')
         button_command = button.get('command', Message_Window.destroy)
         Button_Widget = ttk.Button(Message_Window, text=button_text, command=button_command)
         Button_Widget.grid(row=row, pady=5)
         row = row + 1
+
+# Creates toplevel windows - Currently used only by create_startup_window() and start_thor(), but will eventually be used for all toplevels - Was quite a PIA to implement, due to timing when to center the window 
+class ToplevelWindow():
+    def __init__(self, master, name, title, widgets):
+        self.master = master
+        self.name = name + '_Window'
+        self.title = title
+        self.widgets = widgets
+        self.stop = False
+        self.window = tk.Toplevel(self.master)
+        self.window.title(self.title)
+        self.window.wm_transient(window)
+        self.window.grab_set()
+        self.window.columnconfigure(0, weight=1)
+        self.window.columnconfigure(1, weight=1)
+        self.create_widgets()
+
+    def center_window(self):
+        self.window.update_idletasks()
+        width = self.window.winfo_width()
+        height = self.window.winfo_height()
+        x = self.master.winfo_rootx() + (self.master.winfo_width() - self.width) // 2
+        y = self.master.winfo_rooty() + (self.master.winfo_height() - self.height) // 2
+        self.window.geometry(f'{self.width}x{self.height}+{x}+{y}')
+
+    def create_widgets(self):
+        def check_if_created():
+            if self.window and not self.window.winfo_exists():
+                return
+            self.window.update_idletasks()
+            self.width = self.window.winfo_width()
+            self.height = self.window.winfo_height()
+            if self.height < 201 or self.width < 201:
+                t = Timer(0.1, check_if_created)
+                t.start()
+            else:
+                self.center_window()
+        
+        t = Timer(0.1, check_if_created)
+        t.start()
+        for widget in self.widgets:
+            widget_type = widget['type']
+            widget_options = widget['options']
+            widget_grid_options = widget['grid_options']
+            
+            if widget_type == 'label':
+                label = tk.Label(self.window, **widget_options)
+                label.grid(**widget_grid_options)
+            elif widget_type == 'button':
+                button = ttk.Button(self.window, **widget_options)
+                button.grid(**widget_grid_options)
+        
+    def __getattr__(self, attr):
+        return getattr(self.window, attr)
 
 # Opens the file picker when an Odin archive button is clicked
 def open_file(type):
@@ -730,8 +848,6 @@ def open_file(type):
             print(f"Invalid directory - The directory: '{initialdir}' does not exist. You can change your initial file picker directory by going to: Settings - Flashing - Initial file picker directory")
     except tk.TclError:
         pass
-    except pexpect.exceptions.TIMEOUT:
-        print('A Timeout occurred in start_thor')
     except Exception as e:
         print(f'An exception occurred in open_file: {e}')
 
@@ -831,7 +947,6 @@ def select_partitions(path, name):
     try:
         selected_files = []
         selected_files.clear()
-        combined_file = os.path.join(path, name)
         def get_files_from_tar(path, name):
             file_names = []
             with tarfile.open(os.path.join(path, name), 'r') as tar:
@@ -963,7 +1078,7 @@ def verify_flash():
 def open_link(link):
     webbrowser.open(link)
 
-# Deals with showing links - From https://github.com/GregDMeyer/PWman/blob/master/tkHyperlinkManager.py, which itself is from http://effbot.org/zone/tkinter-text-hyperlink.htm, but that site no longer exists
+# Deals with showing links - From https://github.com/GregDMeyer/PWman/blob/master/tkHyperlinkManager.py, which itself is from http://effbot.org/zone/tkinter-text-hyperlink.html, but that site no longer exists
 class HyperlinkManager:
 
     def __init__(self, text):
@@ -1092,32 +1207,7 @@ def create_startup_window():
             compatibility_message = "It looks like you're using Windows, so sadly Thor GUI won't work for you."
         elif operating_system == 'Darwin':
             compatibility_message = "It looks like you're using macOS, so sadly Thor GUI won't work for you."
-        Startup_Window = tk.Toplevel(window)
-        Startup_Window.title('Thor GUI - A GUI for the Thor Flash Utility')
-        Startup_Window.wm_transient(window)
-        Startup_Window.grab_set()
-        Startup_Window.update_idletasks()
-        Startup_Window.columnconfigure(0, weight=1)
-        Startup_Window.columnconfigure(1, weight=1)
-
-        Label = ttk.Label(Startup_Window, text='Welcome to Thor GUI!', font=('Monospace', 11), anchor='center')
-        Label.grid(row=0, column=0, columnspan=2, pady=9)
-
-        Label2 = ttk.Label(Startup_Window, text="If you're not sure how to use Thor GUI, click the 'Help' tab.", font=('Monospace', 11), anchor='center')
-        Label2.grid(row=2, column=0, columnspan=2, pady=9)
-
-        Label3 = ttk.Label(Startup_Window, text="For info about Thor GUI, click the 'About' tab.", font=('Monospace', 11), anchor='center')
-        Label3.grid(row=1, column=0, columnspan=2, pady=9)
-
-        Label4 = ttk.Label(Startup_Window, text='Thor GUI currently only supports Linux.', font=('Monospace', 11), anchor='center')
-        Label4.grid(row=3, column=0, columnspan=2, pady=9)
-
-        Label5 = ttk.Label(Startup_Window, text=compatibility_message, font=('Monospace', 11), anchor='center')
-        Label5.grid(row=4, column=0, columnspan=2, pady=9)
-
-        Label6 = ttk.Label(Startup_Window, text="Click 'Close' to close this window, or 'Cancel' to close Thor GUI.", font=('Monospace', 11), anchor='center')
-        Label6.grid(row=6, column=0, columnspan=2, pady=9)
-
+        
         def send_cancel():
             Startup_Window.destroy()
             on_window_close()
@@ -1127,19 +1217,130 @@ def create_startup_window():
             first_run = False
             Startup_Window.destroy()
 
-        Cancel_Button = ttk.Button(Startup_Window, text='Cancel', command=send_cancel)
-        Cancel_Button.grid(row=7, column=0, sticky='we', pady=5, padx=(5,2.5))
+        widgets = [
+            {
+                'type': 'label',
+                'options': {
+                    'text': 'Welcome to Thor GUI!',
+                    'font': ('Monospace', 11),
+                    'anchor': 'center'
+                },
+                'grid_options': {
+                    'row': 0,
+                    'column': 0,
+                    'columnspan': 2,
+                    'padx': 9,
+                    'pady': 9
+                }
+            },
+            {
+                'type': 'label',
+                'options': {
+                    'text': "If you're not sure how to use Thor GUI, click the 'Help' tab.",
+                    'font': ('Monospace', 11),
+                    'anchor': 'center'
+                },
+                'grid_options': {
+                    'row': 1,
+                    'column': 0,
+                    'columnspan': 2,
+                    'padx': 9,
+                    'pady': 9
+                }
+            },
+            {
+                'type': 'label',
+                'options': {
+                    'text': "For info about Thor GUI, click the 'About' tab.",
+                    'font': ('Monospace', 11),
+                    'anchor': 'center'
+                },
+                'grid_options': {
+                    'row': 2,
+                    'column': 0,
+                    'columnspan': 2,
+                    'padx': 9,
+                    'pady': 9
+                }
+            },
+            {
+                'type': 'label',
+                'options': {
+                    'text': 'Thor GUI currently only supports Linux.',
+                    'font': ('Monospace', 11),
+                    'anchor': 'center'
+                },
+                'grid_options': {
+                    'row': 3,
+                    'column': 0,
+                    'columnspan': 2,
+                    'padx': 9,
+                    'pady': 9
+                }
+            },
+            {
+                'type': 'label',
+                'options': {
+                    'text': compatibility_message,
+                    'font': ('Monospace', 11),
+                    'anchor': 'center'
+                },
+                'grid_options': {
+                    'row': 4,
+                    'column': 0,
+                    'columnspan': 2,
+                    'padx': 9,
+                    'pady': 9
+                }
+            },
+            {
+                'type': 'label',
+                'options': {
+                    'text': "Click 'Close' to close this window, or 'Cancel' to close Thor GUI.",
+                    'font': ('Monospace', 11),
+                    'anchor': 'center'
+                },
+                'grid_options': {
+                    'row': 5,
+                    'column': 0,
+                    'columnspan': 2,
+                    'padx': 9,
+                    'pady': 9
+                }
+            },
+            {
+                'type': 'button',
+                'options': {
+                    'text': 'Cancel',
+                    'command': send_cancel
+                },
+                'grid_options': {
+                    'row': 6,
+                    'column': 0,
+                    'columnspan': 1,
+                    'sticky': 'we',
+                    'padx': (5, 2.5),
+                    'pady': 5
+                }
+            },
+            {
+                'type': 'button',
+                'options': {
+                    'text': 'Close',
+                    'command': send_close
+                },
+                'grid_options': {
+                    'row': 6,
+                    'column': 1,
+                    'columnspan': 1,
+                    'sticky': 'we',
+                    'padx': (2.5, 5),
+                    'pady': 5
+                }
+            }
+        ]
 
-        Close_Button = ttk.Button(Startup_Window, text='Close', command=send_close)
-        Close_Button.grid(row=7, column=1, sticky='we', pady=5, padx=(2.5,5))
-
-        width = 640
-        height = 257
-        x = window.winfo_rootx() + (window.winfo_width() - width) // 2
-        y = window.winfo_rooty() + (window.winfo_height() - height) // 2
-        Startup_Window.geometry(f'{width}x{height}+{x}+{y}')
-
-        Startup_Window.mainloop()
+        Startup_Window = ToplevelWindow(window, 'Startup', 'Thor GUI - A GUI for the Thor Flash Utility', widgets)
     except Exception as e:
         print(f'An exception occurred in create_startup_window: {e}')
 
@@ -1634,7 +1835,7 @@ if tooltips == True:
 
 # Shows the setup window if first_run == True
 if first_run == True:
-    window.after(0,create_startup_window)
+    window.after(0, create_startup_window)
 
 # Runs the Tkinter event loop
 window.mainloop()
