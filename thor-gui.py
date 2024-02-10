@@ -38,7 +38,7 @@ from tktooltip import ToolTip
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import sv_ttk
 
-version = 'Alpha v0.4.5'
+version = 'Alpha v0.4.6'
 
 path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
 currently_running = False
@@ -62,7 +62,7 @@ if operating_system == 'Linux':
 else:
     simplified_operating_system = operating_system
 prevent_blowback = False
-# Fools Thor into thinking it's being run from xterm, a true one-liner
+# Makes Thor think it's being run from xterm, a true one-liner
 os.environ['TERM'] = 'xterm'
 
 successful_commands = []
@@ -78,21 +78,21 @@ tooltip_dict = {
     'Space_Button': "Send Thor a 'Space'",
     'Page_Up_Button': "Send Thor a 'Page Up'",
     'Page_Down_Button': "Send Thor a 'Page Down'",
-    'BL_Checkbutton': 'The Odin archives selected with these check-boxes will be flashed',
-    'AP_Checkbutton': 'The Odin archives selected with these check-boxes will be flashed',
-    'CP_Checkbutton': 'The Odin archives selected with these check-boxes will be flashed',
-    'CSC_Checkbutton': 'The Odin archives selected with these check-boxes will be flashed',
-    'USERDATA_Checkbutton': 'The Odin archives selected with these check-boxes will be flashed',
+    'BL_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
+    'AP_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
+    'CP_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
+    'CSC_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
+    'USERDATA_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
     'BL_Button': 'Select a BL file',
     'AP_Button': 'Select an AP file',
     'CP_Button': 'Select a CP file',
     'CSC_Button': 'Select a CSC file',
     'USERDATA_Button': 'Select a USERDATA file',
-    'BL_Entry': "Drag and drop a BL file here, or paste it's path",
-    'AP_Entry': "Drag and drop an AP file here, or paste it's path",
-    'CP_Entry': "Drag and drop a CP file here, or paste it's path",
-    'CSC_Entry': "Drag and drop a CSC file here, or paste it's path",
-    'USERDATA_Entry': "Drag and drop a USERDATA file here, or paste it's path",
+    'BL_Entry': "Drag and drop a BL file here,\nor paste it's path",
+    'AP_Entry': "Drag and drop an AP file here,\nor paste it's path",
+    'CP_Entry': "Drag and drop a CP file here,\nor paste it's path",
+    'CSC_Entry': "Drag and drop a CSC file here,\nor paste it's path",
+    'USERDATA_Entry': "Drag and drop a USERDATA file here,\nor paste it's path",
     'Log_Button': 'Log Tab',
     'Options_Button': 'Options Tab',
     'Pit_Button': 'Pit Tab',
@@ -175,8 +175,8 @@ def recreate_variable_file():
     filed_variables['sudo'] = False
     filed_variables['initial_directory'] = '~'
     filed_variables['first_run'] = True
-    filed_variables['thor_file'] = '~'
-    filed_variables['thor_command'] = '~'
+    filed_variables['thor_file'] = f'{path_to_thor_gui}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
+    filed_variables['thor_command'] = f'{path_to_thor_gui}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
     filed_variables['keep_log_dark'] = False
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
@@ -214,46 +214,52 @@ def start_thor():
                     {
                         'type': 'label',
                         'options': {
-                            'text': f"The file '{expanded_thor_file}' doesn't exist",
-                            'font': ('Monospace', 11),
-                            'anchor': 'center'
+                            'text': f"The file:",
                         },
                         'grid_options': {
-                            'row': 0,
-                            'column': 0,
                             'columnspan': 2,
-                            'padx': 9,
-                            'pady': 9
+                            'pady': 5
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': f"'{expanded_thor_file}'",
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 0
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': "doesn't exist",
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'padx': 100,
+                            'pady': 5
                         }
                     },
                     {
                         'type': 'label',
                         'options': {
                             'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
-                            'font': ('Monospace', 11),
-                            'anchor': 'center'
                         },
                         'grid_options': {
-                            'row': 1,
-                            'column': 0,
                             'columnspan': 2,
-                            'padx': 9,
-                            'pady': 9
+                            'pady': 0
                         }
                     },
                     {
                         'type': 'label',
                         'options': {
                             'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
-                            'font': ('Monospace', 11),
-                            'anchor': 'center'
                         },
                         'grid_options': {
-                            'row': 2,
-                            'column': 0,
                             'columnspan': 2,
-                            'padx': 9,
-                            'pady': 9
+                            'pady': 5
                         }
                     },
                     {
@@ -263,12 +269,9 @@ def start_thor():
                             'command': send_ok
                         },
                         'grid_options': {
-                            'row': 3,
-                            'column': 0,
                             'columnspan': 2,
                             'sticky': 'we',
-                            'padx': 5,
-                            'pady': 5
+                            'pady': (0, 5)
                         }
                     }
                 ]
@@ -295,8 +298,56 @@ def send_command(command, case='normal'):
     if currently_running:
         try:
             if 'exit' in command or 'quit' in command:
+                def send_ok():
+                    Unsupported_Command_Window.destroy()
+
+                widgets = [
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': "Sadly, stopping Thor independently is currently not supported by Thor GUI.",
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 5
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': "To stop Thor, either click the 'Stop Thor' button (which will close the window),",
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 0
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': 'or close the window.',
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 5
+                        }
+                    },
+                    {
+                        'type': 'button',
+                        'options': {
+                            'text': 'OK',
+                            'command': send_ok
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'sticky': 'we',
+                            'pady': (0, 5)
+                        }
+                    }
+                ]
+
+                Unsupported_Command_Window = ToplevelWindow(window, 'Unsupported_Command', 'Unsupported command', widgets)
                 print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the \'Stop Thor\' button (which will close the window), or close the window.')
-                show_message('Unsupported command', 'Sadly, stopping Thor independently is currently not supported by Thor GUI.\nTo stop Thor, either click the \'Stop Thor\' button (which will close the window), or close the window.', [{'text': 'OK', 'fg': 'black'}], window_size=(740, 117))
             else:
                 if prompt_available == True:
                     if case == 'normal' or case == 'entry':
@@ -449,7 +500,109 @@ def scan_output():
             if 'Option \'Reset Flash Count\' is set to \'True\'' in clean_line:
                 ResetFlashCount_Option_var = ttk.IntVar(value=True)
         elif 'Failed to open the device for RW: Permission denied (13)' in clean_line:
-            run_function(show_message('Oops!', 'Thor just said:\n\'Failed to open the device for RW: Permission denied (13)\'.\n\nA possible fix is to:\n1. Go to the Settings Tab,\n2. Toggle on \'Run Thor with sudo\',\n3. Restart Thor GUI,\n4. Try connecting again.\n\nIf it still doesn\'t work, feel free to let me know!', [{'text': 'OK', 'fg': 'black'}], (460, 252)))
+            def send_ok():
+                Permission_Denied_Window.destroy()
+
+            widgets = [
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': "Thor just said:",
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5
+                    }
+                },
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': "'Failed to open the device for RW: Permission denied (13)'",
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 0
+                    }
+                },
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': 'A possible fix is to:',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5
+                    }
+                },
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': '1. Go to the Settings Tab,',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5,
+                        'sticky': 'w'
+                    }
+                },
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': '2. Toggle on \'Run Thor with sudo\',',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5,
+                        'sticky': 'w'
+                    }
+                },
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': '3. Restart Thor GUI,',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5,
+                        'sticky': 'w'
+                    }
+                },
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': '4. Try connecting again.',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5,
+                        'sticky': 'w'
+                    }
+                },
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': 'If it still doesn\'t work, feel free to let me know!',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5,
+                    }
+                },
+                {
+                    'type': 'button',
+                    'options': {
+                        'text': 'OK',
+                        'command': send_ok
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'sticky': 'we',
+                        'pady': (0, 5)
+                    }
+                }
+            ]
+
+            Permission_Denied_Window = ToplevelWindow(window, 'Permission_Denied', 'Oops!', widgets)
     except Exception as e:
         print(f'An exception occurred in scan_output: \'{e}\'')
 
@@ -680,11 +833,77 @@ def start_flash():
                 if file_path.endswith(('.tar', '.zip', '.md5')):
                     return True
                 else:
+                    def send_ok():
+                        Invalid_File_Window.destroy()
+
+                    widgets = [
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': 'Invalid {file_type} file selected',
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 5
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': 'Files must be .tar, .zip, or .md5',
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 0
+                            }
+                        },
+                        {
+                            'type': 'button',
+                            'options': {
+                                'text': 'OK',
+                                'command': send_ok
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'sticky': 'we',
+                                'pady': 5
+                            }
+                        }
+                    ]
+
+                    Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', 'Invalid file', widgets)
                     print(f'Invalid {file_type} file selected - Files must be .tar, .zip, or .md5')
-                    show_message('Invalid file', 'Files must be .tar, .zip, or .md5', [{'text': 'OK'}], window_size=(400, 100))
             else:
+                def send_ok():
+                    Invalid_File_Window.destroy()
+
+                widgets = [
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': 'The selected {file_type} file does not exist',
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 5
+                        }
+                    },
+                    {
+                        'type': 'button',
+                        'options': {
+                            'text': 'OK',
+                            'command': send_ok
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'sticky': 'we',
+                            'pady': 5
+                        }
+                    }
+                ]
+
+                Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', 'Invalid file', widgets)
                 print(f'Invalid {file_type} file selected - The file does not exist')
-                show_message('Invalid file', f'The selected {file_type} file does not exist', [{'text': 'OK'}], window_size=(400, 100))
             return False
 
         for checkbox_var, entry, file_type in checkboxes:
@@ -696,52 +915,91 @@ def start_flash():
                 unique_directories.add(os.path.dirname(file_path))
 
         if len(odin_archives) == 0:
+            def send_ok():
+                No_Selected_Files_Window.destroy()
+
+            widgets = [
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': 'No files were selected',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5
+                    }
+                },
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': 'Please select at least one file',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 0
+                    }
+                },
+                {
+                    'type': 'button',
+                    'options': {
+                        'text': 'OK',
+                        'command': send_ok
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'sticky': 'we',
+                        'pady': 5
+                    }
+                }
+            ]
+
+            No_Selected_Files_Window = ToplevelWindow(window, 'No_Selected_Files', 'No selected files', widgets)
             print('No files were selected - Please select at least one file')
-            show_message('No files selected', 'Please select at least one file', [{'text': 'OK', 'fg': 'black'}], window_size=(400, 100))
             return False
 
         if len(unique_directories) > 1:
+            def send_ok():
+                No_Selected_Files_Window.destroy()
+
+            widgets = [
+                {
+                    'type': 'label',
+                    'options': {
+                        'text': 'All selected files must be in the same directory',
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'pady': 5
+                    }
+                },
+                {
+                    'type': 'button',
+                    'options': {
+                        'text': 'OK',
+                        'command': send_ok
+                    },
+                    'grid_options': {
+                        'columnspan': 2,
+                        'sticky': 'we',
+                        'pady': 5
+                    }
+                }
+            ]
+
+            Invalid_Files_Window = ToplevelWindow(window, 'Invalid_Files', 'Invalid files', widgets)
             print('Invalid files - All selected files must be in the same directory')
-            show_message('Invalid files', 'All selected files must be in the same directory', [{'text': 'OK', 'fg': 'black'}], window_size=(400, 100))
             return False
 
         common_directory = unique_directories.pop()
         graphical_flash = True
-        # A tip from @justaCasulCoder to handle file-paths with spaces
-        #send_command(f'flashTar {common_directory}')
-        send_command(f"flashTar '{common_directory}'")
+        # A tip from @justaCasulCoder to handle file-paths with spaces - EDIT: Caused Thor to complain, so was reverted
+        #send_command(f"flashTar '{common_directory}'")
+        send_command(f'flashTar {common_directory}')
 
     except Exception as e:
         print(f'An exception occurred in start_flash: {e}')
 
     return True
-
-# Opens message-boxes - Used by start_flash
-def show_message(title, message, buttons, window_size=(300, 100)):
-    global Message_Window
-
-    Message_Window = tk.Toplevel(window)
-    Message_Window.title(title)
-    Message_Window.wm_transient(window)
-    Message_Window.grab_set()
-    Message_Window.update_idletasks()
-
-    width, height = window_size
-    x = window.winfo_rootx() + (window.winfo_width() - width) // 2
-    y = window.winfo_rooty() + (window.winfo_height() - height) // 2
-    Message_Window.geometry(f'{width}x{height}+{x}+{y}')
-    Message_Window.grid_columnconfigure(0, weight=1)
-
-    message_label = ttk.Label(Message_Window, text=message, anchor='center')
-    message_label.grid(sticky='we', pady=20)
-
-    row = 1
-    for button in buttons:
-        button_text = button.get('text', 'OK')
-        button_command = button.get('command', Message_Window.destroy)
-        Button_Widget = ttk.Button(Message_Window, text=button_text, command=button_command)
-        Button_Widget.grid(row=row, pady=5)
-        row = row + 1
 
 # Creates toplevel windows - Currently used only by create_startup_window() and start_thor(), but will eventually be used for all toplevels - Was quite a PIA to implement, due to timing when to center the window 
 class ToplevelWindow():
@@ -786,6 +1044,10 @@ class ToplevelWindow():
             widget_type = widget['type']
             widget_options = widget['options']
             widget_grid_options = widget['grid_options']
+            if 'padx' in widget_grid_options:
+                pass
+            else:
+                widget_grid_options['padx'] = 5
             
             if widget_type == 'label':
                 label = tk.Label(self.window, **widget_options)
@@ -1222,90 +1484,60 @@ def create_startup_window():
                 'type': 'label',
                 'options': {
                     'text': 'Welcome to Thor GUI!',
-                    'font': ('Monospace', 11),
-                    'anchor': 'center'
                 },
                 'grid_options': {
-                    'row': 0,
-                    'column': 0,
                     'columnspan': 2,
-                    'padx': 9,
-                    'pady': 9
+                    'pady': 5
                 }
             },
             {
                 'type': 'label',
                 'options': {
                     'text': "If you're not sure how to use Thor GUI, click the 'Help' tab.",
-                    'font': ('Monospace', 11),
-                    'anchor': 'center'
                 },
                 'grid_options': {
-                    'row': 1,
-                    'column': 0,
                     'columnspan': 2,
-                    'padx': 9,
-                    'pady': 9
+                    'pady': 0
                 }
             },
             {
                 'type': 'label',
                 'options': {
                     'text': "For info about Thor GUI, click the 'About' tab.",
-                    'font': ('Monospace', 11),
-                    'anchor': 'center'
                 },
                 'grid_options': {
-                    'row': 2,
-                    'column': 0,
                     'columnspan': 2,
-                    'padx': 9,
-                    'pady': 9
+                    'pady': 5
                 }
             },
             {
                 'type': 'label',
                 'options': {
                     'text': 'Thor GUI currently only supports Linux.',
-                    'font': ('Monospace', 11),
-                    'anchor': 'center'
                 },
                 'grid_options': {
-                    'row': 3,
-                    'column': 0,
                     'columnspan': 2,
-                    'padx': 9,
-                    'pady': 9
+                    'pady': 0
                 }
             },
             {
                 'type': 'label',
                 'options': {
                     'text': compatibility_message,
-                    'font': ('Monospace', 11),
-                    'anchor': 'center'
                 },
                 'grid_options': {
-                    'row': 4,
-                    'column': 0,
                     'columnspan': 2,
-                    'padx': 9,
-                    'pady': 9
+                    'pady': 5
                 }
             },
             {
                 'type': 'label',
                 'options': {
                     'text': "Click 'Close' to close this window, or 'Cancel' to close Thor GUI.",
-                    'font': ('Monospace', 11),
-                    'anchor': 'center'
                 },
                 'grid_options': {
-                    'row': 5,
-                    'column': 0,
                     'columnspan': 2,
-                    'padx': 9,
-                    'pady': 9
+                    'pady': 0
                 }
             },
             {
@@ -1315,8 +1547,6 @@ def create_startup_window():
                     'command': send_cancel
                 },
                 'grid_options': {
-                    'row': 6,
-                    'column': 0,
                     'columnspan': 1,
                     'sticky': 'we',
                     'padx': (5, 2.5),
@@ -1581,8 +1811,14 @@ window.grid_rowconfigure(7, weight=1)
 window.grid_columnconfigure(6, weight=1)
 
 # Creates the main window widgets
-Title_Label = ttk.Label(window, text='Thor Flash Utility v1.0.4', font=('Monospace', 20), anchor='center')
-Title_Label.grid(row=0, column=0, columnspan=7, rowspan=2, sticky='nesw')
+Title_Label = ttk.Label(window, text=f'Thor GUI - {version}', font=('Monospace', 20), anchor='center')
+Title_Label.grid(row=0, column=0, columnspan=7, rowspan=2, sticky='nesw', padx=5)
+
+#Title_Label = ttk.Label(window, text='Thor GUI', font=('Monospace', 25), anchor='center')
+#Title_Label.grid(row=0, column=0, columnspan=4, rowspan=2, sticky='nes', padx=5)
+
+#Version_Label = ttk.Label(window, text=f'{version}', font=('Monospace', 15), anchor='center')
+#Version_Label.grid(row=0, column=4, columnspan=3, rowspan=2, sticky='sw', padx=5, pady=20)
 
 Start_Button = Button('Start', window, 'Start Thor', start_thor, 'normal', 8, 0, 'we', 5)
 Begin_Button = Button('Begin', window, 'Start Odin Protocol', toggle_odin, 'disabled', 10, 0, 'we', 5, 5, 2)
