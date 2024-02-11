@@ -194,103 +194,190 @@ else:
     create_variable_file()
 load_variable_file()
 
-# This starts and stops Thor
-def start_thor():
-    global Thor, output_thread, currently_running, prompt_available, sudo, start_button_message, external_thor, thor_command
-    try:
-        if currently_running:
-            on_window_close()
-        elif not currently_running:
-            thor_file = Thor_File_Entry.get()
-            thor_command = Thor_Command_Entry.get()
-            expanded_thor_file = os.path.expanduser(thor_file)
-            if os.path.exists(expanded_thor_file):
-                Thor = pexpect.spawn(f'{thor_command}', timeout=None, encoding='utf-8')
-            else:
-                def send_ok():
-                    Thor_File_Not_Found_Window.destroy()
+# A work-in-progress
+class FlashTool:
+    def __init__(self, tool):
+        self.tool = tool
 
-                widgets = [
-                    {
-                        'type': 'label',
-                        'options': {
-                            'text': f"The file:",
-                        },
-                        'grid_options': {
-                            'columnspan': 2,
-                            'pady': 5
-                        }
-                    },
-                    {
-                        'type': 'label',
-                        'options': {
-                            'text': f"'{expanded_thor_file}'",
-                        },
-                        'grid_options': {
-                            'columnspan': 2,
-                            'pady': 0
-                        }
-                    },
-                    {
-                        'type': 'label',
-                        'options': {
-                            'text': "doesn't exist",
-                        },
-                        'grid_options': {
-                            'columnspan': 2,
-                            'padx': 100,
-                            'pady': 5
-                        }
-                    },
-                    {
-                        'type': 'label',
-                        'options': {
-                            'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
-                        },
-                        'grid_options': {
-                            'columnspan': 2,
-                            'pady': 0
-                        }
-                    },
-                    {
-                        'type': 'label',
-                        'options': {
-                            'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
-                        },
-                        'grid_options': {
-                            'columnspan': 2,
-                            'pady': 5
-                        }
-                    },
-                    {
-                        'type': 'button',
-                        'options': {
-                            'text': 'OK',
-                            'command': send_ok
-                        },
-                        'grid_options': {
-                            'columnspan': 2,
-                            'sticky': 'we',
-                            'pady': (0, 5)
-                        }
-                    }
-                ]
+    def start(self):
+        global Thor, output_thread, currently_running, thor_command
+        try:
+            if self.tool == 'thor':
+                thor_file = Thor_File_Entry.get()
+                thor_command = Thor_Command_Entry.get()
+                expanded_thor_file = os.path.expanduser(thor_file)
+                if os.path.exists(expanded_thor_file):
+                    Thor = pexpect.spawn(f'{thor_command}', timeout=None, encoding='utf-8')
+                else:
+                    def send_ok():
+                        Thor_File_Not_Found_Window.destroy()
 
-                Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
-                raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The \"TheAirBlow.Thor.Shell\" file to use")
-            output_thread = Thread(target=update_output)
-            output_thread.daemon = True
-            output_thread.start()
-            currently_running = True
-            Start_Button.configure(text='Stop Thor')
-            tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
-            print('Started Thor')
-    except pexpect.exceptions.TIMEOUT:
-        print('A Timeout occurred in start_thor')
-    except pexpect.exceptions.ExceptionPexpect as e:
-        print(f'An Exception occurred in start_thor:\n{e}')
-    except Exception as e:
-        print(f'An Exception occurred in start_thor:\n{e}')
+                    widgets = [
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': 'The file:',
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 5
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': f"'{expanded_thor_file}'",
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 0
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': "doesn't exist",
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'padx': 100,
+                                'pady': 5
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 0
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 5
+                            }
+                        },
+                        {
+                            'type': 'button',
+                            'options': {
+                                'text': 'OK',
+                                'command': send_ok
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'sticky': 'we',
+                                'pady': (0, 5)
+                            }
+                        }
+                    ]
+
+                    Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
+                    raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The \"TheAirBlow.Thor.Shell\" file to use")
+                output_thread = Thread(target=update_output)
+                output_thread.daemon = True
+                output_thread.start()
+                currently_running = True
+                Start_Button.configure(text='Stop Thor')
+                tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
+                print('Started Thor')
+            elif self.tool == 'heimdall':
+                thor_file = Thor_File_Entry.get()
+                thor_command = Thor_Command_Entry.get()
+                expanded_thor_file = os.path.expanduser(thor_file)
+                if os.path.exists(expanded_thor_file):
+                    Thor = pexpect.spawn('heimdall', timeout=None, encoding='utf-8')
+                else:
+                    def send_ok():
+                        Thor_File_Not_Found_Window.destroy()
+
+                    widgets = [
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': 'The file:',
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 5
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': f"'{expanded_thor_file}'",
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 0
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': "doesn't exist",
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'padx': 100,
+                                'pady': 5
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 0
+                            }
+                        },
+                        {
+                            'type': 'label',
+                            'options': {
+                                'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'pady': 5
+                            }
+                        },
+                        {
+                            'type': 'button',
+                            'options': {
+                                'text': 'OK',
+                                'command': send_ok
+                            },
+                            'grid_options': {
+                                'columnspan': 2,
+                                'sticky': 'we',
+                                'pady': (0, 5)
+                            }
+                        }
+                    ]
+
+                    Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
+                    raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The \"TheAirBlow.Thor.Shell\" file to use")
+                output_thread = Thread(target=update_output)
+                output_thread.daemon = True
+                output_thread.start()
+                currently_running = True
+                Start_Button.configure(text='Stop Thor')
+                tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
+                print('Started Thor')
+        except pexpect.exceptions.TIMEOUT:
+            print('A Timeout occurred in start')
+        except pexpect.exceptions.ExceptionPexpect as e:
+            print(f'An Exception occurred in start:\n{e}')
+        except Exception as e:
+            print(f'An Exception occurred in start:\n{e}')
 
 # What most Thor commands go through
 def send_command(command, case='normal'):
@@ -636,6 +723,9 @@ def determine_tag(line):
     dark_blue = [
 
     ]
+    default = [
+        'Usage: heimdall <action> <action arguments>'
+    ]
     red = [
         '~~~~~~~^'
     ]
@@ -661,6 +751,8 @@ def determine_tag(line):
         tag = 'orange'
     elif line in dark_blue:
         tag = 'dark_blue'
+    elif line in default:
+        tag = 'default'
     elif line in red:
         tag = 'red'
     elif line in green_italic:
@@ -727,6 +819,14 @@ def set_odin(value):
             tooltip_manager.change_tooltip(Begin_Button, 'Start an Odin session')
             set_widget_state(Apply_Options_Button, Start_Flash_Button, state='disabled')
             odin_running == False
+
+def toggle_start():
+    global currently_running
+    if currently_running:
+        on_window_close()
+    else:
+        flash_tool = FlashTool('thor')
+        flash_tool.start()
 
 # Handles connecting / disconnecting devices
 def toggle_connection():
@@ -959,7 +1059,7 @@ def start_flash():
 
         if len(unique_directories) > 1:
             def send_ok():
-                No_Selected_Files_Window.destroy()
+                Invalid_Files_Window.destroy()
 
             widgets = [
                 {
@@ -1001,7 +1101,7 @@ def start_flash():
 
     return True
 
-# Creates toplevel windows - Currently used only by create_startup_window() and start_thor(), but will eventually be used for all toplevels - Was quite a PIA to implement, due to timing when to center the window 
+# Creates toplevel windows - Was quite a PIA to implement, due to timing when to center the window 
 class ToplevelWindow():
     def __init__(self, master, name, title, widgets):
         self.master = master
@@ -1013,17 +1113,19 @@ class ToplevelWindow():
         self.window.title(self.title)
         self.window.wm_transient(window)
         self.window.grab_set()
+        self.window.withdraw()
         self.window.columnconfigure(0, weight=1)
         self.window.columnconfigure(1, weight=1)
         self.create_widgets()
 
     def center_window(self):
         self.window.update_idletasks()
-        width = self.window.winfo_width()
-        height = self.window.winfo_height()
+        self.width = self.window.winfo_width()
+        self.height = self.window.winfo_height()
         x = self.master.winfo_rootx() + (self.master.winfo_width() - self.width) // 2
         y = self.master.winfo_rooty() + (self.master.winfo_height() - self.height) // 2
         self.window.geometry(f'{self.width}x{self.height}+{x}+{y}')
+        self.window.deiconify()
 
     def create_widgets(self):
         def check_if_created():
@@ -1032,14 +1134,13 @@ class ToplevelWindow():
             self.window.update_idletasks()
             self.width = self.window.winfo_width()
             self.height = self.window.winfo_height()
-            if self.height < 201 or self.width < 201:
+            if self.width < 2 or self.height < 2:
                 t = Timer(0.1, check_if_created)
                 t.start()
             else:
                 self.center_window()
         
-        t = Timer(0.1, check_if_created)
-        t.start()
+        check_if_created()
         for widget in self.widgets:
             widget_type = widget['type']
             widget_options = widget['options']
@@ -1422,32 +1523,37 @@ def on_thor_command_entry_change(*args):
 
 # Changes variables
 def toggle_variable(variable):
-    global dark_theme, tooltips, sudo, external_thor, keep_log_dark
+    global dark_theme, tooltips, sudo, keep_log_dark
     
     if variable == 'dark_theme':
         dark_theme = not dark_theme
         if sv_ttk.get_theme() == 'dark':
             sv_ttk.set_theme('light')
+            Output_Text.tag_configure('default', foreground='#1c1c1c')
         elif sv_ttk.get_theme() == 'light':
             sv_ttk.set_theme('dark')
             Output_Text.configure(bg='#1c1c1c')
+            Output_Text.tag_configure('default', foreground='#fafafa')
         if keep_log_dark == True and dark_theme == False:
             Output_Text.configure(bg='#1c1c1c')
-        
+            Output_Text.tag_configure('default', foreground='#fafafa')
+
     elif variable == 'keep_log_dark':
         keep_log_dark = not keep_log_dark
         if keep_log_dark == True:
             Output_Text.configure(bg='#1c1c1c')
+            Output_Text.tag_configure('default', foreground='#fafafa')
         elif keep_log_dark == False:
             if dark_theme == False:
-                Output_Text.configure(bg='#ffffff')
+                Output_Text.configure(bg='#fafafa')
+                Output_Text.tag_configure('default', foreground='#1c1c1c')
 
     elif variable == 'tooltips':
         tooltips = not tooltips
         if tooltips == True:
             tooltip_manager.create_tooltips()
         elif tooltips == False:
-            tooltip_manager.hide_tooltips()
+            tooltip_manager.destroy_tooltips()
                 
     elif variable == 'sudo':
         sudo = not sudo
@@ -1579,19 +1685,6 @@ def on_window_close():
     global Thor, currently_running, output_thread, prompt_available, Message_Window, version
     try:
         dump_variable_file()
-        def force_stop():
-            global currently_running, version
-            currently_running = False
-            window.after_cancel(start_flash)
-            Thor.sendline('exit')
-            Thor.terminate()
-            Thor.wait()
-            print('Stopped Thor (possibly forcibly)')
-            window.after_cancel(update_output)
-            output_thread.join(timeout=0.25)  # Wait for the output thread to finish with a timeout
-            Force_Close_Window.destroy()
-            print('Stopping Thor GUI...')
-            window.destroy()
         if currently_running:
             if prompt_available == True:
                 currently_running = False
@@ -1605,31 +1698,93 @@ def on_window_close():
                 print('Stopping Thor GUI...')
                 window.destroy()
             elif prompt_available == False:
-                Force_Close_Window = tk.Toplevel(window)
-                Force_Close_Window.title('Force Stop Thor')
-                Force_Close_Window.wm_transient(window)
-                Force_Close_Window.grab_set()
-                Force_Close_Window.update_idletasks()
-                Force_Close_Window.columnconfigure(0, weight=1)
-                Force_Close_Window.columnconfigure(1, weight=1)
-                width = 786
-                height = 132
-                x = window.winfo_rootx() + (window.winfo_width() - width) // 2
-                y = window.winfo_rooty() + (window.winfo_height() - height) // 2
-                Force_Close_Window.geometry(f'{width}x{height}+{x}+{y}')
-                Force_Close_Label = ttk.Label(Force_Close_Window, text='The \'shell>\' prompt isn\'t available, so the \'exit\' command can\'t be sent.', font=('Monospace', 11), anchor='center')
-                Force_Close_Label.grid(columnspan=2, column=0, row=0, sticky='we', pady=(5,2))
-                Force_Close_Label_2 = ttk.Label(Force_Close_Window, text='Thor may be busy, or locked up.', font=('Monospace', 11), anchor='center')
-                Force_Close_Label_2.grid(columnspan=2, column=0, row=1, sticky='we', pady=2)
-                Force_Close_Label_3 = ttk.Label(Force_Close_Window, text='You may force stop Thor by clicking the \'Force Stop\' button.', font=('Monospace', 11), anchor='center')
-                Force_Close_Label_3.grid(columnspan=2, column=0, row=2, sticky='we', pady=2)
-                Force_Close_Label_4 = ttk.Label(Force_Close_Window, text='However, if Thor is in the middle of a flash or something, there will be consequences.', font=('Monospace', 11), anchor='center')
-                Force_Close_Label_4.grid(columnspan=2, column=0, row=3, sticky='we', padx=5, pady=(0,5))
-                Cancel_Force_Stop_Button = ttk.Button(Force_Close_Window, text='Cancel', command=Force_Close_Window.destroy)
-                Cancel_Force_Stop_Button.grid(column=0, row=4, sticky='we', pady=5, padx=(5,2.5))
-                Force_Stop_Button = ttk.Button(Force_Close_Window, text='Force Stop', command=force_stop)
-                Force_Stop_Button.grid(column=1, row=4, sticky='we', pady=5, padx=(2.5,5))
-                Force_Close_Window.mainloop()
+                def cancel():
+                    Force_Close_Window.destroy()
+                def force_stop():
+                    global currently_running, version
+                    currently_running = False
+                    window.after_cancel(start_flash)
+                    Thor.sendline('exit')
+                    Thor.terminate()
+                    Thor.wait()
+                    print('Stopped Thor (possibly forcibly)')
+                    window.after_cancel(update_output)
+                    output_thread.join(timeout=0.25)  # Wait for the output thread to finish with a timeout
+                    Force_Close_Window.destroy()
+                    print('Stopping Thor GUI...')
+                    window.destroy()
+
+                widgets = [
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': "The 'shell>' prompt isn't available, so the 'exit' command can't be sent.",
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 5
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': "Thor may be busy, or locked up.",
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 0
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': "You may force stop Thor by clicking the 'Force Stop' button.",
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 5
+                        }
+                    },
+                    {
+                        'type': 'label',
+                        'options': {
+                            'text': 'However, if Thor is in the middle of a flash or something, there will be consequences.',
+                        },
+                        'grid_options': {
+                            'columnspan': 2,
+                            'pady': 0,
+                            'sticky': 'w'
+                        }
+                    },
+                    {
+                        'type': 'button',
+                        'options': {
+                            'text': 'Cancel',
+                            'command': cancel
+                        },
+                        'grid_options': {
+                            'row': 5,
+                            'column': 0,
+                            'sticky': 'we',
+                            'pady': 5
+                        }
+                    },
+                    {
+                        'type': 'button',
+                        'options': {
+                            'text': 'Force Stop',
+                            'command': force_stop
+                        },
+                        'grid_options': {
+                            'row': 5,
+                            'column': 1,
+                            'sticky': 'we',
+                            'pady': 5
+                        }
+                    }
+                ]
+
+                Force_Close_Window = ToplevelWindow(window, 'Force_Close', 'Force Stop Thor', widgets)
         else:
             window.after_cancel(start_flash)
             print('Stopping Thor GUI...')
@@ -1656,8 +1811,11 @@ class ToolTipManager:
             msg = self.tooltip_dict.get(widget.name)
             ToolTip(widget, msg=msg, delay=self.tooltip_delay, width=len(msg) * 10)
 
-    def hide_tooltips(self):
+    def destroy_tooltips(self):
         for widget in self.needed_tooltips:
+            if self.tooltip is not None:
+                self.tooltip.destroy()
+                self.tooltip = None
             msg='Tooltips will be disabled after a restart'
             if msg:
                 ToolTip(widget, msg=msg, delay=self.tooltip_delay, width=len(msg) * 10)
@@ -1820,7 +1978,8 @@ Title_Label.grid(row=0, column=0, columnspan=7, rowspan=2, sticky='nesw', padx=5
 #Version_Label = ttk.Label(window, text=f'{version}', font=('Monospace', 15), anchor='center')
 #Version_Label.grid(row=0, column=4, columnspan=3, rowspan=2, sticky='sw', padx=5, pady=20)
 
-Start_Button = Button('Start', window, 'Start Thor', start_thor, 'normal', 8, 0, 'we', 5)
+#Start_Button = Button('Start', window, 'Start Thor', start_thor, 'normal', 8, 0, 'we', 5)
+Start_Button = Button('Start', window, 'Start Thor', toggle_start, 'normal', 8, 0, 'we', 5)
 Begin_Button = Button('Begin', window, 'Start Odin Protocol', toggle_odin, 'disabled', 10, 0, 'we', 5, 5, 2)
 Connect_Button = Button('Connect', window, 'Connect', toggle_connection, 'disabled', 9, 0, 'we', 0, 5)
 Command_Entry = Entry('Command', window, 'disabled', 8, 1, 'nesw', 5, 0, 4)
@@ -2056,14 +2215,17 @@ toggle_frame('Log')
 # Binds the on_window_close function to the window's close event
 window.protocol('WM_DELETE_WINDOW', on_window_close)
 
-# Sets what dark_theme to use
+# Sets what theme to use
 if dark_theme:
     sv_ttk.set_theme('dark')
+    Output_Text.tag_configure('default', foreground='#fafafa')
 else:
     sv_ttk.set_theme('light')
+    Output_Text.tag_configure('default', foreground='#1c1c1c')
 
 if keep_log_dark == True:
     Output_Text.configure(bg='#1c1c1c')
+    Output_Text.tag_configure('default', foreground='#fafafa')
 
 # Creates tooltips for buttons and things
 if tooltips == True:
