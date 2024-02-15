@@ -37,10 +37,12 @@ from tkinter import ttk
 from tktooltip import ToolTip
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import sv_ttk
+import locale
 
 version = 'Alpha v0.4.6'
 
-path_to_thor_gui = os.path.dirname(os.path.abspath(sys.argv[0]))
+#cwd = os.path.dirname(os.path.abspath(sys.argv[0]))
+cwd = os.getcwd()
 currently_running = False
 odin_running = False
 Thor = None
@@ -68,6 +70,22 @@ os.environ['TERM'] = 'xterm'
 successful_commands = []
 
 odin_archives = []
+
+# Load translation file if available, otherwise fallback to English US
+#lang = locale.windows_locale[ ctypes.windll.kernel32.GetUserDefaultUILanguage() ] # Get Windows display language
+#lang = os.environ['LANG']
+locale.setlocale(locale.LC_ALL, "")
+locale = locale.getlocale(locale.LC_MESSAGES)[0]
+seperator = '_'
+lang = locale.split(seperator, 1)[0]
+print(lang)
+
+if os.path.exists(cwd+"/locales/"+lang+".json"):
+    with open(cwd+"/locales/"+lang+".json",encoding='utf-8') as json_file:
+        strings = json.load(json_file)
+else:
+    with open(cwd+"/locales/en_US.json",encoding='utf-8') as json_file:
+        strings = json.load(json_file)
 
 tooltip_dict = {
     'Start_Button': 'Start Thor',
@@ -160,8 +178,8 @@ def create_variable_file():
         'sudo': False,
         'initial_directory': '~',
         'first_run': True,
-        'thor_file': f'{path_to_thor_gui}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell',
-        'thor_command': f'{path_to_thor_gui}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
+        'thor_file': f'{cwd}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell',
+        'thor_command': f'{cwd}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
         }
     with open("thor-gui-settings.json", "w") as f:
         json.dump(filed_variables, f)
@@ -175,14 +193,14 @@ def recreate_variable_file():
     filed_variables['sudo'] = False
     filed_variables['initial_directory'] = '~'
     filed_variables['first_run'] = True
-    filed_variables['thor_file'] = f'{path_to_thor_gui}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
-    filed_variables['thor_command'] = f'{path_to_thor_gui}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
+    filed_variables['thor_file'] = f'{cwd}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
+    filed_variables['thor_command'] = f'{cwd}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
     filed_variables['keep_log_dark'] = False
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
 
 # This loads the 'thor-gui-settings.json' file, which contains variables
-if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.json'):
+if os.path.isfile(f'{cwd}/thor-gui-settings.json'):
     with open("thor-gui-settings.json", "r") as f:
         filed_variables = json.load(f)
         filed_version = filed_variables['version']
@@ -190,7 +208,7 @@ if os.path.isfile(f'{path_to_thor_gui}/thor-gui-settings.json'):
         print("The found 'thor-gui-settings.json' file was not created by this version of Thor GUI, so Thor GUI is re-creating it.")
         recreate_variable_file()
 else:
-    print(f"The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({path_to_thor_gui}), so Thor GUI is creating it.")
+    print(f"The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({cwd}), so Thor GUI is creating it.")
     create_variable_file()
 load_variable_file()
 
