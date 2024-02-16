@@ -31,7 +31,7 @@ import pexpect
 import webbrowser
 
 import tkinter as tk
-from tkinter import scrolledtext, filedialog, BooleanVar
+from tkinter import filedialog, BooleanVar
 from tkinter import ttk
 from tktooltip import ToolTip
 from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -39,6 +39,7 @@ import sv_ttk
 import locale
 import zenipy
 from tkinter.scrolledtext import ScrolledText
+from tkfilebrowser import askopendirname
 
 version = 'Alpha v0.4.6'
 
@@ -214,7 +215,7 @@ if os.path.isfile(f'{cwd}/thor-gui-settings.json'):
         recreate_variable_file()
 else:
     #print(f"The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({cwd}), so Thor GUI is creating it.")
-    print(strings['file_not_found'])
+    print(strings['file_not_found3'].format(cwd=cwd))
     create_variable_file()
 load_variable_file()
 
@@ -935,11 +936,20 @@ def toggle_frame(name):
     button_name = name + '_Button'
     frame = globals()[frame_name]
     button = globals()[button_name]
+    # Old way (easier, but doesn't work with Settings Tab)
     #frame.lift()
-    frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
+    # New way - Works with Settings Tab
     if prev_frame == None:
-        prev_frame = globals()['Log_Frame']
-    prev_frame.grid_forget()
+        Log_Frame.grid_forget()
+        Options_Frame.grid_forget()
+        Pit_Frame.grid_forget()
+        Settings_Frame.grid_forget()
+        Help_Frame.grid_forget()
+        About_Frame.grid_forget()
+        Log_Frame.grid_forget()
+    else:
+        prev_frame.grid_forget()
+    frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
     prev_frame = frame
     buttons = [Log_Button, Options_Button, Pit_Button, Settings_Button, Help_Button, About_Button]
     for btn in buttons:
@@ -948,7 +958,7 @@ def toggle_frame(name):
         else:
             btn.grid_configure(pady=5)
 
-# Handles setting the options
+# Handles setting the options - Needs to be tested more throughly
 # NOTE: The T Flash option is currently disabled
 def apply_options():
 #    tflash_status = TFlash_Option_var.get()
@@ -1233,14 +1243,25 @@ def open_file(type):
         if initialdir == '~' or os.path.isdir(initialdir) == True:
             initial_directory = initialdir
             if type == 'Default':
-                file_path = filedialog.askdirectory(title='Select a default directory', initialdir='~')
-                #file_path = zenipy.zenipy.file_selection(multiple=False, directory=True, save=False, confirm_overwrite=False, filename=None, title='Select a default directory', width=330, height=120, timeout=None)
+                if tk_file_dialogs == True:
+                    file_path = filedialog.askdirectory(title='Select a default directory', initialdir='~')
+                else:
+                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=True, save=False, confirm_overwrite=False, filename=None, title='Select a default directory', width=330, height=120, timeout=None)
             elif type == 'Thor':
-                file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', 'TheAirBlow.Thor.Shell')])
+                if tk_file_dialogs == True:
+                    file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', 'TheAirBlow.Thor.Shell')])
+                else:
+                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=f'Select a {type} file', width=330, height=120, timeout=None)
             elif type == 'AP':
-                file_path = filedialog.askopenfilename(title=f'Select an {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
+                if tk_file_dialogs == True:
+                    file_path = filedialog.askopenfilename(title=f'Select an {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
+                else:
+                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=f'Select an {type} file', width=330, height=120, timeout=None)
             else:
-                file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
+                if tk_file_dialogs == True:
+                    file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
+                else:
+                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=f'Select a {type} file', width=330, height=120, timeout=None)
             if file_path:
                 if type == 'Default':
                     Default_Directory_Entry.delete(0, 'end')
@@ -1583,7 +1604,7 @@ def on_thor_command_entry_change(*args):
 
 # Changes variables
 def toggle_variable(variable):
-    global dark_theme, tooltips, sudo, keep_log_dark
+    global dark_theme, tooltips, tk_file_dialogs, sudo, keep_log_dark
     
     if variable == 'dark_theme':
         dark_theme = not dark_theme
@@ -1614,6 +1635,9 @@ def toggle_variable(variable):
             tooltip_manager.create_tooltips()
         elif tooltips == False:
             tooltip_manager.destroy_tooltips()
+
+    elif variable == 'tk_file_dialogs':
+        tk_file_dialogs = not tk_file_dialogs
                 
     elif variable == 'sudo':
         sudo = not sudo
@@ -2170,6 +2194,7 @@ Frame.grid_columnconfigure(0, weight=1)
 theme_checkbutton_var = BooleanVar(value=dark_theme)
 dark_log_checkbutton_var = BooleanVar(value=keep_log_dark)
 tooltip_checkbutton_var = BooleanVar(value=tooltips)
+file_dialog_checkbutton_var = BooleanVar(value=tk_file_dialogs)
 sudo_checkbutton_var = BooleanVar(value=sudo)
 thor_file_entry_var = tk.StringVar()
 thor_file_entry_var.trace("w", on_thor_file_entry_change)
@@ -2177,24 +2202,25 @@ thor_command_entry_var = tk.StringVar()
 thor_command_entry_var.trace("w", on_thor_command_entry_change)
 
 create_label('Theme', Frame, 'Appearance', ('Monospace', 12), 'w')
-Theme_Checkbutton = Checkbutton('Theme', Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10, (5, 0))
-Dark_Log_Checkbutton = Checkbutton('Dark_Log', Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, 'Keep Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
-Tooltip_Checkbutton = Checkbutton('Tooltip', Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10, 0)
-create_label('Tooltip', Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15, (0, 0), columnspan=2)
+Theme_Checkbutton = Checkbutton('Theme', Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, sticky='w', padx=10, pady=(5, 0))
+Dark_Log_Checkbutton = Checkbutton('Dark_Log', Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, 'Keep Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', padx=10)
+File_Dialog_Checkbutton = Checkbutton('File_Dialog', Frame, lambda: toggle_variable('tk_file_dialogs'), file_dialog_checkbutton_var, 'Use tk file dialogs', 'Switch.TCheckbutton', 'normal', 0, 4, 'w', padx=10, pady=0)
+Tooltip_Checkbutton = Checkbutton('Tooltip', Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 5, sticky='w', padx=10, pady=(5, 0))
+create_label('Tooltip', Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), sticky='w', padx=15, pady=(0, 0), columnspan=2)
 create_label('Thor', Frame, 'Thor', ('Monospace', 12), 'w')
 create_label('Thor_File', Frame, 'The "TheAirBlow.Thor.Shell" file to use:', ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
-Thor_File_Entry = Entry('Thor_File', Frame, 'normal', 0, 7, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
+Thor_File_Entry = Entry('Thor_File', Frame, 'normal', 0, 8, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
 Thor_File_Entry.insert(tk.END, thor_file)
-Thor_File_Button = Button('Thor_File', Frame, 'Choose...', lambda: open_file('Thor'), 'normal', 1, 7, 'w', (0,15), 0)
-Sudo_Checkbutton = Checkbutton('Sudo', Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10, (10, 7))
+Thor_File_Button = Button('Thor_File', Frame, 'Choose...', lambda: open_file('Thor'), 'normal', 1, 8, 'w', (0,15), 0)
+Sudo_Checkbutton = Checkbutton('Sudo', Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 9, 'w', 10, (10, 7))
 create_label('Thor_Command', Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 0, columnspan=2)
-Thor_Command_Entry = Entry('Thor_Command', Frame, 'normal', 0, 10, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
+Thor_Command_Entry = Entry('Thor_Command', Frame, 'normal', 0, 11, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
 Thor_Command_Entry.insert(tk.END, thor_command)
 create_label('Flashing', Frame, 'Flashing', ('Monospace', 12), 'w')
 create_label('Default_Directory', Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5, columnspan=2)
-Default_Directory_Entry = Entry('Default_Directory', Frame, 'normal', 0, 13, 'we', (15, 5), 0)
+Default_Directory_Entry = Entry('Default_Directory', Frame, 'normal', 0, 14, 'we', (15, 5), 0)
 Default_Directory_Entry.insert(tk.END, initial_directory)
-Default_Directory_Button = Button('Default_Directory', Frame, 'Choose...', lambda: open_file('Default'), 'normal', 1, 13, 'w', (0, 15), 0)
+Default_Directory_Button = Button('Default_Directory', Frame, 'Choose...', lambda: open_file('Default'), 'normal', 1, 14, 'w', (0, 15), 0)
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)

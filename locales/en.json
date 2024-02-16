@@ -44,6 +44,8 @@
     "path": "Settings - Thor - The 'TheAirBlow.Thor.Shell' file to use",
     "file_not_found": "File not found",
     "file_not_found2": "The file {file} doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The 'TheAirBlow.Thor.Shell' file to use",
+    "file_not_found3": "The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({cwd}), so Thor GUI is creating it.",
+    "found_old_file": "The found 'thor-gui-settings.json' file was not created by this version of Thor GUI, so Thor GUI is re-creating it.",
     "stop_thor": "Stop Thor",
     "stop_thor_and": "Stop Thor (and Thor GUI)",
     "started_thor": "Started Thor",
