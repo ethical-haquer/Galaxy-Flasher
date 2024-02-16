@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import re
-import sys
 import typing as typ
 import json
 import platform
@@ -78,7 +77,6 @@ locale.setlocale(locale.LC_ALL, "")
 locale = locale.getlocale(locale.LC_MESSAGES)[0]
 seperator = '_'
 lang = locale.split(seperator, 1)[0]
-print(lang)
 
 if os.path.exists(cwd+"/locales/"+lang+".json"):
     with open(cwd+"/locales/"+lang+".json",encoding='utf-8') as json_file:
@@ -130,51 +128,6 @@ tooltip_dict = {
     'Thor_File_Button': strings['choose_a_file'],
     'Default_Directory_Button': strings['choose_a_directory']
 }
-"""
-tooltip_dict = {
-    'Start_Button': 'Start Thor',
-    'Connect_Button': 'Connect a device in download mode',
-    'Begin_Button': 'Start an Odin session',
-    'Command_Entry': 'You can enter a Thor command here,\nand press enter to send it',
-    'Enter_Button': "Send Thor an 'Enter'",
-    'Space_Button': "Send Thor a 'Space'",
-    'Page_Up_Button': "Send Thor a 'Page Up'",
-    'Page_Down_Button': "Send Thor a 'Page Down'",
-    'BL_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
-    'AP_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
-    'CP_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
-    'CSC_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
-    'USERDATA_Checkbutton': 'The Odin archives selected with\nthese check-boxes will be flashed',
-    'BL_Button': 'Select a BL file',
-    'AP_Button': 'Select an AP file',
-    'CP_Button': 'Select a CP file',
-    'CSC_Button': 'Select a CSC file',
-    'USERDATA_Button': 'Select a USERDATA file',
-    'BL_Entry': "Drag and drop a BL file here,\nor paste it's path",
-    'AP_Entry': "Drag and drop an AP file here,\nor paste it's path",
-    'CP_Entry': "Drag and drop a CP file here,\nor paste it's path",
-    'CSC_Entry': "Drag and drop a CSC file here,\nor paste it's path",
-    'USERDATA_Entry': "Drag and drop a USERDATA file here,\nor paste it's path",
-    'Log_Button': 'Log Tab',
-    'Options_Button': 'Options Tab',
-    'Pit_Button': 'Pit Tab',
-    'Settings_Button': 'Settings Tab',
-    'Help_Button': 'Help Tab',
-    'About_Button': 'About Tab',
-    'Apply_Options_Button': 'Apply the above options',
-    'Theme_Checkbutton': 'Toggle Theme',
-    'Dark_Log_Checkbutton': 'Toggle keeping the Log output dark, regardless of the theme',
-    'Tooltip_Checkbutton': 'Toggle Tooltips',
-    'Thor_File_Entry': 'The "TheAirBlow.Thor.Shell" file to use',
-    'Thor_Command_Entry': 'The command used to start Thor',
-    'Sudo_Checkbutton': 'Toggle running Thor with/without sudo',
-    'Default_Directory_Entry': 'The file picker will open to this directory',
-    'Start_Flash_Button': 'Start a flash',
-    'Reset_Button': 'Reset the options in the Options Tab to defaults, and clear the Odin archive check-boxes and archive entries',
-    'Thor_File_Button': 'Choose a file',
-    'Default_Directory_Button': 'Choose a directory'
-}
-"""
 
 print(f'''
  _____ _                   ____ _   _ ___
@@ -250,10 +203,12 @@ if os.path.isfile(f'{cwd}/thor-gui-settings.json'):
         filed_variables = json.load(f)
         filed_version = filed_variables['version']
     if filed_version != version:
-        print("The found 'thor-gui-settings.json' file was not created by this version of Thor GUI, so Thor GUI is re-creating it.")
+        #print("The found 'thor-gui-settings.json' file was not created by this version of Thor GUI, so Thor GUI is re-creating it.")
+        print(strings['found_old_file'])
         recreate_variable_file()
 else:
-    print(f"The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({cwd}), so Thor GUI is creating it.")
+    #print(f"The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({cwd}), so Thor GUI is creating it.")
+    print(strings['file_not_found'])
     create_variable_file()
 load_variable_file()
 
@@ -279,7 +234,8 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                'text': 'The file:',
+                                #'text': 'The file:',
+                                'text': strings['the_file:'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -299,7 +255,8 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                'text': "doesn't exist",
+                                #'text': "doesn't exist",
+                                'text': strings['does_not_exist'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -310,7 +267,8 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
+                                #'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
+                                'text': strings['you_can_change'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -320,7 +278,8 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
+                                #'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
+                                'text': strings['path'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -341,8 +300,9 @@ class FlashTool:
                         }
                     ]
 
-                    Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
-                    raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The \"TheAirBlow.Thor.Shell\" file to use")
+                    #Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
+                    Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', strings['file_not_found'], widgets)
+                    raise Exception(strings['file_not_found2'].format(file=f"'{expanded_thor_file}'"))
                 output_thread = Thread(target=update_output)
                 output_thread.daemon = True
                 output_thread.start()
