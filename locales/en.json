@@ -53,5 +53,9 @@
     "unsupported_command": "Unsupported command",
     "stopping_thor_independently2": "Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the 'Stop Thor' button (which will close the window), or close the window.",
     "sent_command": "Sent command: {command}",
-    "sent_command_password": "Sent command: {password}"
+    "sent_command_password": "Sent command: {password}",
+    "could_not_send": "Couldn't send the command: {command}, as no prompt ('shell>', '[y/n] (n):') was available",
+    "could_not_send2": "Couldn't send the command: {command}, as the 'shell>' prompt wasn't available",
+    "exception_send_command": "An exception occurred in send_command: {e}",
+    "exception_update_output": "An exception occurred in update_output: {e}"
 }

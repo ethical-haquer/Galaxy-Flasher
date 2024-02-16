@@ -37,6 +37,8 @@ from tktooltip import ToolTip
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import sv_ttk
 import locale
+import zenipy
+from tkinter.scrolledtext import ScrolledText
 
 version = 'Alpha v0.4.6'
 
@@ -140,7 +142,7 @@ print(f'''
 ''')
 
 def load_variable_file():
-    global dark_theme, tooltips, sudo, initial_directory, first_run, thor_file, thor_command, keep_log_dark
+    global dark_theme, tooltips, sudo, initial_directory, first_run, thor_file, thor_command, keep_log_dark, tk_file_dialogs
     with open("thor-gui-settings.json", "r") as f:
         filed_variables = json.load(f)
         dark_theme = filed_variables['dark_theme']
@@ -151,7 +153,8 @@ def load_variable_file():
         thor_file = filed_variables['thor_file']
         thor_command = filed_variables['thor_command']
         keep_log_dark = filed_variables['keep_log_dark']
-    
+        tk_file_dialogs = filed_variables['tk_file_dialogs']
+
 def dump_variable_file():
     with open("thor-gui-settings.json", "r") as f:
         filed_variables = json.load(f)
@@ -164,6 +167,7 @@ def dump_variable_file():
     filed_variables['thor_file'] = thor_file
     filed_variables['thor_command'] = thor_command
     filed_variables['keep_log_dark'] = keep_log_dark
+    filed_variables['tk_file_dialogs'] = tk_file_dialogs
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
 
@@ -173,6 +177,7 @@ def create_variable_file():
         'dark_theme': False,
         'tooltips': True,
         'keep_log_dark': False,
+        'tk_file_dialogs': False,
         'sudo': False,
         'initial_directory': '~',
         'first_run': True,
@@ -194,6 +199,7 @@ def recreate_variable_file():
     filed_variables['thor_file'] = f'{cwd}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
     filed_variables['thor_command'] = f'{cwd}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
     filed_variables['keep_log_dark'] = False
+    filed_variables['tk_file_dialogs'] = False
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
 
@@ -499,11 +505,14 @@ def send_command(command, case='normal'):
                     print(strings['sent_command'].format(command=f"'{command}'"))
                 else:
                     if case == 'entry':
-                        print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')
+                        #print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')
+                        print(strings['could_not_send'].format(command=f"'{command}'"))
                     else:
-                        print(f'Couldn\'t send the command: \'{command}\', as the \'shell>\' prompt wasn\'t available')
+                        #print(f'Couldn\'t send the command: \'{command}\', as the \'shell>\' prompt wasn\'t available')
+                        print(strings['could_not_send2'].format(command=f"'{command}'"))
         except Exception as e:
-            print(f'An exception occurred in send_command: {e}')
+            #print(f'An exception occurred in send_command: {e}')
+            print(strings['exception_send_command'].format(e=f"{e}"))
 
 # Perhaps the most important part of the program, along with scan_output - Handles displaying the output from Thor, while scan_output calls other functions when it detects certain lines in the output
 def update_output():
@@ -551,7 +560,8 @@ def update_output():
         except pexpect.exceptions.EOF:
             break
         except Exception as e:
-            print(f'An exception occurred in update_output: \'{e}\'')
+            #print(f'An exception occurred in update_output: \'{e}\'')
+            print(strings['exception_update_output'])
 
         # Update the Output_Text widget
         if output_text_lines:
@@ -636,7 +646,7 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        'text': "Thor just said:",
+                        #'text': "Thor just said:",
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -646,7 +656,7 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        'text': "'Failed to open the device for RW: Permission denied (13)'",
+                        #'text': "'Failed to open the device for RW: Permission denied (13)'",
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -656,7 +666,7 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        'text': 'A possible fix is to:',
+                        #'text': 'A possible fix is to:',
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -666,7 +676,7 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        'text': '1. Go to the Settings Tab,',
+                        #'text': '1. Go to the Settings Tab,',
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -677,7 +687,7 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        'text': '2. Toggle on \'Run Thor with sudo\',',
+                        #'text': '2. Toggle on \'Run Thor with sudo\',',
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -688,7 +698,7 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        'text': '3. Restart Thor GUI,',
+                        #'text': '3. Restart Thor GUI,',
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -699,7 +709,7 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        'text': '4. Try connecting again.',
+                        #'text': '4. Try connecting again.',
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -710,7 +720,7 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        'text': 'If it still doesn\'t work, feel free to let me know!',
+                        #'text': 'If it still doesn\'t work, feel free to let me know!',
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -917,13 +927,20 @@ def reset():
     except Exception as e:
         print(f'An exception occurred in reset: {e}')
 
+prev_frame = None
 # Moves the correct frame to the top
 def toggle_frame(name):
+    global prev_frame
     frame_name = name + '_Frame'
     button_name = name + '_Button'
     frame = globals()[frame_name]
     button = globals()[button_name]
-    frame.lift()
+    #frame.lift()
+    frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
+    if prev_frame == None:
+        prev_frame = globals()['Log_Frame']
+    prev_frame.grid_forget()
+    prev_frame = frame
     buttons = [Log_Button, Options_Button, Pit_Button, Settings_Button, Help_Button, About_Button]
     for btn in buttons:
         if btn == button:
@@ -1202,7 +1219,7 @@ class ToplevelWindow():
     def __getattr__(self, attr):
         return getattr(self.window, attr)
 
-# Opens the file picker when an Odin archive button is clicked
+# Opens the file picker
 def open_file(type):
     global initial_directory
     try:
@@ -1217,6 +1234,7 @@ def open_file(type):
             initial_directory = initialdir
             if type == 'Default':
                 file_path = filedialog.askdirectory(title='Select a default directory', initialdir='~')
+                #file_path = zenipy.zenipy.file_selection(multiple=False, directory=True, save=False, confirm_overwrite=False, filename=None, title='Select a default directory', width=330, height=120, timeout=None)
             elif type == 'Thor':
                 file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', 'TheAirBlow.Thor.Shell')])
             elif type == 'AP':
@@ -2081,7 +2099,7 @@ Log_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Log_Frame.grid_columnconfigure(0, weight=1)
 Log_Frame.grid_rowconfigure(0, weight=1)
 
-Output_Text = scrolledtext.ScrolledText(Log_Frame, state='disabled', highlightthickness=0, font=('Monospace', 9), borderwidth=0)
+Output_Text = ScrolledText(Log_Frame, state='disabled', highlightthickness=0, font=('Monospace', 9), borderwidth=0)
 Output_Text.grid(row=0, column=0, rowspan=6, sticky='nesw')
 
 # Creates the 'Options' frame and check-boxes
@@ -2133,9 +2151,21 @@ create_label('Test', Pit_Frame, 'Just a test :)', sticky='w', padx=10, pady=10)
 create_label('Although', Pit_Frame, 'Pull requests are always welcome though!', sticky='w', padx=10, pady=10)
 
 # Creates the 'Settings' frame
-Settings_Frame = ttk.Frame(window)
+Settings_Frame = ScrolledText(window, state='disable', highlightthickness=0, borderwidth=0)
+Settings_Frame.config(cursor='')
 Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Settings_Frame.grid_columnconfigure(0, weight=1)
+
+Frame = tk.Frame(Settings_Frame)
+#Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
+#Settings_Frame.grid_columnconfigure(0, weight=1)
+Settings_Frame.window_create('1.0', window=Frame)
+
+Settings_Frame.tag_add('Frame', '1.0', 'end')
+Settings_Frame.tag_config('Frame', lmargin1=0, lmargin2=0)
+
+Frame.place(relwidth=1, relheight=1)
+Frame.grid_columnconfigure(0, weight=1)
 
 theme_checkbutton_var = BooleanVar(value=dark_theme)
 dark_log_checkbutton_var = BooleanVar(value=keep_log_dark)
@@ -2146,25 +2176,25 @@ thor_file_entry_var.trace("w", on_thor_file_entry_change)
 thor_command_entry_var = tk.StringVar()
 thor_command_entry_var.trace("w", on_thor_command_entry_change)
 
-create_label('Theme', Settings_Frame, 'Appearance', ('Monospace', 12), 'w')
-Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10, (5, 0))
-Dark_Log_Checkbutton = Checkbutton('Dark_Log', Settings_Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, 'Keep Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
-Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10, 0)
-create_label('Tooltip', Settings_Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15, (0, 0), columnspan=2)
-create_label('Thor', Settings_Frame, 'Thor', ('Monospace', 12), 'w')
-create_label('Thor_File', Settings_Frame, 'The "TheAirBlow.Thor.Shell" file to use:', ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
-Thor_File_Entry = Entry('Thor_File', Settings_Frame, 'normal', 0, 7, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
+create_label('Theme', Frame, 'Appearance', ('Monospace', 12), 'w')
+Theme_Checkbutton = Checkbutton('Theme', Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, 'w', 10, (5, 0))
+Dark_Log_Checkbutton = Checkbutton('Dark_Log', Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, 'Keep Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', 10)
+Tooltip_Checkbutton = Checkbutton('Tooltip', Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 3, 'w', 10, 0)
+create_label('Tooltip', Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), 'w', 15, (0, 0), columnspan=2)
+create_label('Thor', Frame, 'Thor', ('Monospace', 12), 'w')
+create_label('Thor_File', Frame, 'The "TheAirBlow.Thor.Shell" file to use:', ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
+Thor_File_Entry = Entry('Thor_File', Frame, 'normal', 0, 7, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
 Thor_File_Entry.insert(tk.END, thor_file)
-Thor_File_Button = Button('Thor_File', Settings_Frame, 'Choose...', lambda: open_file('Thor'), 'normal', 1, 7, 'w', (0,15), 0)
-Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10, (10, 7))
-create_label('Thor_Command', Settings_Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 0, columnspan=2)
-Thor_Command_Entry = Entry('Thor_Command', Settings_Frame, 'normal', 0, 10, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
+Thor_File_Button = Button('Thor_File', Frame, 'Choose...', lambda: open_file('Thor'), 'normal', 1, 7, 'w', (0,15), 0)
+Sudo_Checkbutton = Checkbutton('Sudo', Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 8, 'w', 10, (10, 7))
+create_label('Thor_Command', Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 0, columnspan=2)
+Thor_Command_Entry = Entry('Thor_Command', Frame, 'normal', 0, 10, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
 Thor_Command_Entry.insert(tk.END, thor_command)
-create_label('Flashing', Settings_Frame, 'Flashing', ('Monospace', 12), 'w')
-create_label('Default_Directory', Settings_Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5, columnspan=2)
-Default_Directory_Entry = Entry('Default_Directory', Settings_Frame, 'normal', 0, 13, 'we', (15, 5), 0)
+create_label('Flashing', Frame, 'Flashing', ('Monospace', 12), 'w')
+create_label('Default_Directory', Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5, columnspan=2)
+Default_Directory_Entry = Entry('Default_Directory', Frame, 'normal', 0, 13, 'we', (15, 5), 0)
 Default_Directory_Entry.insert(tk.END, initial_directory)
-Default_Directory_Button = Button('Default_Directory', Settings_Frame, 'Choose...', lambda: open_file('Default'), 'normal', 1, 13, 'w', (0, 15), 0)
+Default_Directory_Button = Button('Default_Directory', Frame, 'Choose...', lambda: open_file('Default'), 'normal', 1, 13, 'w', (0, 15), 0)
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
@@ -2252,7 +2282,8 @@ Output_Text.tag_configure('orange', foreground='#E9AD0C')
 Output_Text.tag_configure('dark_blue', foreground='#2A7BDE')
 
 # Raises the 'Log' frame to top on start-up
-toggle_frame('Log')
+#toggle_frame('Log')
+Log_Frame.lift()
 
 # Binds the on_window_close function to the window's close event
 window.protocol('WM_DELETE_WINDOW', on_window_close)
