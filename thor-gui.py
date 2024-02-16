@@ -71,7 +71,7 @@ successful_commands = []
 
 odin_archives = []
 
-# Load translation file if available, otherwise fallback to English US
+# Load translation file if available, otherwise fallback to English
 #lang = locale.windows_locale[ ctypes.windll.kernel32.GetUserDefaultUILanguage() ] # Get Windows display language
 #lang = os.environ['LANG']
 locale.setlocale(locale.LC_ALL, "")
@@ -87,6 +87,50 @@ else:
     with open(cwd+"/locales/en_US.json",encoding='utf-8') as json_file:
         strings = json.load(json_file)
 
+tooltip_dict = {
+    'Start_Button': strings['start_thor'],
+    'Connect_Button': strings['connect_a_device'],
+    'Begin_Button': strings['start_an_odin'],
+    'Command_Entry': strings['enter_a_command'],
+    'Enter_Button': strings['send_thor_enter'],
+    'Space_Button': strings['send_thor_space'],
+    'Page_Up_Button': strings['send_thor_up'],
+    'Page_Down_Button': strings['send_thor_down'],
+    'BL_Checkbutton': strings['the_archives_selected'],
+    'AP_Checkbutton': strings['the_archives_selected'],
+    'CP_Checkbutton': strings['the_archives_selected'],
+    'CSC_Checkbutton': strings['the_archives_selected'],
+    'USERDATA_Checkbutton': strings['the_archives_selected'],
+    'BL_Button': strings['select_bl_file'],
+    'AP_Button': strings['select_ap_file'],
+    'CP_Button': strings['select_cp_file'],
+    'CSC_Button': strings['select_csc_file'],
+    'USERDATA_Button': strings['select_userdata_file'],
+    'BL_Entry': strings['drag_bl_file'],
+    'AP_Entry': strings['drag_ap_file'],
+    'CP_Entry': strings['drag_cp_file'],
+    'CSC_Entry': strings['drag_csc_file'],
+    'USERDATA_Entry': strings['drag_userdata_file'],
+    'Log_Button': strings['log_tab'],
+    'Options_Button': strings['options_tab'],
+    'Pit_Button': strings['pit_tab'],
+    'Settings_Button': strings['settings_tab'],
+    'Help_Button': strings['help_tab'],
+    'About_Button': strings['about_tab'],
+    'Apply_Options_Button': strings['apply_options'],
+    'Theme_Checkbutton': strings['toggle_theme'],
+    'Dark_Log_Checkbutton': strings['toggle_dark_log'],
+    'Tooltip_Checkbutton': strings['toggle_tooltips'],
+    'Thor_File_Entry': strings['the_thor_file'],
+    'Thor_Command_Entry': strings['the_command_used'],
+    'Sudo_Checkbutton': strings['toggle_sudo'],
+    'Default_Directory_Entry': strings['the_file_picker'],
+    'Start_Flash_Button': strings['start_flash'],
+    'Reset_Button': strings['reset_the_options'],
+    'Thor_File_Button': strings['choose_a_file'],
+    'Default_Directory_Button': strings['choose_a_directory']
+}
+"""
 tooltip_dict = {
     'Start_Button': 'Start Thor',
     'Connect_Button': 'Connect a device in download mode',
@@ -130,6 +174,7 @@ tooltip_dict = {
     'Thor_File_Button': 'Choose a file',
     'Default_Directory_Button': 'Choose a directory'
 }
+"""
 
 print(f'''
  _____ _                   ____ _   _ ___
