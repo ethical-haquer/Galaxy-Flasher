@@ -307,9 +307,12 @@ class FlashTool:
                 output_thread.daemon = True
                 output_thread.start()
                 currently_running = True
-                Start_Button.configure(text='Stop Thor')
-                tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
-                print('Started Thor')
+                #Start_Button.configure(text='Stop Thor')
+                Start_Button.configure(text=strings['stop_thor'])
+                #tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
+                tooltip_manager.change_tooltip(Start_Button, strings['stop_thor_and'])
+                #print('Started Thor')
+                print(strings['started_thor'])
             elif self.tool == 'heimdall':
                 thor_file = Thor_File_Entry.get()
                 thor_command = Thor_Command_Entry.get()
@@ -324,7 +327,8 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                'text': 'The file:',
+                                #'text': 'The file:',
+                                'text': strings['the_file:'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -344,7 +348,8 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                'text': "doesn't exist",
+                                #'text': "doesn't exist",
+                                'text': strings['does_not_exist'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -355,7 +360,8 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
+                                #'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
+                                'text': strings['you_can_change'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -365,7 +371,8 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
+                                #'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
+                                'text': strings['path'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -386,15 +393,19 @@ class FlashTool:
                         }
                     ]
 
-                    Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
-                    raise Exception(f"The file '{expanded_thor_file}' doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The \"TheAirBlow.Thor.Shell\" file to use")
+                    #Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
+                    Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', strings['file_not_found'], widgets)
+                    raise Exception(strings['file_not_found2'].format(file=f"'{expanded_thor_file}'"))
                 output_thread = Thread(target=update_output)
                 output_thread.daemon = True
                 output_thread.start()
                 currently_running = True
-                Start_Button.configure(text='Stop Thor')
-                tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
-                print('Started Thor')
+                #Start_Button.configure(text='Stop Thor')
+                Start_Button.configure(text=strings['stop_thor'])
+                #tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
+                tooltip_manager.change_tooltip(Start_Button, strings['stop_thor_and'])
+                #print('Started Thor')
+                print(strings['started_thor'])
         except pexpect.exceptions.TIMEOUT:
             print('A Timeout occurred in start')
         except pexpect.exceptions.ExceptionPexpect as e:
@@ -415,7 +426,8 @@ def send_command(command, case='normal'):
                     {
                         'type': 'label',
                         'options': {
-                            'text': "Sadly, stopping Thor independently is currently not supported by Thor GUI.",
+                            #'text': "Sadly, stopping Thor independently is currently not supported by Thor GUI.",
+                            'text': strings['stopping_thor_independently'],
                         },
                         'grid_options': {
                             'columnspan': 2,
@@ -425,7 +437,8 @@ def send_command(command, case='normal'):
                     {
                         'type': 'label',
                         'options': {
-                            'text': "To stop Thor, either click the 'Stop Thor' button (which will close the window),",
+                            #'text': "To stop Thor, either click the 'Stop Thor' button (which will close the window),",
+                            'text': strings['to_stop_thor'],
                         },
                         'grid_options': {
                             'columnspan': 2,
@@ -435,7 +448,8 @@ def send_command(command, case='normal'):
                     {
                         'type': 'label',
                         'options': {
-                            'text': 'or close the window.',
+                            #'text': 'or close the window.',
+                            'text': strings['or_close'],
                         },
                         'grid_options': {
                             'columnspan': 2,
@@ -456,28 +470,33 @@ def send_command(command, case='normal'):
                     }
                 ]
 
-                Unsupported_Command_Window = ToplevelWindow(window, 'Unsupported_Command', 'Unsupported command', widgets)
-                print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the \'Stop Thor\' button (which will close the window), or close the window.')
+                #Unsupported_Command_Window = ToplevelWindow(window, 'Unsupported_Command', 'Unsupported command', widgets)
+                Unsupported_Command_Window = ToplevelWindow(window, 'Unsupported_Command', strings['unsupported_command'], widgets)
+                #print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the \'Stop Thor\' button (which will close the window), or close the window.')
+                print(strings['stopping_thor_independently2'])
             else:
                 if prompt_available == True:
                     if case == 'normal' or case == 'entry':
                         Thor.sendline(command)
                         Output_Text.see(tk.END)
                         successful_commands.append(command)
-                        print(f'Sent command: \'{command}\'')
+                        #print(f'Sent command: \'{command}\'')
+                        print(strings['sent_command'].format(command=f"'{command}'"))
                 elif sudo_prompt_available == True:
                     sudo_prompt_available = False
                     Thor.sendline(command)
                     Output_Text.see(tk.END)
                     successful_commands.append('{password}')
-                    print('Sent command: \'{password}\'')
+                    #print('Sent command: \'{password}\'')
+                    print(strings['sent_command_password'])
                     Command_Entry.delete(0, tk.END)
                     Command_Entry.configure(show='')
                 elif clean_line.endswith('[y/n] (n):') and case == 'entry':
                     Thor.sendline(command)
                     Output_Text.see(tk.END)
                     successful_commands.append(command)
-                    print(f'Sent command: \'{command}\'')
+                    #print(f'Sent command: \'{command}\'')
+                    print(strings['sent_command'].format(command=f"'{command}'"))
                 else:
                     if case == 'entry':
                         print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')

@@ -43,5 +43,15 @@
     "you_can_change": "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
     "path": "Settings - Thor - The 'TheAirBlow.Thor.Shell' file to use",
     "file_not_found": "File not found",
-    "file_not_found2": "The file {file} doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The 'TheAirBlow.Thor.Shell' file to use"
+    "file_not_found2": "The file {file} doesn't exist - You can change what 'TheAirBlow.Thor.Shell' file is used by going to: Settings - Thor - The 'TheAirBlow.Thor.Shell' file to use",
+    "stop_thor": "Stop Thor",
+    "stop_thor_and": "Stop Thor (and Thor GUI)",
+    "started_thor": "Started Thor",
+    "stopping_thor_independently": "Sadly, stopping Thor independently is currently not supported by Thor GUI.",
+    "to_stop_thor": "To stop Thor, either click the 'Stop Thor' button (which will close the window),",
+    "or_close": "or close the window.",
+    "unsupported_command": "Unsupported command",
+    "stopping_thor_independently2": "Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the 'Stop Thor' button (which will close the window), or close the window.",
+    "sent_command": "Sent command: {command}",
+    "sent_command_password": "Sent command: {password}"
 }
