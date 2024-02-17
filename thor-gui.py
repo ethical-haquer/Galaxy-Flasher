@@ -39,7 +39,6 @@ import sv_ttk
 import locale
 import zenipy
 from tkinter.scrolledtext import ScrolledText
-from tkfilebrowser import askopendirname
 
 version = 'Alpha v0.4.6'
 
@@ -178,7 +177,7 @@ def create_variable_file():
         'dark_theme': False,
         'tooltips': True,
         'keep_log_dark': False,
-        'tk_file_dialogs': False,
+        'tk_file_dialogs': True,
         'sudo': False,
         'initial_directory': '~',
         'first_run': True,
@@ -200,7 +199,7 @@ def recreate_variable_file():
     filed_variables['thor_file'] = f'{cwd}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
     filed_variables['thor_command'] = f'{cwd}/Thor/{simplified_operating_system}-{simplified_architecture}/TheAirBlow.Thor.Shell'
     filed_variables['keep_log_dark'] = False
-    filed_variables['tk_file_dialogs'] = False
+    filed_variables['tk_file_dialogs'] = True
     with open('thor-gui-settings.json', 'w') as f:
         json.dump(filed_variables, f)
 
@@ -562,7 +561,7 @@ def update_output():
             break
         except Exception as e:
             #print(f'An exception occurred in update_output: \'{e}\'')
-            print(strings['exception_update_output'])
+            print(strings['exception_update_output'].format(e=f"{e}"))
 
         # Update the Output_Text widget
         if output_text_lines:
@@ -648,6 +647,7 @@ def scan_output():
                     'type': 'label',
                     'options': {
                         #'text': "Thor just said:",
+                        'text': strings['thor_just_said'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -658,6 +658,7 @@ def scan_output():
                     'type': 'label',
                     'options': {
                         #'text': "'Failed to open the device for RW: Permission denied (13)'",
+                        'text': strings['failed_to_open'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -668,6 +669,7 @@ def scan_output():
                     'type': 'label',
                     'options': {
                         #'text': 'A possible fix is to:',
+                        'text': strings['a_possible_fix'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -678,6 +680,7 @@ def scan_output():
                     'type': 'label',
                     'options': {
                         #'text': '1. Go to the Settings Tab,',
+                        'text': strings['goto_settings_tab'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -689,6 +692,7 @@ def scan_output():
                     'type': 'label',
                     'options': {
                         #'text': '2. Toggle on \'Run Thor with sudo\',',
+                        'text': strings['toggle_on_sudo'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -700,6 +704,7 @@ def scan_output():
                     'type': 'label',
                     'options': {
                         #'text': '3. Restart Thor GUI,',
+                        'text': strings['restart_thor_gui'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -711,6 +716,7 @@ def scan_output():
                     'type': 'label',
                     'options': {
                         #'text': '4. Try connecting again.',
+                        'text': strings['try_connecting_again'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -722,6 +728,7 @@ def scan_output():
                     'type': 'label',
                     'options': {
                         #'text': 'If it still doesn\'t work, feel free to let me know!',
+                        'text': strings['let_me_know'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -742,9 +749,11 @@ def scan_output():
                 }
             ]
 
-            Permission_Denied_Window = ToplevelWindow(window, 'Permission_Denied', 'Oops!', widgets)
+            #Permission_Denied_Window = ToplevelWindow(window, 'Permission_Denied', 'Oops!', widgets)
+            Permission_Denied_Window = ToplevelWindow(window, 'Permission_Denied', strings['oops'], widgets)
     except Exception as e:
-        print(f'An exception occurred in scan_output: \'{e}\'')
+        #print(f'An exception occurred in scan_output: \'{e}\'')
+        print(strings['exception_scan_output'].format(e=f"{e}"))
 
 # Handles coloring the output, as the original ANSI escape sequences are stripped out
 def determine_tag(line):
@@ -845,15 +854,19 @@ def set_connect(value):
     global connection
     if value == 'on':
         if connection == False:
-            set_widget_state(Connect_Button, text='Disconnect')
-            tooltip_manager.change_tooltip(Connect_Button, 'Disconnect a device in download mode')
+            #set_widget_state(Connect_Button, text='Disconnect')
+            set_widget_state(Connect_Button, text=strings['disconnect'])
+            #tooltip_manager.change_tooltip(Connect_Button, 'Disconnect a device in download mode')
+            tooltip_manager.change_tooltip(Connect_Button, strings['disconnect_device'])
             Begin_Button.configure(state='normal')
             connection = True
     elif value == 'off':
         if connection == True:
             set_odin('off')
-            Connect_Button.configure(text='Connect device')
-            tooltip_manager.change_tooltip(Connect_Button, 'Connect a device in download mode')
+            #Connect_Button.configure(text='Connect device')
+            Connect_Button.configure(text=strings['connect_device'])
+            #tooltip_manager.change_tooltip(Connect_Button, 'Connect a device in download mode')
+            tooltip_manager.change_tooltip(Connect_Button, strings['connect_device2'])
             Begin_Button.configure(state='disabled')
             connection = False
 
@@ -862,14 +875,18 @@ def set_odin(value):
     global odin_running
     if value == 'on':
         if odin_running == False:
-            Begin_Button.configure(text='End Odin Protocol')
-            tooltip_manager.change_tooltip(Begin_Button, 'Stop an Odin session')
+            #Begin_Button.configure(text='End Odin Protocol')
+            Begin_Button.configure(text=strings['end_odin_protocol'])
+            #tooltip_manager.change_tooltip(Begin_Button, 'Stop an Odin session')
+            tooltip_manager.change_tooltip(Begin_Button, strings['stop_odin_session'])
             set_widget_state(Apply_Options_Button, Start_Flash_Button)
             odin_running = True
     elif value == 'off':
         if odin_running == True:
-            Begin_Button.configure(text='Start Odin Protocol')
-            tooltip_manager.change_tooltip(Begin_Button, 'Start an Odin session')
+            #Begin_Button.configure(text='Start Odin Protocol')
+            Begin_Button.configure(text=strings['start_odin_protocol'])
+            #tooltip_manager.change_tooltip(Begin_Button, 'Start an Odin session')
+            tooltip_manager.change_tooltip(Begin_Button, strings['start_odin_session'])
             set_widget_state(Apply_Options_Button, Start_Flash_Button, state='disabled')
             odin_running == False
 
@@ -892,7 +909,8 @@ def toggle_connection():
             elif connection:
                 send_command('disconnect')
     except Exception as e:
-        print(f'An exception occurred in toggle_connection: {e}')
+        #print(f'An exception occurred in toggle_connection: {e}')
+        print(strings['exception_toggle_connection'].format(e=f"{e}"))
 
 # This starts and stops the Odin protocol
 def toggle_odin():
@@ -905,7 +923,8 @@ def toggle_odin():
             elif odin_running:
                 send_command('end')
     except Exception as e:
-        print(f'An exception occurred in toggle_odin: {e}')
+        #print(f'An exception occurred in toggle_odin: {e}')
+        print(strings['exception_toggle_odin'].format(e=f"{e}"))
 
 # Sets the 'Options' back to default and resets the Odin archive Check-buttons/Entries
 def reset():
@@ -926,7 +945,8 @@ def reset():
         CSC_Entry.delete(0, 'end')
         USERDATA_Entry.delete(0, 'end')
     except Exception as e:
-        print(f'An exception occurred in reset: {e}')
+        #print(f'An exception occurred in reset: {e}')
+        print(strings['exception_reset'].format(e=f"{e}"))
 
 prev_frame = None
 # Moves the correct frame to the top
@@ -1009,7 +1029,8 @@ def start_flash():
                         {
                             'type': 'label',
                             'options': {
-                                'text': 'Invalid {file_type} file selected',
+                                #'text': 'Invalid {file_type} file selected',
+                                'text': strings['invalid_file_type'].format(file_type=f"{file_type}"),
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -1019,7 +1040,8 @@ def start_flash():
                         {
                             'type': 'label',
                             'options': {
-                                'text': 'Files must be .tar, .zip, or .md5',
+                                #'text': 'Files must be .tar, .zip, or .md5',
+                                'text': strings['files_must_be'],
                             },
                             'grid_options': {
                                 'columnspan': 2,
@@ -1040,8 +1062,10 @@ def start_flash():
                         }
                     ]
 
-                    Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', 'Invalid file', widgets)
-                    print(f'Invalid {file_type} file selected - Files must be .tar, .zip, or .md5')
+                    #Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', 'Invalid file', widgets)
+                    Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', strings['invalid_file'], widgets)
+                    #print(f'Invalid {file_type} file selected - Files must be .tar, .zip, or .md5')
+                    print(strings['invalid_file_selected'].format(file_type=f"{file_type}"))
             else:
                 def send_ok():
                     Invalid_File_Window.destroy()
@@ -1050,7 +1074,8 @@ def start_flash():
                     {
                         'type': 'label',
                         'options': {
-                            'text': 'The selected {file_type} file does not exist',
+                            #'text': 'The selected {file_type} file does not exist',
+                            'text': strings['file_does_not_exist'].format(file_type=f"{file_type}"),
                         },
                         'grid_options': {
                             'columnspan': 2,
@@ -1071,8 +1096,9 @@ def start_flash():
                     }
                 ]
 
-                Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', 'Invalid file', widgets)
-                print(f'Invalid {file_type} file selected - The file does not exist')
+                Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', strings['invalid_file'], widgets)
+                #print(f'Invalid {file_type} file selected - The file does not exist')
+                print(strings['invalid_file_selected2'].format(file_type=f"{file_type}"))
             return False
 
         for checkbox_var, entry, file_type in checkboxes:
@@ -1091,7 +1117,8 @@ def start_flash():
                 {
                     'type': 'label',
                     'options': {
-                        'text': 'No files were selected',
+                        #'text': 'No files were selected',
+                        'text': strings['no_files_selected'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -1101,7 +1128,8 @@ def start_flash():
                 {
                     'type': 'label',
                     'options': {
-                        'text': 'Please select at least one file',
+                        #'text': 'Please select at least one file',
+                        'text': strings['please_select_file'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -1122,8 +1150,10 @@ def start_flash():
                 }
             ]
 
-            No_Selected_Files_Window = ToplevelWindow(window, 'No_Selected_Files', 'No selected files', widgets)
-            print('No files were selected - Please select at least one file')
+            #No_Selected_Files_Window = ToplevelWindow(window, 'No_Selected_Files', 'No selected files', widgets)
+            No_Selected_Files_Window = ToplevelWindow(window, 'No_Selected_Files', strings['no_selected_files'], widgets)
+            #print('No files were selected - Please select at least one file')
+            print(strings['no_files_selected2'])
             return False
 
         if len(unique_directories) > 1:
@@ -1134,7 +1164,8 @@ def start_flash():
                 {
                     'type': 'label',
                     'options': {
-                        'text': 'All selected files must be in the same directory',
+                        #'text': 'All selected files must be in the same directory',
+                        'text': strings['files_same_directory'],
                     },
                     'grid_options': {
                         'columnspan': 2,
@@ -1155,8 +1186,9 @@ def start_flash():
                 }
             ]
 
-            Invalid_Files_Window = ToplevelWindow(window, 'Invalid_Files', 'Invalid files', widgets)
-            print('Invalid files - All selected files must be in the same directory')
+            Invalid_Files_Window = ToplevelWindow(window, 'Invalid_Files', strings['invalid_files'], widgets)
+            #print('Invalid files - All selected files must be in the same directory')
+            print(strings['invalid_files'])
             return False
 
         common_directory = unique_directories.pop()
@@ -1166,7 +1198,8 @@ def start_flash():
         send_command(f'flashTar {common_directory}')
 
     except Exception as e:
-        print(f'An exception occurred in start_flash: {e}')
+        #print(f'An exception occurred in start_flash: {e}')
+        print(strings['exception_start_flash'].format(e=f"{e}"))
 
     return True
 
@@ -1244,24 +1277,24 @@ def open_file(type):
             initial_directory = initialdir
             if type == 'Default':
                 if tk_file_dialogs == True:
-                    file_path = filedialog.askdirectory(title='Select a default directory', initialdir='~')
+                    file_path = filedialog.askdirectory(title=strings['select_default_directory'], initialdir='~')
                 else:
-                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=True, save=False, confirm_overwrite=False, filename=None, title='Select a default directory', width=330, height=120, timeout=None)
+                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=True, save=False, confirm_overwrite=False, filename=None, title=strings['select_default_directory'], width=330, height=120, timeout=None)
             elif type == 'Thor':
                 if tk_file_dialogs == True:
-                    file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', 'TheAirBlow.Thor.Shell')])
+                    file_path = filedialog.askopenfilename(title=strings['select_a_file'].format(type=f"{type}"), initialdir=initialdir, filetypes=[(f'{type} file', 'TheAirBlow.Thor.Shell')])
                 else:
-                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=f'Select a {type} file', width=330, height=120, timeout=None)
+                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=strings['select_a_file'].format(type=f"{type}"), width=330, height=120, timeout=None)
             elif type == 'AP':
                 if tk_file_dialogs == True:
-                    file_path = filedialog.askopenfilename(title=f'Select an {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
+                    file_path = filedialog.askopenfilename(title=strings['select_a_file'].format(type=f"{type}"), initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
                 else:
-                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=f'Select an {type} file', width=330, height=120, timeout=None)
+                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=strings['select_a_file'].format(type=f"{type}"), width=330, height=120, timeout=None)
             else:
                 if tk_file_dialogs == True:
-                    file_path = filedialog.askopenfilename(title=f'Select a {type} file', initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
+                    file_path = filedialog.askopenfilename(title=strings['select_a_file'].format(type=f"{type}"), initialdir=initialdir, filetypes=[(f'{type} file', '.tar .zip .md5')])
                 else:
-                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=f'Select a {type} file', width=330, height=120, timeout=None)
+                    file_path = zenipy.zenipy.file_selection(multiple=False, directory=False, save=False, confirm_overwrite=False, filename=None, title=strings['select_a_file'].format(type=f"{type}"), width=330, height=120, timeout=None)
             if file_path:
                 if type == 'Default':
                     Default_Directory_Entry.delete(0, 'end')
@@ -1285,15 +1318,16 @@ def open_file(type):
                     USERDATA_Entry.delete(0, 'end')
                     USERDATA_Entry.insert(0, file_path)
                 if type == 'Default':
-                    print(f"Selected default directory: '{file_path}' with file picker")
+                    print(strings['selected_default_directory'].format(file_path=f"'{file_path}'"))
                 else:
-                    print(f"Selected {type} file: '{file_path}' with file picker")
+                    print(strings['selected_file'].format(type=f"{type}", file_path=f"'{file_path}'"))
         else:
-            print(f"Invalid directory - The directory: '{initialdir}' does not exist. You can change your initial file picker directory by going to: Settings - Flashing - Initial file picker directory")
+            print(strings['invalid_directory'].format(initialdir=f"'{initialdir}'"))
     except tk.TclError:
         pass
     except Exception as e:
-        print(f'An exception occurred in open_file: {e}')
+        #print(f'An exception occurred in open_file: {e}')
+        print(strings['exception_open_file'].format(e=f"{e}"))
 
 # Handles asking the user if they'd like to connect to a device
 def select_device():
@@ -1315,8 +1349,8 @@ def select_device():
                     devices.append(line.strip('> '))
 
         if devices:
-            title = 'Connect device'
-            message = 'Choose a device to connect to:'
+            title = strings['connect_device']
+            message = strings['choose_a_device']
             selected_device = tk.StringVar(value=None)
 
             Connect_Device_Window = tk.Toplevel(window)
@@ -1355,7 +1389,8 @@ def select_device():
                     KEY_DOWN = '\x1b[B'
                     selected = selected_device.get()
                     if selected == '':
-                        print('No device was selected')
+                        #print('No device was selected')
+                        strings['no_device_selected']
                     else:
                         for radio_button, var in radio_buttons:
                             if var.get() == selected:
@@ -1373,18 +1408,20 @@ def select_device():
                     Connect_Device_Window.destroy()
 
             # Create the Connect button
-            Connect_Button_2 = ttk.Button(Connect_Device_Window, text='Connect', command=handle_connect)
+            Connect_Button_2 = ttk.Button(Connect_Device_Window, text=strings['connect'], command=handle_connect)
             Connect_Button_2.grid(pady=5, padx=5, column=1, row=row, sticky='we')
 
             # Create the Cancel button
-            Cancel_Button = ttk.Button(Connect_Device_Window, text='Cancel', command=cancel_connect)
+            Cancel_Button = ttk.Button(Connect_Device_Window, text=strings['cancel'], command=cancel_connect)
             Cancel_Button.grid(pady=5, padx=5, column=0, row=row, sticky='we')
 
             Connect_Device_Window.mainloop()
         else:
-            print('No devices available.')
+            #print('No devices available.')
+            print(strings['no_devices_available'])
     except Exception as e:
-        print(f'An exception occurred in select_device: {e}')
+        #print(f'An exception occurred in select_device: {e}')
+        print(strings['exception_select_device'].format(e=f"{e}"))
 
 # Handles asking the user what partitions they'd like to flash
 def select_partitions(path, name):
@@ -1415,7 +1452,8 @@ def select_partitions(path, name):
                 if var.get() == 1:
                     selected_files.append(checkbox.cget('text'))
             if not selected_files:
-                print(f'You chose not to select any partitions from {name}')
+                #print(f'You chose not to select any partitions from {name}')
+                print(string['you_chose_not'].format(name=f"{name}"))
                 Thor.send('\n')
                 Select_Partitions_Window.destroy()
                 return False
@@ -1434,11 +1472,12 @@ def select_partitions(path, name):
         elif name.endswith('.zip'):
             file_names = get_files_from_zip(path, name)
         else:
-            print('Invalid file format. Please provide a .tar, .zip, or .md5 file.')
+            #print('Invalid file format. Please provide a .tar, .zip, or .md5 file.')
+            print(strings['invalid_file_format'])
             return
 
         Select_Partitions_Window = tk.Toplevel(window)
-        Select_Partitions_Window.title('Select partitions')
+        #Select_Partitions_Window.title('Select partitions')
         Select_Partitions_Window.wm_transient(window)
         Select_Partitions_Window.grab_set()
         Select_Partitions_Window.update_idletasks()
@@ -1897,9 +1936,9 @@ class ToolTipManager:
 
     def destroy_tooltips(self):
         for widget in self.needed_tooltips:
-            if self.tooltip is not None:
-                self.tooltip.destroy()
-                self.tooltip = None
+            #if self.tooltip is not None:
+            #    self.tooltip.destroy()
+            #    self.tooltip = None
             msg='Tooltips will be disabled after a restart'
             if msg:
                 ToolTip(widget, msg=msg, delay=self.tooltip_delay, width=len(msg) * 10)
@@ -2209,18 +2248,18 @@ Tooltip_Checkbutton = Checkbutton('Tooltip', Frame, lambda: toggle_variable('too
 create_label('Tooltip', Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), sticky='w', padx=15, pady=(0, 0), columnspan=2)
 create_label('Thor', Frame, 'Thor', ('Monospace', 12), 'w')
 create_label('Thor_File', Frame, 'The "TheAirBlow.Thor.Shell" file to use:', ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
-Thor_File_Entry = Entry('Thor_File', Frame, 'normal', 0, 8, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
+Thor_File_Entry = Entry('Thor_File', Frame, 'normal', 0, 9, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
 Thor_File_Entry.insert(tk.END, thor_file)
-Thor_File_Button = Button('Thor_File', Frame, 'Choose...', lambda: open_file('Thor'), 'normal', 1, 8, 'w', (0,15), 0)
-Sudo_Checkbutton = Checkbutton('Sudo', Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 9, 'w', 10, (10, 7))
+Thor_File_Button = Button('Thor_File', Frame, 'Choose...', lambda: open_file('Thor'), 'normal', 1, 9, 'w', (0,15), 0)
+Sudo_Checkbutton = Checkbutton('Sudo', Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 10, 'w', 10, (10, 7))
 create_label('Thor_Command', Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 0, columnspan=2)
-Thor_Command_Entry = Entry('Thor_Command', Frame, 'normal', 0, 11, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
+Thor_Command_Entry = Entry('Thor_Command', Frame, 'normal', 0, 12, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
 Thor_Command_Entry.insert(tk.END, thor_command)
 create_label('Flashing', Frame, 'Flashing', ('Monospace', 12), 'w')
 create_label('Default_Directory', Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5, columnspan=2)
-Default_Directory_Entry = Entry('Default_Directory', Frame, 'normal', 0, 14, 'we', (15, 5), 0)
+Default_Directory_Entry = Entry('Default_Directory', Frame, 'normal', 0, 15, 'we', (15, 5), 0)
 Default_Directory_Entry.insert(tk.END, initial_directory)
-Default_Directory_Button = Button('Default_Directory', Frame, 'Choose...', lambda: open_file('Default'), 'normal', 1, 14, 'w', (0, 15), 0)
+Default_Directory_Button = Button('Default_Directory', Frame, 'Choose...', lambda: open_file('Default'), 'normal', 1, 15, 'w', (0, 15), 0)
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
