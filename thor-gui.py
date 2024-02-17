@@ -42,7 +42,6 @@ from tkinter.scrolledtext import ScrolledText
 
 version = 'Alpha v0.4.6'
 
-#cwd = os.path.dirname(os.path.abspath(sys.argv[0]))
 cwd = os.getcwd()
 currently_running = False
 odin_running = False
@@ -209,11 +208,9 @@ if os.path.isfile(f'{cwd}/thor-gui-settings.json'):
         filed_variables = json.load(f)
         filed_version = filed_variables['version']
     if filed_version != version:
-        #print("The found 'thor-gui-settings.json' file was not created by this version of Thor GUI, so Thor GUI is re-creating it.")
         print(strings['found_old_file'])
         recreate_variable_file()
 else:
-    #print(f"The 'thor-gui-settings.json' file was not found in the directory that this program is being run from ({cwd}), so Thor GUI is creating it.")
     print(strings['file_not_found3'].format(cwd=cwd))
     create_variable_file()
 load_variable_file()
@@ -240,7 +237,6 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                #'text': 'The file:',
                                 'text': strings['the_file:'],
                             },
                             'grid_options': {
@@ -261,7 +257,6 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                #'text': "doesn't exist",
                                 'text': strings['does_not_exist'],
                             },
                             'grid_options': {
@@ -273,7 +268,6 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                #'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
                                 'text': strings['you_can_change'],
                             },
                             'grid_options': {
@@ -284,7 +278,6 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                #'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
                                 'text': strings['path'],
                             },
                             'grid_options': {
@@ -306,18 +299,14 @@ class FlashTool:
                         }
                     ]
 
-                    #Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
                     Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', strings['file_not_found'], widgets)
                     raise Exception(strings['file_not_found2'].format(file=f"'{expanded_thor_file}'"))
                 output_thread = Thread(target=update_output)
                 output_thread.daemon = True
                 output_thread.start()
                 currently_running = True
-                #Start_Button.configure(text='Stop Thor')
                 Start_Button.configure(text=strings['stop_thor'])
-                #tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
                 tooltip_manager.change_tooltip(Start_Button, strings['stop_thor_and'])
-                #print('Started Thor')
                 print(strings['started_thor'])
             elif self.tool == 'heimdall':
                 thor_file = Thor_File_Entry.get()
@@ -333,7 +322,6 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                #'text': 'The file:',
                                 'text': strings['the_file:'],
                             },
                             'grid_options': {
@@ -354,7 +342,6 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                #'text': "doesn't exist",
                                 'text': strings['does_not_exist'],
                             },
                             'grid_options': {
@@ -366,7 +353,6 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                #'text': "You can change what 'TheAirBlow.Thor.Shell' file is used by going to:",
                                 'text': strings['you_can_change'],
                             },
                             'grid_options': {
@@ -377,7 +363,6 @@ class FlashTool:
                         {
                             'type': 'label',
                             'options': {
-                                #'text': 'Settings - Thor - The "TheAirBlow.Thor.Shell" file to use',
                                 'text': strings['path'],
                             },
                             'grid_options': {
@@ -399,18 +384,14 @@ class FlashTool:
                         }
                     ]
 
-                    #Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', 'File not found', widgets)
                     Thor_File_Not_Found_Window = ToplevelWindow(window, 'Thor_File_Not_Found', strings['file_not_found'], widgets)
                     raise Exception(strings['file_not_found2'].format(file=f"'{expanded_thor_file}'"))
                 output_thread = Thread(target=update_output)
                 output_thread.daemon = True
                 output_thread.start()
                 currently_running = True
-                #Start_Button.configure(text='Stop Thor')
                 Start_Button.configure(text=strings['stop_thor'])
-                #tooltip_manager.change_tooltip(Start_Button, 'Stop Thor (and Thor GUI)')
                 tooltip_manager.change_tooltip(Start_Button, strings['stop_thor_and'])
-                #print('Started Thor')
                 print(strings['started_thor'])
         except pexpect.exceptions.TIMEOUT:
             print('A Timeout occurred in start')
@@ -432,7 +413,6 @@ def send_command(command, case='normal'):
                     {
                         'type': 'label',
                         'options': {
-                            #'text': "Sadly, stopping Thor independently is currently not supported by Thor GUI.",
                             'text': strings['stopping_thor_independently'],
                         },
                         'grid_options': {
@@ -443,7 +423,6 @@ def send_command(command, case='normal'):
                     {
                         'type': 'label',
                         'options': {
-                            #'text': "To stop Thor, either click the 'Stop Thor' button (which will close the window),",
                             'text': strings['to_stop_thor'],
                         },
                         'grid_options': {
@@ -454,7 +433,6 @@ def send_command(command, case='normal'):
                     {
                         'type': 'label',
                         'options': {
-                            #'text': 'or close the window.',
                             'text': strings['or_close'],
                         },
                         'grid_options': {
@@ -476,9 +454,7 @@ def send_command(command, case='normal'):
                     }
                 ]
 
-                #Unsupported_Command_Window = ToplevelWindow(window, 'Unsupported_Command', 'Unsupported command', widgets)
                 Unsupported_Command_Window = ToplevelWindow(window, 'Unsupported_Command', strings['unsupported_command'], widgets)
-                #print('Sadly, stopping Thor independently is currently not supported by Thor GUI. To stop Thor, either click the \'Stop Thor\' button (which will close the window), or close the window.')
                 print(strings['stopping_thor_independently2'])
             else:
                 if prompt_available == True:
@@ -486,14 +462,12 @@ def send_command(command, case='normal'):
                         Thor.sendline(command)
                         Output_Text.see(tk.END)
                         successful_commands.append(command)
-                        #print(f'Sent command: \'{command}\'')
                         print(strings['sent_command'].format(command=f"'{command}'"))
                 elif sudo_prompt_available == True:
                     sudo_prompt_available = False
                     Thor.sendline(command)
                     Output_Text.see(tk.END)
                     successful_commands.append('{password}')
-                    #print('Sent command: \'{password}\'')
                     print(strings['sent_command_password'])
                     Command_Entry.delete(0, tk.END)
                     Command_Entry.configure(show='')
@@ -501,17 +475,13 @@ def send_command(command, case='normal'):
                     Thor.sendline(command)
                     Output_Text.see(tk.END)
                     successful_commands.append(command)
-                    #print(f'Sent command: \'{command}\'')
                     print(strings['sent_command'].format(command=f"'{command}'"))
                 else:
                     if case == 'entry':
-                        #print(f'Couldn\'t send the command: \'{command}\', as no prompt (\'shell>\', \'[y/n] (n):\') was available')
                         print(strings['could_not_send'].format(command=f"'{command}'"))
                     else:
-                        #print(f'Couldn\'t send the command: \'{command}\', as the \'shell>\' prompt wasn\'t available')
                         print(strings['could_not_send2'].format(command=f"'{command}'"))
         except Exception as e:
-            #print(f'An exception occurred in send_command: {e}')
             print(strings['exception_send_command'].format(e=f"{e}"))
 
 # Perhaps the most important part of the program, along with scan_output - Handles displaying the output from Thor, while scan_output calls other functions when it detects certain lines in the output
@@ -560,7 +530,6 @@ def update_output():
         except pexpect.exceptions.EOF:
             break
         except Exception as e:
-            #print(f'An exception occurred in update_output: \'{e}\'')
             print(strings['exception_update_output'].format(e=f"{e}"))
 
         # Update the Output_Text widget
@@ -646,7 +615,6 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': "Thor just said:",
                         'text': strings['thor_just_said'],
                     },
                     'grid_options': {
@@ -657,7 +625,6 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': "'Failed to open the device for RW: Permission denied (13)'",
                         'text': strings['failed_to_open'],
                     },
                     'grid_options': {
@@ -668,7 +635,6 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': 'A possible fix is to:',
                         'text': strings['a_possible_fix'],
                     },
                     'grid_options': {
@@ -679,7 +645,6 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': '1. Go to the Settings Tab,',
                         'text': strings['goto_settings_tab'],
                     },
                     'grid_options': {
@@ -691,7 +656,6 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': '2. Toggle on \'Run Thor with sudo\',',
                         'text': strings['toggle_on_sudo'],
                     },
                     'grid_options': {
@@ -703,7 +667,6 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': '3. Restart Thor GUI,',
                         'text': strings['restart_thor_gui'],
                     },
                     'grid_options': {
@@ -715,7 +678,6 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': '4. Try connecting again.',
                         'text': strings['try_connecting_again'],
                     },
                     'grid_options': {
@@ -727,7 +689,6 @@ def scan_output():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': 'If it still doesn\'t work, feel free to let me know!',
                         'text': strings['let_me_know'],
                     },
                     'grid_options': {
@@ -749,10 +710,8 @@ def scan_output():
                 }
             ]
 
-            #Permission_Denied_Window = ToplevelWindow(window, 'Permission_Denied', 'Oops!', widgets)
             Permission_Denied_Window = ToplevelWindow(window, 'Permission_Denied', strings['oops'], widgets)
     except Exception as e:
-        #print(f'An exception occurred in scan_output: \'{e}\'')
         print(strings['exception_scan_output'].format(e=f"{e}"))
 
 # Handles coloring the output, as the original ANSI escape sequences are stripped out
@@ -854,18 +813,14 @@ def set_connect(value):
     global connection
     if value == 'on':
         if connection == False:
-            #set_widget_state(Connect_Button, text='Disconnect')
             set_widget_state(Connect_Button, text=strings['disconnect'])
-            #tooltip_manager.change_tooltip(Connect_Button, 'Disconnect a device in download mode')
             tooltip_manager.change_tooltip(Connect_Button, strings['disconnect_device'])
             Begin_Button.configure(state='normal')
             connection = True
     elif value == 'off':
         if connection == True:
             set_odin('off')
-            #Connect_Button.configure(text='Connect device')
             Connect_Button.configure(text=strings['connect_device'])
-            #tooltip_manager.change_tooltip(Connect_Button, 'Connect a device in download mode')
             tooltip_manager.change_tooltip(Connect_Button, strings['connect_device2'])
             Begin_Button.configure(state='disabled')
             connection = False
@@ -875,17 +830,13 @@ def set_odin(value):
     global odin_running
     if value == 'on':
         if odin_running == False:
-            #Begin_Button.configure(text='End Odin Protocol')
             Begin_Button.configure(text=strings['end_odin_protocol'])
-            #tooltip_manager.change_tooltip(Begin_Button, 'Stop an Odin session')
             tooltip_manager.change_tooltip(Begin_Button, strings['stop_odin_session'])
             set_widget_state(Apply_Options_Button, Start_Flash_Button)
             odin_running = True
     elif value == 'off':
         if odin_running == True:
-            #Begin_Button.configure(text='Start Odin Protocol')
             Begin_Button.configure(text=strings['start_odin_protocol'])
-            #tooltip_manager.change_tooltip(Begin_Button, 'Start an Odin session')
             tooltip_manager.change_tooltip(Begin_Button, strings['start_odin_session'])
             set_widget_state(Apply_Options_Button, Start_Flash_Button, state='disabled')
             odin_running == False
@@ -909,7 +860,6 @@ def toggle_connection():
             elif connection:
                 send_command('disconnect')
     except Exception as e:
-        #print(f'An exception occurred in toggle_connection: {e}')
         print(strings['exception_toggle_connection'].format(e=f"{e}"))
 
 # This starts and stops the Odin protocol
@@ -923,7 +873,6 @@ def toggle_odin():
             elif odin_running:
                 send_command('end')
     except Exception as e:
-        #print(f'An exception occurred in toggle_odin: {e}')
         print(strings['exception_toggle_odin'].format(e=f"{e}"))
 
 # Sets the 'Options' back to default and resets the Odin archive Check-buttons/Entries
@@ -945,7 +894,6 @@ def reset():
         CSC_Entry.delete(0, 'end')
         USERDATA_Entry.delete(0, 'end')
     except Exception as e:
-        #print(f'An exception occurred in reset: {e}')
         print(strings['exception_reset'].format(e=f"{e}"))
 
 prev_frame = None
@@ -957,8 +905,9 @@ def toggle_frame(name):
     frame = globals()[frame_name]
     button = globals()[button_name]
     # Old way - Simpler, but doesn't work with the new Settings Tab (w/ scrollbar)
-    #frame.lift()
+    frame.lift()
     # New way - Works with Settings Tab
+    """
     if prev_frame == None:
         Log_Frame.grid_forget()
         Options_Frame.grid_forget()
@@ -971,6 +920,7 @@ def toggle_frame(name):
         prev_frame.grid_forget()
     frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
     prev_frame = frame
+    """
     buttons = [Log_Button, Options_Button, Pit_Button, Settings_Button, Help_Button, About_Button]
     for btn in buttons:
         if btn == button:
@@ -1029,7 +979,6 @@ def start_flash():
                         {
                             'type': 'label',
                             'options': {
-                                #'text': 'Invalid {file_type} file selected',
                                 'text': strings['invalid_file_type'].format(file_type=f"{file_type}"),
                             },
                             'grid_options': {
@@ -1040,7 +989,6 @@ def start_flash():
                         {
                             'type': 'label',
                             'options': {
-                                #'text': 'Files must be .tar, .zip, or .md5',
                                 'text': strings['files_must_be'],
                             },
                             'grid_options': {
@@ -1062,9 +1010,7 @@ def start_flash():
                         }
                     ]
 
-                    #Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', 'Invalid file', widgets)
                     Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', strings['invalid_file'], widgets)
-                    #print(f'Invalid {file_type} file selected - Files must be .tar, .zip, or .md5')
                     print(strings['invalid_file_selected'].format(file_type=f"{file_type}"))
             else:
                 def send_ok():
@@ -1074,7 +1020,6 @@ def start_flash():
                     {
                         'type': 'label',
                         'options': {
-                            #'text': 'The selected {file_type} file does not exist',
                             'text': strings['file_does_not_exist'].format(file_type=f"{file_type}"),
                         },
                         'grid_options': {
@@ -1097,7 +1042,6 @@ def start_flash():
                 ]
 
                 Invalid_File_Window = ToplevelWindow(window, 'Invalid_File', strings['invalid_file'], widgets)
-                #print(f'Invalid {file_type} file selected - The file does not exist')
                 print(strings['invalid_file_selected2'].format(file_type=f"{file_type}"))
             return False
 
@@ -1192,7 +1136,6 @@ def start_flash():
         send_command(f'flashTar {common_directory}')
 
     except Exception as e:
-        #print(f'An exception occurred in start_flash: {e}')
         print(strings['exception_start_flash'].format(e=f"{e}"))
 
     return True
@@ -1442,7 +1385,6 @@ def select_partitions(path, name):
                 if var.get() == 1:
                     selected_files.append(checkbox.cget('text'))
             if not selected_files:
-                #print(f'You chose not to select any partitions from {name}')
                 print(strings['you_chose_not'].format(name=f"{name}"))
                 Thor.send('\n')
                 Select_Partitions_Window.destroy()
@@ -2201,21 +2143,22 @@ create_label('Test', Pit_Frame, strings['just_a_test'], sticky='w', padx=10, pad
 create_label('Although', Pit_Frame, strings['pull_requests_welcome'], sticky='w', padx=10, pady=10)
 
 # Creates the 'Settings' frame
-Settings_Frame = ScrolledText(window, state='disable', highlightthickness=0, borderwidth=0)
-Settings_Frame.config(cursor='')
-Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
-Settings_Frame.grid_columnconfigure(0, weight=1)
-
-Frame = tk.Frame(Settings_Frame)
+#Settings_Frame = ScrolledText(window, state='disable', highlightthickness=0, borderwidth=0)
+#Settings_Frame.config(cursor='')
 #Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 #Settings_Frame.grid_columnconfigure(0, weight=1)
-Settings_Frame.window_create('1.0', window=Frame)
 
-Settings_Frame.tag_add('Frame', '1.0', 'end')
-Settings_Frame.tag_config('Frame', lmargin1=0, lmargin2=0)
+#Frame = tk.Frame(Settings_Frame)
+Settings_Frame = ttk.Frame(window)
+Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
+Settings_Frame.grid_columnconfigure(0, weight=1)
+#Settings_Frame.window_create('1.0', window=Frame)
 
-Frame.place(relwidth=1, relheight=1)
-Frame.grid_columnconfigure(0, weight=1)
+#Settings_Frame.tag_add('Frame', '1.0', 'end')
+#Settings_Frame.tag_config('Frame', lmargin1=0, lmargin2=0)
+
+#Frame.place(relwidth=1, relheight=1)
+#Frame.grid_columnconfigure(0, weight=1)
 
 theme_checkbutton_var = BooleanVar(value=dark_theme)
 dark_log_checkbutton_var = BooleanVar(value=keep_log_dark)
@@ -2227,26 +2170,26 @@ thor_file_entry_var.trace("w", on_thor_file_entry_change)
 thor_command_entry_var = tk.StringVar()
 thor_command_entry_var.trace("w", on_thor_command_entry_change)
 
-create_label('Theme', Frame, strings['appearance'], ('Monospace', 12), 'w')
-Theme_Checkbutton = Checkbutton('Theme', Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, strings['dark_theme'], 'Switch.TCheckbutton', 'normal', 0, 1, sticky='w', padx=10, pady=(5, 0))
-Dark_Log_Checkbutton = Checkbutton('Dark_Log', Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, strings['keep_log_dark'], 'Switch.TCheckbutton', 'normal', 0, 2, 'w', padx=10)
-File_Dialog_Checkbutton = Checkbutton('File_Dialog', Frame, lambda: toggle_variable('tk_file_dialogs'), file_dialog_checkbutton_var, strings['use_tk_dialogs'], 'Switch.TCheckbutton', 'normal', 0, 4, 'w', padx=10, pady=0)
-Tooltip_Checkbutton = Checkbutton('Tooltip', Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, strings['tooltips'], 'Switch.TCheckbutton', 'normal', 0, 5, sticky='w', padx=10, pady=(5, 0))
-create_label('Tooltip', Frame, strings['restart_required_tooltips'], ('Monospace', 8), sticky='w', padx=15, pady=(0, 0), columnspan=2)
-create_label('Thor', Frame, strings['thor'], ('Monospace', 12), 'w')
-create_label('Thor_File', Frame, strings['the_thor_file'], ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
-Thor_File_Entry = Entry('Thor_File', Frame, 'normal', 0, 9, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
+create_label('Theme', Settings_Frame, strings['appearance'], ('Monospace', 12), 'w')
+Theme_Checkbutton = Checkbutton('Theme', Settings_Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, strings['dark_theme'], 'Switch.TCheckbutton', 'normal', 0, 1, sticky='w', padx=10, pady=(5, 0))
+Dark_Log_Checkbutton = Checkbutton('Dark_Log', Settings_Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, strings['keep_log_dark'], 'Switch.TCheckbutton', 'normal', 0, 2, 'w', padx=10)
+File_Dialog_Checkbutton = Checkbutton('File_Dialog', Settings_Frame, lambda: toggle_variable('tk_file_dialogs'), file_dialog_checkbutton_var, strings['use_tk_dialogs'], 'Switch.TCheckbutton', 'normal', 0, 4, 'w', padx=10, pady=0)
+Tooltip_Checkbutton = Checkbutton('Tooltip', Settings_Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, strings['tooltips'], 'Switch.TCheckbutton', 'normal', 0, 5, sticky='w', padx=10, pady=(5, 0))
+create_label('Tooltip', Settings_Frame, strings['restart_required_tooltips'], ('Monospace', 8), sticky='w', padx=15, pady=(0, 0), columnspan=2)
+create_label('Thor', Settings_Frame, strings['thor'], ('Monospace', 12), 'w')
+create_label('Thor_File', Settings_Frame, strings['the_thor_file'], ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
+Thor_File_Entry = Entry('Thor_File', Settings_Frame, 'normal', 0, 9, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
 Thor_File_Entry.insert(tk.END, thor_file)
-Thor_File_Button = Button('Thor_File', Frame, strings['choose'], lambda: open_file('Thor'), 'normal', 1, 9, 'w', (0,15), 0)
-Sudo_Checkbutton = Checkbutton('Sudo', Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, strings['run_thor_sudo'], 'Switch.TCheckbutton', 'normal', 0, 10, 'w', 10, (10, 7))
-create_label('Thor_Command', Frame, strings['command_used_thor'], ('Monospace', 9), 'w', 15, 0, columnspan=2)
-Thor_Command_Entry = Entry('Thor_Command', Frame, 'normal', 0, 12, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
+Thor_File_Button = Button('Thor_File', Settings_Frame, strings['choose'], lambda: open_file('Thor'), 'normal', 1, 9, 'w', (0,15), 0)
+Sudo_Checkbutton = Checkbutton('Sudo', Settings_Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, strings['run_thor_sudo'], 'Switch.TCheckbutton', 'normal', 0, 10, 'w', 10, (10, 7))
+create_label('Thor_Command', Settings_Frame, strings['command_used_thor'], ('Monospace', 9), 'w', 15, 0, columnspan=2)
+Thor_Command_Entry = Entry('Thor_Command', Settings_Frame, 'normal', 0, 12, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
 Thor_Command_Entry.insert(tk.END, thor_command)
-create_label('Flashing', Frame, strings['flashing'], ('Monospace', 12), 'w')
-create_label('Default_Directory', Frame, strings['file_picker_directory'], ('Monospace', 9), 'w', 15, 5, columnspan=2)
-Default_Directory_Entry = Entry('Default_Directory', Frame, 'normal', 0, 15, 'we', (15, 5), 0)
+create_label('Flashing', Settings_Frame, strings['flashing'], ('Monospace', 12), 'w')
+create_label('Default_Directory', Settings_Frame, strings['file_picker_directory'], ('Monospace', 9), 'w', 15, 5, columnspan=2)
+Default_Directory_Entry = Entry('Default_Directory', Settings_Frame, 'normal', 0, 15, 'we', (15, 5), 0)
 Default_Directory_Entry.insert(tk.END, initial_directory)
-Default_Directory_Button = Button('Default_Directory', Frame, strings['choose'], lambda: open_file('Default'), 'normal', 1, 15, 'w', (0, 15), 0)
+Default_Directory_Button = Button('Default_Directory', Settings_Frame, strings['choose'], lambda: open_file('Default'), 'normal', 1, 15, 'w', (0, 15), 0)
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
@@ -2334,8 +2277,7 @@ Output_Text.tag_configure('orange', foreground='#E9AD0C')
 Output_Text.tag_configure('dark_blue', foreground='#2A7BDE')
 
 # Raises the 'Log' frame to top on start-up
-#toggle_frame('Log')
-Log_Frame.lift()
+toggle_frame('Log')
 
 # Binds the on_window_close function to the window's close event
 window.protocol('WM_DELETE_WINDOW', on_window_close)
