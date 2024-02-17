@@ -956,7 +956,7 @@ def toggle_frame(name):
     button_name = name + '_Button'
     frame = globals()[frame_name]
     button = globals()[button_name]
-    # Old way (easier, but doesn't work with Settings Tab)
+    # Old way - Simpler, but doesn't work with the new Settings Tab (w/ scrollbar)
     #frame.lift()
     # New way - Works with Settings Tab
     if prev_frame == None:
@@ -1117,7 +1117,6 @@ def start_flash():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': 'No files were selected',
                         'text': strings['no_files_selected'],
                     },
                     'grid_options': {
@@ -1128,7 +1127,6 @@ def start_flash():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': 'Please select at least one file',
                         'text': strings['please_select_file'],
                     },
                     'grid_options': {
@@ -1150,9 +1148,7 @@ def start_flash():
                 }
             ]
 
-            #No_Selected_Files_Window = ToplevelWindow(window, 'No_Selected_Files', 'No selected files', widgets)
             No_Selected_Files_Window = ToplevelWindow(window, 'No_Selected_Files', strings['no_selected_files'], widgets)
-            #print('No files were selected - Please select at least one file')
             print(strings['no_files_selected2'])
             return False
 
@@ -1164,7 +1160,6 @@ def start_flash():
                 {
                     'type': 'label',
                     'options': {
-                        #'text': 'All selected files must be in the same directory',
                         'text': strings['files_same_directory'],
                     },
                     'grid_options': {
@@ -1187,7 +1182,6 @@ def start_flash():
             ]
 
             Invalid_Files_Window = ToplevelWindow(window, 'Invalid_Files', strings['invalid_files'], widgets)
-            #print('Invalid files - All selected files must be in the same directory')
             print(strings['invalid_files'])
             return False
 
@@ -1326,7 +1320,6 @@ def open_file(type):
     except tk.TclError:
         pass
     except Exception as e:
-        #print(f'An exception occurred in open_file: {e}')
         print(strings['exception_open_file'].format(e=f"{e}"))
 
 # Handles asking the user if they'd like to connect to a device
@@ -1389,7 +1382,6 @@ def select_device():
                     KEY_DOWN = '\x1b[B'
                     selected = selected_device.get()
                     if selected == '':
-                        #print('No device was selected')
                         strings['no_device_selected']
                     else:
                         for radio_button, var in radio_buttons:
@@ -1417,10 +1409,8 @@ def select_device():
 
             Connect_Device_Window.mainloop()
         else:
-            #print('No devices available.')
             print(strings['no_devices_available'])
     except Exception as e:
-        #print(f'An exception occurred in select_device: {e}')
         print(strings['exception_select_device'].format(e=f"{e}"))
 
 # Handles asking the user what partitions they'd like to flash
@@ -1453,7 +1443,7 @@ def select_partitions(path, name):
                     selected_files.append(checkbox.cget('text'))
             if not selected_files:
                 #print(f'You chose not to select any partitions from {name}')
-                print(string['you_chose_not'].format(name=f"{name}"))
+                print(strings['you_chose_not'].format(name=f"{name}"))
                 Thor.send('\n')
                 Select_Partitions_Window.destroy()
                 return False
@@ -1472,7 +1462,6 @@ def select_partitions(path, name):
         elif name.endswith('.zip'):
             file_names = get_files_from_zip(path, name)
         else:
-            #print('Invalid file format. Please provide a .tar, .zip, or .md5 file.')
             print(strings['invalid_file_format'])
             return
 
@@ -1486,12 +1475,12 @@ def select_partitions(path, name):
         checkboxes = []
         shortened_file = name[:34]
 
-        Label = ttk.Label(Select_Partitions_Window, text=f'Select what partitions to flash from\n{shortened_file}...', font=('Monospace', 10))
+        Label = ttk.Label(Select_Partitions_Window, text=strings['select_partitions_from'].format(shortened_file=f"{shortened_file}"), font=('Monospace', 10))
         Label.pack(pady=5)
         window_height = window_height + 50
 
         select_all_var = tk.IntVar()
-        select_all_button = ttk.Checkbutton(Select_Partitions_Window, text='Select all', variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var))
+        select_all_button = ttk.Checkbutton(Select_Partitions_Window, text=strings['select_all'], variable=select_all_var, command=lambda: select_all(checkboxes, select_all_var))
         select_all_button.pack(pady=5)
 
         for file_name in file_names:
@@ -1501,7 +1490,7 @@ def select_partitions(path, name):
             checkboxes.append((checkbox, var))
             window_height = window_height + 33
 
-        Select_Partitions_Button = ttk.Button(Select_Partitions_Window, text='Select', command=lambda: flash_selected_files(checkboxes, Select_Partitions_Window))
+        Select_Partitions_Button = ttk.Button(Select_Partitions_Window, text=strings['select'], command=lambda: flash_selected_files(checkboxes, Select_Partitions_Window))
         window_height = window_height + 38
         Select_Partitions_Button.pack()
 
@@ -1514,37 +1503,37 @@ def select_partitions(path, name):
         Select_Partitions_Window.mainloop()
 
     except Exception as e:
-        print(f'An exception occurred in select_partitions: {e}')
+        print(strings['exception_select_partitions'].format(e=f"{e}"))
 
 # Asks the user if they'd like to flash the selected partitions
 def verify_flash():
     global last_lines
     try:
         Verify_Flash_Window = tk.Toplevel(window)
-        Verify_Flash_Window.title('Verify Flash')
+        Verify_Flash_Window.title(strings['verify_flash'])
         Verify_Flash_Window.wm_transient(window)
         Verify_Flash_Window.grab_set()
         Verify_Flash_Window.update_idletasks()
         Verify_Flash_Window.columnconfigure(0, weight=1)
         Verify_Flash_Window.columnconfigure(1, weight=1)
 
-        Label = ttk.Label(Verify_Flash_Window, text='Are you absolutely sure you want to flash the partitions you selected?', font=('Monospace', 11), anchor='center')
+        Label = ttk.Label(Verify_Flash_Window, text=strings['are_you_sure'], font=('Monospace', 11), anchor='center')
         Label.grid(row=0, column=0, columnspan=2, pady=9)
 
         def send_no():
-            print('Sent \'n\'')
             Thor.sendline('n')
+            print(strings['sent_n'])
             Verify_Flash_Window.destroy()
 
         def send_yes():
             Thor.sendline('y')
-            print('Sent \'y\'')
+            print(strings['sent_y'])
             Verify_Flash_Window.destroy()
 
-        No_Button = ttk.Button(Verify_Flash_Window, text='No', command=send_no)
+        No_Button = ttk.Button(Verify_Flash_Window, text=strings['no'], command=lambda: send_no)
         No_Button.grid(row=1, column=0, sticky='we', pady=5, padx=(5,2.5))
 
-        Yes_Button = ttk.Button(Verify_Flash_Window, text='Yes', command=send_yes)
+        Yes_Button = ttk.Button(Verify_Flash_Window, text=strings['yes'], command=lambda: send_yes)
         Yes_Button.grid(row=1, column=1, sticky='we', pady=5, padx=(2.5,5))
 
         width = 640
@@ -1555,7 +1544,7 @@ def verify_flash():
 
         Verify_Flash_Window.mainloop()
     except Exception as e:
-        print(f'An exception occurred in verify_flash: {e}')
+        print(strings['exception_verify_flash'].format(e=f"{e}"))
 
 # Opens websites
 def open_link(link):
@@ -1689,15 +1678,15 @@ def toggle_variable(variable):
             Thor_Command_Entry.delete(0, tk.END)
             Thor_Command_Entry.insert(0, thor_command_entry_text)
 
-# Creates the start-up window - There's room for improvement
+# Creates the start-up window
 def create_startup_window():
     try:
         if operating_system == 'Linux':
-            compatibility_message = "It looks like you're using Linux, so you're good to go!"
+            compatibility_message = strings['looks_like_linux']
         elif operating_system == 'Windows':
-            compatibility_message = "It looks like you're using Windows, so sadly Thor GUI won't work for you."
+            compatibility_message = strings['looks_like_windows']
         elif operating_system == 'Darwin':
-            compatibility_message = "It looks like you're using macOS, so sadly Thor GUI won't work for you."
+            compatibility_message = strings['looks_like_macos']
         
         def send_cancel():
             Startup_Window.destroy()
@@ -1712,7 +1701,7 @@ def create_startup_window():
             {
                 'type': 'label',
                 'options': {
-                    'text': 'Welcome to Thor GUI!',
+                    'text': strings['welcome'],
                 },
                 'grid_options': {
                     'columnspan': 2,
@@ -1722,7 +1711,7 @@ def create_startup_window():
             {
                 'type': 'label',
                 'options': {
-                    'text': "If you're not sure how to use Thor GUI, click the 'Help' tab.",
+                    'text': strings['how_to_use'],
                 },
                 'grid_options': {
                     'columnspan': 2,
@@ -1732,7 +1721,7 @@ def create_startup_window():
             {
                 'type': 'label',
                 'options': {
-                    'text': "For info about Thor GUI, click the 'About' tab.",
+                    'text': strings['info_thor_gui'],
                 },
                 'grid_options': {
                     'columnspan': 2,
@@ -1742,7 +1731,7 @@ def create_startup_window():
             {
                 'type': 'label',
                 'options': {
-                    'text': 'Thor GUI currently only supports Linux.',
+                    'text': strings['only_supports_linux'],
                 },
                 'grid_options': {
                     'columnspan': 2,
@@ -1762,7 +1751,7 @@ def create_startup_window():
             {
                 'type': 'label',
                 'options': {
-                    'text': "Click 'Close' to close this window, or 'Cancel' to close Thor GUI.",
+                    'text': strings['click_close_cancel'],
                 },
                 'grid_options': {
                     'columnspan': 2,
@@ -1772,7 +1761,7 @@ def create_startup_window():
             {
                 'type': 'button',
                 'options': {
-                    'text': 'Cancel',
+                    'text': strings['cancel'],
                     'command': send_cancel
                 },
                 'grid_options': {
@@ -1799,9 +1788,9 @@ def create_startup_window():
             }
         ]
 
-        Startup_Window = ToplevelWindow(window, 'Startup', 'Thor GUI - A GUI for the Thor Flash Utility', widgets)
+        Startup_Window = ToplevelWindow(window, 'Startup', strings['startup_title'], widgets)
     except Exception as e:
-        print(f'An exception occurred in create_startup_window: {e}')
+        print(strings['exception_create_startup_window'].format(e=f"{e}"))
 
 # Handles stopping everything when the window is closed, or the 'Stop Thor' button is clicked
 def on_window_close():
@@ -1815,10 +1804,10 @@ def on_window_close():
                 Thor.sendline('exit')
                 Thor.terminate()
                 Thor.wait()
-                print('Stopped Thor')
+                print(strings['stopped_thor'])
                 window.after_cancel(update_output)
                 output_thread.join(timeout=0.25)  # Wait for the output thread to finish with a timeout
-                print('Stopping Thor GUI...')
+                print(strings['stopping_thor_gui'])
                 window.destroy()
             elif prompt_available == False:
                 def cancel():
@@ -1830,18 +1819,18 @@ def on_window_close():
                     Thor.sendline('exit')
                     Thor.terminate()
                     Thor.wait()
-                    print('Stopped Thor (possibly forcibly)')
+                    print(strings['stopped_thor_possibly'])
                     window.after_cancel(update_output)
                     output_thread.join(timeout=0.25)  # Wait for the output thread to finish with a timeout
                     Force_Close_Window.destroy()
-                    print('Stopping Thor GUI...')
+                    print(strings['stopping_thor_gui'])
                     window.destroy()
 
                 widgets = [
                     {
                         'type': 'label',
                         'options': {
-                            'text': "The 'shell>' prompt isn't available, so the 'exit' command can't be sent.",
+                            'text': strings['shell_prompt_not_available'],
                         },
                         'grid_options': {
                             'columnspan': 2,
@@ -1851,7 +1840,7 @@ def on_window_close():
                     {
                         'type': 'label',
                         'options': {
-                            'text': "Thor may be busy, or locked up.",
+                            'text': strings['thor_busy'],
                         },
                         'grid_options': {
                             'columnspan': 2,
@@ -1861,7 +1850,7 @@ def on_window_close():
                     {
                         'type': 'label',
                         'options': {
-                            'text': "You may force stop Thor by clicking the 'Force Stop' button.",
+                            'text': strings['force_stop_thor'],
                         },
                         'grid_options': {
                             'columnspan': 2,
@@ -1871,7 +1860,7 @@ def on_window_close():
                     {
                         'type': 'label',
                         'options': {
-                            'text': 'However, if Thor is in the middle of a flash or something, there will be consequences.',
+                            'text': strings['however_consequences'],
                         },
                         'grid_options': {
                             'columnspan': 2,
@@ -1882,7 +1871,7 @@ def on_window_close():
                     {
                         'type': 'button',
                         'options': {
-                            'text': 'Cancel',
+                            'text': strings['cancel'],
                             'command': cancel
                         },
                         'grid_options': {
@@ -1895,7 +1884,7 @@ def on_window_close():
                     {
                         'type': 'button',
                         'options': {
-                            'text': 'Force Stop',
+                            'text': strings['force_stop'],
                             'command': force_stop
                         },
                         'grid_options': {
@@ -1907,15 +1896,15 @@ def on_window_close():
                     }
                 ]
 
-                Force_Close_Window = ToplevelWindow(window, 'Force_Close', 'Force Stop Thor', widgets)
+                Force_Close_Window = ToplevelWindow(window, 'Force_Close', strings['force_stop_thor'], widgets)
         else:
             window.after_cancel(start_flash)
-            print('Stopping Thor GUI...')
+            print(strings['stopping_thor_gui'])
             window.destroy()
     except Exception as e:
-        print(f'An exception occurred in on_window_close: {e}')
+        print(strings['exception_on_window_close'].format(e=f"{e}"))
 
-# Creates and hides tooltips
+# Creates and hides tooltips - Needs to be modified to support actually deleting tooltips
 class ToolTipManager:
     
     def __init__(self, tooltip_dict):
@@ -1939,7 +1928,7 @@ class ToolTipManager:
             #if self.tooltip is not None:
             #    self.tooltip.destroy()
             #    self.tooltip = None
-            msg='Tooltips will be disabled after a restart'
+            msg = strings['tooltips_will_be']
             if msg:
                 ToolTip(widget, msg=msg, delay=self.tooltip_delay, width=len(msg) * 10)
 
@@ -2097,23 +2086,21 @@ Title_Label.grid(row=0, column=0, columnspan=7, rowspan=2, sticky='nesw', padx=5
 
 #Title_Label = ttk.Label(window, text='Thor GUI', font=('Monospace', 25), anchor='center')
 #Title_Label.grid(row=0, column=0, columnspan=4, rowspan=2, sticky='nes', padx=5)
-
 #Version_Label = ttk.Label(window, text=f'{version}', font=('Monospace', 15), anchor='center')
 #Version_Label.grid(row=0, column=4, columnspan=3, rowspan=2, sticky='sw', padx=5, pady=20)
 
-#Start_Button = Button('Start', window, 'Start Thor', start_thor, 'normal', 8, 0, 'we', 5)
-Start_Button = Button('Start', window, 'Start Thor', toggle_start, 'normal', 8, 0, 'we', 5)
-Begin_Button = Button('Begin', window, 'Start Odin Protocol', toggle_odin, 'disabled', 10, 0, 'we', 5, 5, 2)
-Connect_Button = Button('Connect', window, 'Connect', toggle_connection, 'disabled', 9, 0, 'we', 0, 5)
+Start_Button = Button('Start', window, strings['start_thor'], toggle_start, 'normal', 8, 0, 'we', 5)
+Begin_Button = Button('Begin', window, strings['start_odin_protocol'], toggle_odin, 'disabled', 10, 0, 'we', 5, 5, 2)
+Connect_Button = Button('Connect', window, strings['connect'], toggle_connection, 'disabled', 9, 0, 'we', 0, 5)
 Command_Entry = Entry('Command', window, 'disabled', 8, 1, 'nesw', 5, 0, 4)
 Command_Entry.bind('<Return>', lambda event: send_command(Command_Entry.get(), 'entry'))
-Enter_Button = Button('Enter', window, 'Enter', lambda: Thor.send('\n'), 'disabled', 8, 2, 'ew', 5)
-Space_Button = Button('Space', window, 'Space', lambda: Thor.send('\x20'), 'disabled', 9, 2, 'ew', (0, 5))
+Enter_Button = Button('Enter', window, strings['enter'], lambda: Thor.send('\n'), 'disabled', 8, 2, 'ew', 5)
+Space_Button = Button('Space', window, strings['space'], lambda: Thor.send('\x20'), 'disabled', 9, 2, 'ew', (0, 5))
 Page_Up_Button = Button('Page_Up', window, 'PgUp', lambda: Thor.send('\x1b[A'), 'disabled', 10, 2, 'ew', 0)
 Page_Down_Button = Button('Page_Down', window, 'PgDn', lambda: Thor.send('\x1b[B'), 'disabled', 11, 2, 'ew', 5)
 
-Start_Flash_Button = Button('Start_Flash', window, 'Start', start_flash, 'disabled', 8, 8, 'ew', 0, 5, 2)
-Reset_Button =Button('Reset', window, 'Reset', reset, 'normal', 10, 8, 'we', 5, 5, 2)
+Start_Flash_Button = Button('Start_Flash', window, strings['start'], start_flash, 'disabled', 8, 8, 'ew', 0, 5, 2)
+Reset_Button =Button('Reset', window, strings['reset'], reset, 'normal', 10, 8, 'we', 5, 5, 2)
 
 # Creates the Odin Archive Check-boxes
 BL_Checkbutton_var = tk.IntVar()
@@ -2149,12 +2136,12 @@ bind_file_drop(CSC_Entry)
 bind_file_drop(USERDATA_Entry)
 
 # Creates the five frame buttons
-Log_Button = Button('Log', window, 'Log', lambda:toggle_frame('Log'), 'normal', 0, 2, 'wes', (5, 0), 0)
-Options_Button = Button('Options', window, 'Options', lambda:toggle_frame('Options'), 'normal', 1, 2, 'wes', 0, (0, 5))
-Pit_Button = Button('Pit', window, 'Pit', lambda:toggle_frame('Pit'), 'normal', 2, 2, 'wes', 0, 5)
-Help_Button = Button('Help', window, 'Help', lambda:toggle_frame('Help'), 'normal', 4, 2, 'wes', 0, 5)
-About_Button = Button('About', window, 'About', lambda:toggle_frame('About'), 'normal', 5, 2, 'wes', 0, 5)
-Settings_Button = Button('Settings', window, 'Settings', lambda:toggle_frame('Settings'), 'normal', 3, 2, 'wes', 0, 5)
+Log_Button = Button('Log', window, strings['log'], lambda:toggle_frame('Log'), 'normal', 0, 2, 'wes', (5, 0), 0)
+Options_Button = Button('Options', window, strings['options'], lambda:toggle_frame('Options'), 'normal', 1, 2, 'wes', 0, (0, 5))
+Pit_Button = Button('Pit', window, strings['pit'], lambda:toggle_frame('Pit'), 'normal', 2, 2, 'wes', 0, 5)
+Settings_Button = Button('Settings', window, strings['settings'], lambda:toggle_frame('Settings'), 'normal', 3, 2, 'wes', 0, 5)
+Help_Button = Button('Help', window, strings['help'], lambda:toggle_frame('Help'), 'normal', 4, 2, 'wes', 0, 5)
+About_Button = Button('About', window, strings['about'], lambda:toggle_frame('About'), 'normal', 5, 2, 'wes', 0, 5)
 
 # Creates the Log Frame
 Log_Frame = ttk.Frame(window)
@@ -2169,49 +2156,49 @@ Output_Text.grid(row=0, column=0, rowspan=6, sticky='nesw')
 Options_Frame = ttk.Frame(window)
 Options_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
-NOTE_Label = ttk.Label(Options_Frame, text="NOTE: The 'T Flash' option is temporarily not supported by Thor GUI.")
-NOTE_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
+Note_Label = ttk.Label(Options_Frame, text=strings['tflash_temporarily'])
+Note_Label.grid(row=0, column=0, pady=10, padx=10, sticky='w')
 
 TFlash_Option_var = tk.IntVar()
 TFlash_Option = ttk.Checkbutton(Options_Frame, variable=TFlash_Option_var, text='T Flash', state='disabled')
 TFlash_Option.grid(row=1, column=0, pady=10, padx=10, sticky='w')
 
-TFlash_Label = ttk.Label(Options_Frame, text='Writes the bootloader of a working device onto the SD card', cursor='hand2')
+TFlash_Label = ttk.Label(Options_Frame, text=strings['writes_bootloader_sd'], cursor='hand2')
 TFlash_Label.grid(row=2, column=0, pady=10, padx=10, sticky='w')
 
 TFlash_Label.bind('<ButtonRelease-1>', lambda e: open_link('https://android.stackexchange.com/questions/196304/what-does-odins-t-flash-option-do'))
 
 EFSClear_Option_var = tk.IntVar()
-EFSClear_Option = ttk.Checkbutton(Options_Frame, variable=EFSClear_Option_var, text='EFS Clear')
+EFSClear_Option = ttk.Checkbutton(Options_Frame, variable=EFSClear_Option_var, text=strings['efs_clear'])
 EFSClear_Option.grid(row=3, column=0, pady=10, padx=10, sticky='w')
 
-EFSClear_Label = ttk.Label(Options_Frame, text="Wipes the EFS partition (WARNING: You better know what you're doing!)", cursor='hand2')
+EFSClear_Label = ttk.Label(Options_Frame, text=strings['wipes_efs_partition'], cursor='hand2')
 EFSClear_Label.grid(row=4, column=0, pady=10, padx=10, sticky='w')
 
 EFSClear_Label.bind('<ButtonRelease-1>', lambda e: open_link('https://android.stackexchange.com/questions/185679/what-is-efs-and-msl-in-android'))
 
 BootloaderUpdate_Option_var = tk.IntVar()
-BootloaderUpdate_Option = ttk.Checkbutton(Options_Frame, variable=BootloaderUpdate_Option_var, text='Bootloader Update')
+BootloaderUpdate_Option = ttk.Checkbutton(Options_Frame, variable=BootloaderUpdate_Option_var, text=strings['bootloader_update'])
 BootloaderUpdate_Option.grid(row=5, column=0, pady=10, padx=10, sticky='w')
 
 BootloaderUpdate_Label = ttk.Label(Options_Frame, text='')
 BootloaderUpdate_Label.grid(row=6, column=0, pady=10, padx=10, sticky='w')
 
 ResetFlashCount_Option_var = tk.IntVar(value=True)
-ResetFlashCount_Option = ttk.Checkbutton(Options_Frame, variable=ResetFlashCount_Option_var, text='Reset Flash Count')
+ResetFlashCount_Option = ttk.Checkbutton(Options_Frame, variable=ResetFlashCount_Option_var, text=strings['reset_flash_count'])
 ResetFlashCount_Option.grid(row=7, column=0, pady=10, padx=10, sticky='w')
 
 ResetFlashCount_Label = ttk.Label(Options_Frame, text='')
 ResetFlashCount_Label.grid(row=8, column=0, pady=10, padx=10, sticky='w')
 
-Apply_Options_Button = Button('Apply_Options', Options_Frame, 'Apply', apply_options, 'disabled', 0, 9, 'w', 10, 10)
+Apply_Options_Button = Button('Apply_Options', Options_Frame, strings['apply'], apply_options, 'disabled', 0, 9, 'w', 10, 10)
 
 # Creates the 'Pit' frame
 Pit_Frame = ttk.Frame(window)
 Pit_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 
-create_label('Test', Pit_Frame, 'Just a test :)', sticky='w', padx=10, pady=10)
-create_label('Although', Pit_Frame, 'Pull requests are always welcome though!', sticky='w', padx=10, pady=10)
+create_label('Test', Pit_Frame, strings['just_a_test'], sticky='w', padx=10, pady=10)
+create_label('Although', Pit_Frame, strings['pull_requests_welcome'], sticky='w', padx=10, pady=10)
 
 # Creates the 'Settings' frame
 Settings_Frame = ScrolledText(window, state='disable', highlightthickness=0, borderwidth=0)
@@ -2240,54 +2227,54 @@ thor_file_entry_var.trace("w", on_thor_file_entry_change)
 thor_command_entry_var = tk.StringVar()
 thor_command_entry_var.trace("w", on_thor_command_entry_change)
 
-create_label('Theme', Frame, 'Appearance', ('Monospace', 12), 'w')
-Theme_Checkbutton = Checkbutton('Theme', Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, 'Dark theme', 'Switch.TCheckbutton', 'normal', 0, 1, sticky='w', padx=10, pady=(5, 0))
-Dark_Log_Checkbutton = Checkbutton('Dark_Log', Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, 'Keep Log dark', 'Switch.TCheckbutton', 'normal', 0, 2, 'w', padx=10)
-File_Dialog_Checkbutton = Checkbutton('File_Dialog', Frame, lambda: toggle_variable('tk_file_dialogs'), file_dialog_checkbutton_var, 'Use tk file dialogs', 'Switch.TCheckbutton', 'normal', 0, 4, 'w', padx=10, pady=0)
-Tooltip_Checkbutton = Checkbutton('Tooltip', Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, 'Tooltips', 'Switch.TCheckbutton', 'normal', 0, 5, sticky='w', padx=10, pady=(5, 0))
-create_label('Tooltip', Frame, 'A restart is required to turn off tooltips\n', ('Monospace', 8), sticky='w', padx=15, pady=(0, 0), columnspan=2)
-create_label('Thor', Frame, 'Thor', ('Monospace', 12), 'w')
-create_label('Thor_File', Frame, 'The "TheAirBlow.Thor.Shell" file to use:', ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
+create_label('Theme', Frame, strings['appearance'], ('Monospace', 12), 'w')
+Theme_Checkbutton = Checkbutton('Theme', Frame, lambda: toggle_variable('dark_theme'), theme_checkbutton_var, strings['dark_theme'], 'Switch.TCheckbutton', 'normal', 0, 1, sticky='w', padx=10, pady=(5, 0))
+Dark_Log_Checkbutton = Checkbutton('Dark_Log', Frame, lambda: toggle_variable('keep_log_dark'), dark_log_checkbutton_var, strings['keep_log_dark'], 'Switch.TCheckbutton', 'normal', 0, 2, 'w', padx=10)
+File_Dialog_Checkbutton = Checkbutton('File_Dialog', Frame, lambda: toggle_variable('tk_file_dialogs'), file_dialog_checkbutton_var, strings['use_tk_dialogs'], 'Switch.TCheckbutton', 'normal', 0, 4, 'w', padx=10, pady=0)
+Tooltip_Checkbutton = Checkbutton('Tooltip', Frame, lambda: toggle_variable('tooltips'), tooltip_checkbutton_var, strings['tooltips'], 'Switch.TCheckbutton', 'normal', 0, 5, sticky='w', padx=10, pady=(5, 0))
+create_label('Tooltip', Frame, strings['restart_required_tooltips'], ('Monospace', 8), sticky='w', padx=15, pady=(0, 0), columnspan=2)
+create_label('Thor', Frame, strings['thor'], ('Monospace', 12), 'w')
+create_label('Thor_File', Frame, strings['the_thor_file'], ('Monospace', 9), 'w', 15, (5, 0), columnspan=2)
 Thor_File_Entry = Entry('Thor_File', Frame, 'normal', 0, 9, 'we', (15, 5), 0, textvariable=thor_file_entry_var)
 Thor_File_Entry.insert(tk.END, thor_file)
-Thor_File_Button = Button('Thor_File', Frame, 'Choose...', lambda: open_file('Thor'), 'normal', 1, 9, 'w', (0,15), 0)
-Sudo_Checkbutton = Checkbutton('Sudo', Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, 'Run Thor with sudo', 'Switch.TCheckbutton', 'normal', 0, 10, 'w', 10, (10, 7))
-create_label('Thor_Command', Frame, 'Command used to start Thor (reflects changes made above):', ('Monospace', 9), 'w', 15, 0, columnspan=2)
+Thor_File_Button = Button('Thor_File', Frame, strings['choose'], lambda: open_file('Thor'), 'normal', 1, 9, 'w', (0,15), 0)
+Sudo_Checkbutton = Checkbutton('Sudo', Frame, lambda: toggle_variable('sudo'), sudo_checkbutton_var, strings['run_thor_sudo'], 'Switch.TCheckbutton', 'normal', 0, 10, 'w', 10, (10, 7))
+create_label('Thor_Command', Frame, strings['command_used_thor'], ('Monospace', 9), 'w', 15, 0, columnspan=2)
 Thor_Command_Entry = Entry('Thor_Command', Frame, 'normal', 0, 12, 'we', 15, (0, 15), 2, textvariable=thor_command_entry_var)
 Thor_Command_Entry.insert(tk.END, thor_command)
-create_label('Flashing', Frame, 'Flashing', ('Monospace', 12), 'w')
-create_label('Default_Directory', Frame, 'Initial file picker directory:', ('Monospace', 9), 'w', 15, 5, columnspan=2)
+create_label('Flashing', Frame, strings['flashing'], ('Monospace', 12), 'w')
+create_label('Default_Directory', Frame, strings['file_picker_directory'], ('Monospace', 9), 'w', 15, 5, columnspan=2)
 Default_Directory_Entry = Entry('Default_Directory', Frame, 'normal', 0, 15, 'we', (15, 5), 0)
 Default_Directory_Entry.insert(tk.END, initial_directory)
-Default_Directory_Button = Button('Default_Directory', Frame, 'Choose...', lambda: open_file('Default'), 'normal', 1, 15, 'w', (0, 15), 0)
+Default_Directory_Button = Button('Default_Directory', Frame, strings['choose'], lambda: open_file('Default'), 'normal', 1, 15, 'w', (0, 15), 0)
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
 Help_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
 Help_Frame.grid_columnconfigure(0, weight=1)
 
-create_label('Help', Help_Frame, '\nNot sure how to use Thor GUI?', ('Monospace', 13))
+create_label('Help', Help_Frame, strings['not_sure_how'], ('Monospace', 13))
 create_text('Usage_Help_Text', Help_Frame, [
-    ('Check out ', None),
-    ('the Usage Guide', 'https://github.com/ethical-haquer/Thor_GUI#usage'),
+    (strings['check_out'], None),
+    (strings['the_usage_guide'], 'https://github.com/ethical-haquer/Thor_GUI#usage'),
     ('.', None)
 ])
 
-create_label('Help_2', Help_Frame, '\nNeed help?', ('Monospace', 13))
+create_label('Help_2', Help_Frame, strings['need_help'], ('Monospace', 13))
 create_text('Get_Help', Help_Frame, [
-    ('Let me know on ', None),
+    (strings['let_me_know2'], None),
     ('XDA', 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/'),
-    (', or open an issue on ', None),
+    (strings['open_an_issue'], None),
     ('GitHub', 'https://github.com/ethical-haquer/Thor_GUI'),
     ('.', None)
 ])
 
-create_label('Help_3', Help_Frame, '\nFound an issue?', ('Monospace', 13))
+create_label('Help_3', Help_Frame, strings['found_an_issue'], ('Monospace', 13))
 create_text('Report', Help_Frame, [
-    ("If it isn't listed ", None),
-    ('here', 'https://github.com/ethical-haquer/Thor_GUI#known-bugs'),
-    (', you can ', None),
-    ('report it', 'https://github.com/ethical-haquer/Thor_GUI/issues/new/choose'),
+    (strings['if_not_listed'], None),
+    (strings['here'], 'https://github.com/ethical-haquer/Thor_GUI#known-bugs'),
+    (strings['you_can'], None),
+    (strings['report_it'], 'https://github.com/ethical-haquer/Thor_GUI/issues/new/choose'),
     ('.', None)
 ])
 
@@ -2298,44 +2285,44 @@ About_Frame.grid_columnconfigure(0, weight=1)
 
 create_label('Thor_GUI', About_Frame, 'Thor GUI', ('Monospace', 13))
 create_label('Thor_GUI_Version', About_Frame, f'{version}')
-create_label('Thor_GUI_Description', About_Frame, "A GUI for the Thor Flash Utility")
+create_label('Thor_GUI_Description', About_Frame, strings['a_gui_for'])
 create_text('Thor_GUI_Websites', About_Frame, [
     ('GitHub', 'https://github.com/ethical-haquer/Thor_GUI'),
     (', ', None),
     ('XDA', 'https://xdaforums.com/t/thor-gui-a-gui-for-the-thor-flash-utility-samsung-flash-tool.4636402/')
 ])
 
-create_label('Built_Around', About_Frame, 'Built around the:')
+create_label('Built_Around', About_Frame, strings['built_around'])
 create_label('Thor', About_Frame, '\nThor Flash Utility', ('Monospace', 13))
 create_label('Thor_Version', About_Frame, 'v1.0.4')
-create_label('Thor_Description', About_Frame, 'An alternative to Heimdall')
+create_label('Thor_Description', About_Frame, strings['an_alternative'])
 create_text('Thor_Websites', About_Frame, [
     ('GitHub', 'https://github.com/Samsung-Loki/Thor'),
     (', ', None),
     ('XDA', 'https://forum.xda-developers.com/t/dev-thor-flash-utility-the-new-samsung-flash-tool.4597355/')
 ])
 
-create_label('Credits', About_Frame, '\nCredits:', ('Monospace', 13))
+create_label('Credits', About_Frame, strings['credits'], ('Monospace', 13))
 create_text('TheAirBlow', About_Frame, [
     ('TheAirBlow', 'https://github.com/TheAirBlow'),
-    (' for the ', None),
+    (strings['for_the'], None),
     ('Thor Flash Utility', None)
 ])
 create_text('rdbende', About_Frame, [
     ('rdbende', 'https://github.com/rdbende'),
-    (' for the ', None),
+    (strings['for_the'], None),
     ('Sun Valley tkk theme', 'https://github.com/rdbende/Sun-Valley-ttk-theme')
 ])
 create_text('ethical_haquer', About_Frame, [
-    ('Myself, ', None),
+    (strings['myself'], None),
     ('ethical_haquer', 'https://github.com/ethical-haquer'),
-    (', for Thor GUI', None)
+    (strings['for_thor_gui'], None)
 ])
 
-create_label('Disclaimer', About_Frame, '\nThor GUI comes with absolutely no warranty.', ('Monospace', 9))
-create_label('Disclaimer_2', About_Frame, 'See the GNU General Public License, version 3 or later for details.', ('Monospace', 9))
-create_label('Disclaimer_3', About_Frame, '\nThor Flash Utility comes with absolutely no warranty.', ('Monospace', 9))
-create_label('Disclaimer_4', About_Frame, 'See the Mozilla Public License, version 2 or later for details.', ('Monospace', 9))
+create_label('Disclaimer', About_Frame, strings['thor_gui_warranty'], ('Monospace', 9))
+create_label('Disclaimer_2', About_Frame, strings['see_gnu_gpl'], ('Monospace', 9))
+create_label('Disclaimer_3', About_Frame, strings['thor_warranty'], ('Monospace', 9))
+create_label('Disclaimer_4', About_Frame, strings['see_mozzila_license'], ('Monospace', 9))
 
 # Configures the tags for coloring the output text
 Output_Text.tag_configure('green', foreground='#26A269')
