@@ -193,7 +193,7 @@ pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal
 
 ## Installation
 
-+ First, make sure you have the above prerequisites.
++ First, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Thor_GUI?tab=readme-ov-file#prerequisites).
 + Download the latest "thor-gui-os-version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it.
 + Then run:
@@ -266,6 +266,7 @@ https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5df866bb-74d1-40ba-b
 
 Here are some ways you can help me improve/finish Thor GUI:
 + Find and report bugs. If you find an issue that isn't listed above in "Known Bugs", please let me know!
++ Help translate Thor GUI into your language. Refer to [this readme](https://github.com/ethical-haquer/Thor_GUI/blob/main/locales/README.md) for more info.
 + Improve the code. Pull requests are always welcome!
 + Suggest an improvement by opening up a [feature request](https://github.com/ethical-haquer/Thor_GUI/issues/new/choose)!
 
