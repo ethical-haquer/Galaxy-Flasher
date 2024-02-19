@@ -1472,10 +1472,10 @@ def verify_flash():
             print(strings['sent_y'])
             Verify_Flash_Window.destroy()
 
-        No_Button = ttk.Button(Verify_Flash_Window, text=strings['no'], command=lambda: send_no)
+        No_Button = ttk.Button(Verify_Flash_Window, text=strings['no'], command=send_no)
         No_Button.grid(row=1, column=0, sticky='we', pady=5, padx=(5,2.5))
 
-        Yes_Button = ttk.Button(Verify_Flash_Window, text=strings['yes'], command=lambda: send_yes)
+        Yes_Button = ttk.Button(Verify_Flash_Window, text=strings['yes'], command=send_yes)
         Yes_Button.grid(row=1, column=1, sticky='we', pady=5, padx=(2.5,5))
 
         width = 640

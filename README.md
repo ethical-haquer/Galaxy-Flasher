@@ -100,20 +100,11 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Thor GUI's:
 
 Functional:
++ Actually flashing files is currently broken. The code that handles this needs to be re-written.
 + Currently, the only interactive Thor commands (ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
 
 Aesthetic:
 + The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
-+ After using Thor GUI on different devices, I've realized that I need to just specify a padding for text in windows, instead of specifing the exact size in pixels. Currently you may notice that the bottom part of certain message windows gets cut-off, and the text in the About Tab may be slightly too low.
-+ Not surprisingly, the code I cooked-up as part of v0.2.0 can be improved:
-  <details>
-    <summary><b>Screenshot</b></summary>
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4ebc4b7e-f476-4b39-83a4-d648743eaef2">
-      <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4ebc4b7e-f476-4b39-83a4-d648743eaef2">
-      <img alt="Screenshot">
-    </picture>
-  </details>
 
 ## Supported platforms
 
@@ -127,7 +118,7 @@ Aesthetic:
 - [x] Starting/Stopping an Odin session
 - [x] Setting options
 - [x] Typing and sending Thor a command
-- [x] Flashing Odin archives
+- [ ] Flashing Odin archives
 - [ ] Flashing a single partition
 - [ ] Printing a description of a device's partition table
 - [ ] Dumping a device's partition table into a PIT file
