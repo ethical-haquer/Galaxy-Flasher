@@ -1,6 +1,8 @@
 
 # Thor GUI
 
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Github Releases](https://img.shields.io/github/downloads/ethical-haquer/Thor_GUI/total.svg?style=flat)](https://github.com/ethical-haquer/Thor_GUI/releases)
+
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 
 <picture>
