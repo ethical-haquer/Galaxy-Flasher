@@ -2,7 +2,7 @@
 This folder contains all the locale files to support different languages. The language that is used by Thor GUI is dependent on your system language. If your language is not yet supported by Thor GUI, it will fallback to English.
 
 If you want to translate Thor GUI to a language which is not yet supported, use the [`en.json`](https://github.com/ethical-haquer/Thor_GUI/blob/main/locales/en.json) file as a base for the translation.
-Make sure that the json file is named with the same format (e.g. Japanese = `ja.json`).
+Make sure that the json file is named using the same format (for example, Japanese = `ja.json`).
 
 If you want to check what display language is being reported to Thor GUI, you can run these commands in the Python shell:
 
