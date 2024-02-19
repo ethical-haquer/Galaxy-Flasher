@@ -100,7 +100,7 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Thor GUI's:
 
 Functional:
-+ Actually flashing files is currently broken. The code that handles this needs to be re-written.
++ Flashing Odin archives is currently broken. The code that handles this needs to be re-written.
 + Currently, the only interactive Thor commands (ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
 
 Aesthetic:
