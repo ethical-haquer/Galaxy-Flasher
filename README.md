@@ -176,10 +176,16 @@ pip install tkinter-tooltip
 pip install tkinterdnd2-universal
 ```
 
+### zenipy
+
+```
+pip install zenipy
+```
+
 ### To install all of the above Python packages
 
 ```
-pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal
+pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal zenipy
 ```
 
 ## Installation
