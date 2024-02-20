@@ -1,6 +1,8 @@
 
 # Thor GUI
 
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Github Releases](https://img.shields.io/github/downloads/ethical-haquer/Thor_GUI/total.svg?style=flat)](https://github.com/ethical-haquer/Thor_GUI/releases)
+
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 
 <picture>
@@ -100,7 +102,7 @@ Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been i
 In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Thor GUI's:
 
 Functional:
-+ Actually flashing files is currently broken. The code that handles this needs to be re-written.
++ Flashing Odin archives is currently broken. The code that handles this needs to be re-written.
 + Currently, the only interactive Thor commands (ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
 
 Aesthetic:
@@ -152,40 +154,24 @@ Fedora:
 sudo dnf install python3-tkinter
 ```
 
-### Pexpect
+### These Python packages:
+
+- pexpect
+- sv-ttk
+- tkinter-tooltip
+- tkinterdnd2-universal
+- zenipy
+
+#### To install all of them:
 
 ```
-pip install pexpect
-```
-
-### Sun Valley ttk theme
-
-```
-pip install sv-ttk
-```
-
-### tkinter-tooltip
-
-```
-pip install tkinter-tooltip
-```
-
-### tkinterdnd2-universal
-
-```
-pip install tkinterdnd2-universal
-```
-
-### To install all of the above Python packages
-
-```
-pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal
+pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal zenipy
 ```
 
 ## Installation
 
 + First, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Thor_GUI?tab=readme-ov-file#prerequisites).
-+ Download the latest "thor-gui-os-version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
++ Download the latest "thor-gui_os_version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it.
 + Then run:
 
