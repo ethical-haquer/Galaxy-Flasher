@@ -171,7 +171,7 @@ pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal zenipy
 ## Installation
 
 + First, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Thor_GUI?tab=readme-ov-file#prerequisites).
-+ Download the latest "thor-gui-os-version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
++ Download the latest "thor-gui_os_version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
 + Once it's downloaded, extract it.
 + Then run:
 
