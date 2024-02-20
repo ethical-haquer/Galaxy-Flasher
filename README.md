@@ -154,37 +154,15 @@ Fedora:
 sudo dnf install python3-tkinter
 ```
 
-### Pexpect
+### These Python packages:
 
-```
-pip install pexpect
-```
+- pexpect
+- sv-ttk
+- tkinter-tooltip
+- tkinterdnd2-universal
+- zenipy
 
-### Sun Valley ttk theme
-
-```
-pip install sv-ttk
-```
-
-### tkinter-tooltip
-
-```
-pip install tkinter-tooltip
-```
-
-### tkinterdnd2-universal
-
-```
-pip install tkinterdnd2-universal
-```
-
-### zenipy
-
-```
-pip install zenipy
-```
-
-### To install all of the above Python packages
+#### To install all of them:
 
 ```
 pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal zenipy
