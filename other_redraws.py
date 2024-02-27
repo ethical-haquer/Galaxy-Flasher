@@ -1,4 +1,67 @@
 """
+# Avg 12%, 28% CPU
+def redraw(self):
+    text_widget = self.text
+    text_widget.config(state="normal")
+    text_widget.configure(background=self.bg)
+
+    history_lines = self.extract_history_as_text(self.screen)
+    combined_lines = history_lines if not self.in_alternate_screen else []
+    for line in self.screen.display:
+        if isinstance(line, str):
+            combined_lines.append(line)
+        else:
+            line_str = "".join(
+                char.data if hasattr(char, "data") else char for char in line
+            )
+            combined_lines.append(line_str)
+
+    rows = self.text_rows
+    total_lines = len(combined_lines)
+    start_line = max(0, total_lines - rows)
+    offset = total_lines - len(self.screen.display)
+
+    full_text = "\n".join(combined_lines)
+    text_widget.replace("1.0", tk.END, full_text)
+
+    tag_ranges = {}
+    tag_names = set()
+    for y, line in enumerate(self.screen.display, start=start_line + 1):
+        line_tags = []
+        for x, char in enumerate(line):
+            char_style = self.screen.buffer[y - 1][x]
+            fg = COLOR_MAPPINGS.get(char_style.fg, self.fg)
+            bg = COLOR_MAPPINGS.get(char_style.bg, self.bg)
+            tag_name = f"color_{fg}_{bg}"
+            line_tags.append(
+                (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
+            )
+            tag_names.add(tag_name)
+
+        tag_ranges[y] = line_tags
+
+    for tag_name in tag_names:
+        fg, bg = tag_name.split("_")[1:]
+        text_widget.tag_configure(tag_name, foreground=fg, background=bg)
+
+    for y, line_tags in tag_ranges.items():
+        for tag_name, start_pos, end_pos in line_tags:
+            text_widget.tag_add(tag_name, start_pos, end_pos)
+
+    text_widget.tag_raise("block_cursor")
+    text_widget.tag_raise("sel")
+
+    cursor_line, cursor_col = (
+        self.screen.cursor.y + 1 + offset,
+        self.screen.cursor.x + 1,
+    )
+    text_widget.mark_set("insert", f"{cursor_line}.{cursor_col}")
+    text_widget.see("insert")
+
+    text_widget.focus_set()
+    """
+
+"""
 def redraw(self):
     self.text.config(state='normal')
     self.text.delete("1.0", tk.END)

@@ -18,7 +18,6 @@ COLOR_MAPPINGS = {
     "white": "white",
 }
 
-
 class Terminal(Frame):
     def __init__(
         self, master=None, log_file=None, font_size=8, color=False, *args, **kwargs
@@ -356,6 +355,8 @@ class Terminal(Frame):
 
     # Avg 12%, 28% CPU
     def redraw(self):
+        fgd = None
+        bgd = None
         text_widget = self.text
         text_widget.config(state="normal")
         text_widget.configure(background=self.bg)
@@ -385,6 +386,15 @@ class Terminal(Frame):
             line_tags = []
             for x, char in enumerate(line):
                 char_style = self.screen.buffer[y - 1][x]
+                fgd2 = char_style.fg
+                bgd2 = char_style.bg
+                if fgd2 != fgd:
+                    fgd = fgd2
+                    print(fgd)
+                bgd2 = char_style.bg
+                if bgd2 != bgd:
+                    bgd = bgd2
+                    print(bgd)
                 fg = COLOR_MAPPINGS.get(char_style.fg, self.fg)
                 bg = COLOR_MAPPINGS.get(char_style.bg, self.bg)
                 tag_name = f"color_{fg}_{bg}"
@@ -421,7 +431,6 @@ class Terminal(Frame):
             self.output_thread.join(timeout=0.25)
             self.child = None
         super().destroy()
-
 
 if __name__ == "__main__":
     log_file = "tkinter-terminal.log"
