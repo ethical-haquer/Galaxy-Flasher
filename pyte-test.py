@@ -1,6 +1,7 @@
 import threading as thrd
 import tkinter as tk
 from tkinter import Frame, Scrollbar, Text, font
+import re
 
 import pexpect
 import pyte
@@ -353,10 +354,21 @@ class Terminal(Frame):
             lines_as_text.append(processed_line)
         return lines_as_text
 
+    def is_hex_color_code(self, s):
+        # Define the regular expression pattern for a hexadecimal color code
+        pattern = r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+    
+        # Check if the string matches the pattern
+        if re.match(pattern, s):
+            return True
+        else:
+            return False
+
     # Avg 12%, 28% CPU
     def redraw(self):
-        fgd = None
-        bgd = None
+        old_fg = None
+        old_bg = None
+        fgd_bgd = None
         text_widget = self.text
         text_widget.config(state="normal")
         text_widget.configure(background=self.bg)
@@ -386,18 +398,32 @@ class Terminal(Frame):
             line_tags = []
             for x, char in enumerate(line):
                 char_style = self.screen.buffer[y - 1][x]
-                fgd2 = char_style.fg
-                bgd2 = char_style.bg
-                if fgd2 != fgd:
-                    fgd = fgd2
-                    print(fgd)
-                bgd2 = char_style.bg
-                if bgd2 != bgd:
-                    bgd = bgd2
-                    print(bgd)
-                fg = COLOR_MAPPINGS.get(char_style.fg, self.fg)
-                bg = COLOR_MAPPINGS.get(char_style.bg, self.bg)
+                fg = char_style.fg
+                bg = char_style.bg
+                
+                if self.is_hex_color_code(fg):
+                    if not fg.startswith("#"):
+                        fg = f"#{fg}"
+                else:
+                    fg = COLOR_MAPPINGS.get(char_style.fg, self.fg)
+                
+                if self.is_hex_color_code(bg):
+                    if not bg.startswith("#"):
+                        bg = f"#{bg}"
+                else:
+                    bg = COLOR_MAPPINGS.get(char_style.bg, self.bg)
+                
+                if fg != old_fg:
+                    old_fg = fg
+                    print(fg + " fg")
+                if bg != old_bg:
+                    old_bg = bg
+                    print(bg + " bg")
+                    
                 tag_name = f"color_{fg}_{bg}"
+                if tag_name != fgd_bgd:
+                    fgd_bgd = tag_name
+                    print(tag_name)
                 line_tags.append(
                     (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
                 )

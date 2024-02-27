@@ -40,7 +40,7 @@ import zenipy
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from tktooltip import ToolTip
 
-version = "Alpha v0.4.6"
+version = "Alpha v0.4.7"
 
 cwd = os.getcwd()
 currently_running = False
@@ -134,7 +134,7 @@ COLOR_MAPPINGS = {
     "black": "black",
     "red": "#ff0000",
     "green": "#00ff00",
-    "yellow": "#ffff00",
+    #"yellow": "#ffff00",
     "blue": "#0000ff",
     "magenta": "#ff00ff",
     "cyan": "#00ffff",
@@ -144,6 +144,7 @@ COLOR_MAPPINGS = {
     "pink": "#ffc0cb",
     "teal": "#008080",
     "gray": "#808080",
+    "ffff00": "yellow",
     # Add more colors as needed
 }
 
@@ -825,6 +826,7 @@ class Terminal(ScrolledText):
     def redraw(self):
         fgd = None
         bgd = None
+        fgd_bgd = None
         text_widget = self
         text_widget.config(state="normal")
         text_widget.configure(background=self.bg)
@@ -858,14 +860,21 @@ class Terminal(ScrolledText):
                 bgd2 = char_style.bg
                 if fgd2 != fgd:
                     fgd = fgd2
-                    print(fgd)
+                    print(fgd + " fg")
                 bgd2 = char_style.bg
                 if bgd2 != bgd:
                     bgd = bgd2
-                    print(bgd)
+                    print(bgd + " bg")
                 fg = COLOR_MAPPINGS.get(char_style.fg, self.fg)
+                if COLOR_MAPPINGS.get(char_style.fg):
+                    print(f"Yo: {char_style.fg}")
+                else:
+                    print(f"No: {char_style.fg}")
                 bg = COLOR_MAPPINGS.get(char_style.bg, self.bg)
                 tag_name = f"color_{fg}_{bg}"
+                if tag_name != fgd_bgd:
+                    fgd_bgd = tag_name
+                    print(tag_name)
                 line_tags.append(
                     (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
                 )
@@ -875,6 +884,8 @@ class Terminal(ScrolledText):
 
         for tag_name in tag_names:
             fg, bg = tag_name.split("_")[1:]
+            #print(fg + " fg2")
+            #print(bg + " bg2")
             text_widget.tag_configure(tag_name, foreground=fg, background=bg)
 
         for y, line_tags in tag_ranges.items():
@@ -2179,24 +2190,24 @@ def toggle_variable(variable):
         dark_theme = not dark_theme
         if sv_ttk.get_theme() == "dark":
             sv_ttk.set_theme("light")
-            Terminal.tag_configure("default", foreground="#1c1c1c")
+            #Terminal.tag_configure("default", foreground="#1c1c1c")
         elif sv_ttk.get_theme() == "light":
             sv_ttk.set_theme("dark")
             Terminal.configure(bg="#1c1c1c")
-            Terminal.tag_configure("default", foreground="#fafafa")
+            #Terminal.tag_configure("default", foreground="#fafafa")
         if keep_log_dark == True and dark_theme == False:
             Terminal.configure(bg="#1c1c1c")
-            Terminal.tag_configure("default", foreground="#fafafa")
+            #Terminal.tag_configure("default", foreground="#fafafa")
 
     elif variable == "keep_log_dark":
         keep_log_dark = not keep_log_dark
         if keep_log_dark == True:
             Terminal.configure(bg="#1c1c1c")
-            Terminal.tag_configure("default", foreground="#fafafa")
+            #Terminal.tag_configure("default", foreground="#fafafa")
         elif keep_log_dark == False:
             if dark_theme == False:
                 Terminal.configure(bg="#fafafa")
-                Terminal.tag_configure("default", foreground="#1c1c1c")
+                #Terminal.tag_configure("default", foreground="#1c1c1c")
 
     elif variable == "tooltips":
         tooltips = not tooltips
@@ -3315,14 +3326,14 @@ window.protocol("WM_DELETE_WINDOW", on_window_close)
 if dark_theme:
     sv_ttk.set_theme("dark")
     Terminal.configure(bg='#1c1c1c')
-    Terminal.tag_configure('default', foreground='#fafafa')
+    #Terminal.tag_configure('default', foreground='#fafafa')
 else:
     sv_ttk.set_theme("light")
-    Terminal.tag_configure('default', foreground='#1c1c1c')
+    #Terminal.tag_configure('default', foreground='#1c1c1c')
 
 if keep_log_dark == True:
     Terminal.configure(bg='#1c1c1c')
-    Terminal.tag_configure('default', foreground='#fafafa')
+    #Terminal.tag_configure('default', foreground='#fafafa')
     pass
 
 # Creates tooltips for buttons and things
