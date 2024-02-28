@@ -8,6 +8,10 @@ import pyte
 import pyte.graphics
 from pyte.screens import HistoryScreen
 from colour import Color
+import webcolors
+import os
+
+os.environ["TERM"] = "linux"
 
 class Terminal(Frame):
     def __init__(
@@ -139,7 +143,7 @@ class Terminal(Frame):
         while True:
             if self.child:
                 data = self.child.read_nonblocking(4096, timeout=None)
-                print(data)
+                #print(data)
             if not data:
                 break
             update_ui(data)
@@ -274,8 +278,10 @@ class Terminal(Frame):
     def is_valid_text_widget_color(self, string):
         try:
             tk.font.nametofont(string)
+            #print(f"Is color: {string}")
             return True
         except tk.TclError:
+            #print(f"Is not color: {string}")
             return False
 
     def is_color(self, color):
@@ -283,8 +289,10 @@ class Terminal(Frame):
             # Remove spaces - Perhaps not needed
             color = color.replace(" ", "")
             Color(color)
+            #print(f"Is color: {color}")
             return True
         except ValueError:
+            #print(f"Is not color: {color}")
             return False
 
     # Avg 12%, 28% CPU
@@ -315,61 +323,78 @@ class Terminal(Frame):
         full_text = "\n".join(combined_lines)
         text_widget.replace("1.0", tk.END, full_text)
 
-        tag_ranges = {}
-        tag_names = set()
-        for y, line in enumerate(self.screen.display, start=start_line + 1):
-            line_tags = []
-            for x, char in enumerate(line):
-                char_style = self.screen.buffer[y - 1][x]
-                fg = char_style.fg
-                bg = char_style.bg
-
-                if self.is_hex_color(fg):
-                    if not fg.startswith("#"):
-                        fg = f"#{fg}"
-                elif self.is_color(fg):
-                    pass
-                elif fg == "default":
-                    fg = self.fg
-                elif fg == "brightblack":
-                    fg = self.fg
-                else:
-                    print(f"Unable to define fg: {fg}")
-                
-                if self.is_hex_color(bg):
-                    if not bg.startswith("#"):
-                        bg = f"#{bg}"
-                elif bg == "default":
-                    bg = self.bg
-                elif self.is_color(bg):
-                    pass
-                else:
-                    print(f"Unable to define bg: {bg}")
+        
+        if self.color == True:
+            tag_ranges = {}
+            tag_names = set()
             
-                if fg != old_fg:
-                    old_fg = fg
-                if bg != old_bg:
-                    old_bg = bg
+            for y, line in enumerate(self.screen.display, start=start_line + 1):
+                line_tags = []
+                for x, char in enumerate(line):
+                    char_style = self.screen.buffer[y - 1][x]
+                    fg = char_style.fg
+                    bg = char_style.bg
                     
-                tag_name = f"color_{fg}_{bg}"
-                if tag_name != old_tag:
-                    print(f"Final tag: {tag_name}")
-                    old_tag = tag_name
+                    if self.is_hex_color(fg):
+                        print(f"Is hex: {fg}")
+                        if not fg.startswith("#"):
+                            fg = f"#{fg}"
+                        #print(f"The color is: {webcolors.hex_to_name(fg)}")
+                        fg = webcolors.hex_to_name(fg)
+                    elif self.is_color(fg):
+                        pass
                     
-                line_tags.append(
-                    (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
-                )
-                tag_names.add(tag_name)
+                    elif fg == "default":
+                        #print(f"Is default: {fg}")
+                        fg = self.fg
+                    elif fg == "brightblack":
+                        #print(f"Is brightblack: {fg}")
+                        fg = self.fg
+                    
+                    else:
+                        print(f"Unable to define fg: {fg}")
 
-            tag_ranges[y] = line_tags
+                    if self.is_hex_color(bg):
+                        if not bg.startswith("#"):
+                            bg = f"#{bg}"
+                        #print(f"The color is: {webcolors.hex_to_name(bg)}")
+                        bg = webcolors.hex_to_name(bg)
+                    elif bg == "default":
+                        bg = self.bg
+                    elif self.is_color(bg):
+                        pass
+                    else:
+                        print(f"Unable to define bg: {bg}")
+                        
+                    if bg == "black":
+                        print("black")
 
-        for tag_name in tag_names:
-            fg, bg = tag_name.split("_")[1:]
-            text_widget.tag_configure(tag_name, foreground=fg, background=bg)
+                    if fg != old_fg:
+                        old_fg = fg
+                    if bg != old_bg:
+                        old_bg = bg
+                        
+                    tag_name = f"color_{fg}_{bg}"
+                    if tag_name != old_tag:
+                        #print(f"Final tag: {tag_name}")
+                        old_tag = tag_name
+                        
+                    line_tags.append(
+                        (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
+                    )
+                    tag_names.add(tag_name)
 
-        for y, line_tags in tag_ranges.items():
-            for tag_name, start_pos, end_pos in line_tags:
-                text_widget.tag_add(tag_name, start_pos, end_pos)
+                tag_ranges[y] = line_tags
+
+            for tag_name in tag_names:
+                fg, bg = tag_name.split("_")[1:]
+                text_widget.tag_configure(tag_name, foreground=fg, background=bg)
+
+            for y, line_tags in tag_ranges.items():
+                for tag_name, start_pos, end_pos in line_tags:
+                    text_widget.tag_add(tag_name, start_pos, end_pos)
+        else:
+            text_widget.configure(bg=self.bg, fg=self.fg)
 
         text_widget.tag_raise("block_cursor")
         text_widget.tag_raise("sel")
@@ -394,9 +419,9 @@ if __name__ == "__main__":
     log_file = "tkinter-terminal.log"
     ui_config = {
         "wrap": "none",
-        "bg": "white",
-        "fg": "black",
-        "font_size": 11,
+        "bg": "black",
+        "fg": "white",
+        "font_size": 10,
     }
     root = tk.Tk()
     root.grid_rowconfigure(0, weight=1)

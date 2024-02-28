@@ -40,6 +40,7 @@ import zenipy
 from colour import Color
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from tktooltip import ToolTip
+import webcolors
 
 version = "Alpha v0.4.7"
 
@@ -66,7 +67,7 @@ else:
     simplified_operating_system = operating_system
 prevent_blowback = False
 # Makes Thor think it's being run from xterm, a true one-liner
-os.environ["TERM"] = "xterm"
+os.environ["TERM"] = "linux"
 
 successful_commands = []
 
@@ -741,61 +742,77 @@ class Terminal(ScrolledText):
         full_text = "\n".join(combined_lines)
         self.replace("1.0", tk.END, full_text)
 
-        tag_ranges = {}
-        tag_names = set()
-        for y, line in enumerate(self.screen.display, start=start_line + 1):
-            line_tags = []
-            for x, char in enumerate(line):
-                char_style = self.screen.buffer[y - 1][x]
-                fg = char_style.fg
-                bg = char_style.bg
+        if self.color == True:
+            tag_ranges = {}
+            tag_names = set()
+            
+            for y, line in enumerate(self.screen.display, start=start_line + 1):
+                line_tags = []
+                for x, char in enumerate(line):
+                    char_style = self.screen.buffer[y - 1][x]
+                    fg = char_style.fg
+                    bg = char_style.bg
+                    
+                    if self.is_hex_color(fg):
+                        print(f"Is hex: {fg}")
+                        if not fg.startswith("#"):
+                            fg = f"#{fg}"
+                        #print(f"The color is: {webcolors.hex_to_name(fg)}")
+                        fg = webcolors.hex_to_name(fg)
+                    elif self.is_color(fg):
+                        pass
+                    
+                    elif fg == "default":
+                        #print(f"Is default: {fg}")
+                        fg = self.fg
+                    elif fg == "brightblack":
+                        #print(f"Is brightblack: {fg}")
+                        fg = self.fg
+                    
+                    else:
+                        print(f"Unable to define fg: {fg}")
 
-                if self.is_hex_color(fg):
-                    if not fg.startswith("#"):
-                        fg = f"#{fg}"
-                elif self.is_color(fg):
-                    pass
-                elif fg == "default":
-                    fg = self.fg
-                elif fg == "brightblack":
-                    fg = self.fg
-                else:
-                    print(f"Unable to define fg: {fg}")
+                    if self.is_hex_color(bg):
+                        if not bg.startswith("#"):
+                            bg = f"#{bg}"
+                        #print(f"The color is: {webcolors.hex_to_name(bg)}")
+                        bg = webcolors.hex_to_name(bg)
+                    elif bg == "default":
+                        bg = self.bg
+                    elif self.is_color(bg):
+                        pass
+                    else:
+                        print(f"Unable to define bg: {bg}")
+                        
+                    if bg == "black":
+                        print("black")
 
-                if self.is_hex_color(bg):
-                    if not bg.startswith("#"):
-                        bg = f"#{bg}"
-                elif bg == "default":
-                    bg = self.bg
-                elif self.is_color(bg):
-                    pass
-                else:
-                    print(f"Unable to define bg: {bg}")
+                    if fg != old_fg:
+                        old_fg = fg
+                    if bg != old_bg:
+                        old_bg = bg
+                        
+                    tag_name = f"color_{fg}_{bg}"
+                    if tag_name != old_tag:
+                        #print(f"Final tag: {tag_name}")
+                        old_tag = tag_name
+                        
+                    line_tags.append(
+                        (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
+                    )
+                    tag_names.add(tag_name)
 
-                if fg != old_fg:
-                    old_fg = fg
-                if bg != old_bg:
-                    old_bg = bg
+                tag_ranges[y] = line_tags
 
-                tag_name = f"color_{fg}_{bg}"
-                if tag_name != old_tag:
-                    print(f"Final tag: {tag_name}")
-                    old_tag = tag_name
+            for tag_name in tag_names:
+                fg, bg = tag_name.split("_")[1:]
+                text_widget.tag_configure(tag_name, foreground=fg, background=bg)
 
-                line_tags.append(
-                    (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
-                )
-                tag_names.add(tag_name)
-
-            tag_ranges[y] = line_tags
-
-        for tag_name in tag_names:
-            fg, bg = tag_name.split("_")[1:]
-            self.tag_configure(tag_name, foreground=fg, background=bg)
-
-        for y, line_tags in tag_ranges.items():
-            for tag_name, start_pos, end_pos in line_tags:
-                self.tag_add(tag_name, start_pos, end_pos)
+            for y, line_tags in tag_ranges.items():
+                for tag_name, start_pos, end_pos in line_tags:
+                    text_widget.tag_add(tag_name, start_pos, end_pos)
+        else:
+            self.configure(bg=self.bg, fg=self.fg)
 
         self.tag_raise("block_cursor")
         self.tag_raise("sel")
@@ -2098,24 +2115,24 @@ def toggle_variable(variable):
         dark_theme = not dark_theme
         if sv_ttk.get_theme() == "dark":
             sv_ttk.set_theme("light")
-            # Terminal.tag_configure("default", foreground="#1c1c1c")
+            Terminal.tag_configure("default", foreground="#1c1c1c")
         elif sv_ttk.get_theme() == "light":
             sv_ttk.set_theme("dark")
             Terminal.configure(bg="#1c1c1c")
-            # Terminal.tag_configure("default", foreground="#fafafa")
+            Terminal.tag_configure("default", foreground="#fafafa")
         if keep_log_dark == True and dark_theme == False:
             Terminal.configure(bg="#1c1c1c")
-            # Terminal.tag_configure("default", foreground="#fafafa")
+            Terminal.tag_configure("default", foreground="#fafafa")
 
     elif variable == "keep_log_dark":
         keep_log_dark = not keep_log_dark
         if keep_log_dark == True:
             Terminal.configure(bg="#1c1c1c")
-            # Terminal.tag_configure("default", foreground="#fafafa")
+            Terminal.tag_configure("default", foreground="#fafafa")
         elif keep_log_dark == False:
             if dark_theme == False:
                 Terminal.configure(bg="#fafafa")
-                # Terminal.tag_configure("default", foreground="#1c1c1c")
+                Terminal.tag_configure("default", foreground="#1c1c1c")
 
     elif variable == "tooltips":
         tooltips = not tooltips
@@ -3247,14 +3264,14 @@ window.protocol("WM_DELETE_WINDOW", on_window_close)
 if dark_theme:
     sv_ttk.set_theme("dark")
     Terminal.configure(bg="#1c1c1c")
-    # Terminal.tag_configure('default', foreground='#fafafa')
+    Terminal.tag_configure('default', foreground='#fafafa')
 else:
     sv_ttk.set_theme("light")
-    # Terminal.tag_configure('default', foreground='#1c1c1c')
+    Terminal.tag_configure('default', foreground='#1c1c1c')
 
 if keep_log_dark == True:
     Terminal.configure(bg="#1c1c1c")
-    # Terminal.tag_configure('default', foreground='#fafafa')
+    Terminal.tag_configure('default', foreground='#fafafa')
     pass
 
 # Creates tooltips for buttons and things
