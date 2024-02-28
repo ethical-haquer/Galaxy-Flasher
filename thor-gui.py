@@ -143,6 +143,7 @@ print(
 """
 )
 
+
 def load_variable_file():
     global dark_theme, tooltips, sudo, initial_directory, first_run, thor_file, thor_command, keep_log_dark, tk_file_dialogs
     with open("thor-gui-settings.json", "r") as f:
@@ -246,7 +247,7 @@ class FlashTool:
                     )
                     """
                     Terminal.start(command=thor_command)
-                    #Terminal.start(command="/bin/bash")
+                    # Terminal.start(command="/bin/bash")
                 else:
 
                     def send_ok():
@@ -404,8 +405,12 @@ class FlashTool:
         except Exception as e:
             print(f"An Exception occurred in start:\n{e}")
 
+    def stop(self):
+        Terminal.stop()
+
+
 # Also a work-in-progress - Some things that need to be worked on:
-# 1. Make history colored, or at least make it not treat on-screen text as history
+# 1. Make history colored, or at least make it stop treating on-screen text as history
 # 2. Fix the issue where making the terminal bigger and smaller will cause the text to go completely off-screen
 class Terminal(ScrolledText):
     def __init__(
@@ -437,8 +442,6 @@ class Terminal(ScrolledText):
         # Configure the font
         self.custom_font = font.Font(family="Monospace", size=font_size)
         self.cached_size = None
-
-        self.first = True
 
         self.configure(
             font=self.custom_font,
@@ -474,7 +477,7 @@ class Terminal(ScrolledText):
         self.context_menu.add_command(
             label="Dump History", command=self.dump_pyte_history
         )
-        
+
         # Bind right-click to show the context menu
         self.bind("<Button-3>", self.show_context_menu)  # For Windows/Linux
 
@@ -490,7 +493,11 @@ class Terminal(ScrolledText):
         height = self.winfo_height()
         cols, rows = self.calculate_size(width, height)
         self.resize_pty(cols, rows)
-        self.first = False
+
+    def stop(self):
+        self.output_thread.join(timeout=0.25)
+        self.child.terminate()
+        self.child = None
 
     def send(self, data):
         self.child.sendline(data)
@@ -555,12 +562,15 @@ class Terminal(ScrolledText):
             self.update_cursor()
 
         while True:
-            if self.child:
-                data = self.child.read_nonblocking(4096, timeout=None)
-                print(data)
-            if not data:
+            try:
+                if self.child:
+                    data = self.child.read_nonblocking(4096, timeout=None)
+                    # print(data)
+                if not data:
+                    break
+                update_ui(data)
+            except pexpect.exceptions.EOF:
                 break
-            update_ui(data)
 
     def handle_escape_sequences(self, data_str):
         # Entering alternate screen
@@ -580,6 +590,7 @@ class Terminal(ScrolledText):
             self.scrollback_buffer.pop(0)  # Remove the oldest line if we're at capacity
         self.scrollback_buffer.append(line)
 
+    # Needs work - For example, Ctrl+Shift+C doesn't work, nor does navigating htop
     def on_key_press(self, event):
         keysym = event.keysym
         char = event.char
@@ -622,7 +633,6 @@ class Terminal(ScrolledText):
 
     def on_resize(self, event):
         if self.child:
-            # and self.first == True:
             print("resizing...")
             if self.after_id:
                 self.after_cancel(self.after_id)
@@ -695,16 +705,9 @@ class Terminal(ScrolledText):
         else:
             return False
 
-    def is_valid_text_widget_color(self, string):
-        try:
-            tk.font.nametofont(string)
-            return True
-        except tk.TclError:
-            return False
-
     def is_color(self, color):
         try:
-            # Remove spaces - Perhaps not needed
+            # Removes spaces - Perhaps not needed
             color = color.replace(" ", "")
             Color(color)
             return True
@@ -716,7 +719,6 @@ class Terminal(ScrolledText):
         old_fg = None
         old_bg = None
         old_tag = None
-        #text_widget = self.text
         self.config(state="normal")
         self.configure(background=self.bg)
 
@@ -807,12 +809,14 @@ class Terminal(ScrolledText):
 
         self.focus_set()
 
+    """
     def destroy(self):
         if self.child:
             self.child.terminate()
             self.output_thread.join(timeout=0.25)
             self.child = None
         super().destroy()
+        """
 
 
 # What most Thor commands go through
@@ -1248,7 +1252,7 @@ def set_odin(value):
 
 
 def toggle_start():
-    global currently_running
+    global currently_running, flash_tool
     if currently_running:
         on_window_close()
     else:
@@ -2237,14 +2241,18 @@ def on_window_close():
             if prompt_available == True:
                 currently_running = False
                 window.after_cancel(start_flash)
+                """
                 Thor.sendline("exit")
                 Thor.terminate()
                 Thor.wait()
+                """
                 print(strings["stopped_thor"])
+                """
                 window.after_cancel(update_output)
                 output_thread.join(
                     timeout=0.25
                 )  # Wait for the output thread to finish with a timeout
+                """
                 print(strings["stopping_thor_gui"])
                 window.destroy()
             elif prompt_available == False:
@@ -2256,14 +2264,19 @@ def on_window_close():
                     global currently_running, version
                     currently_running = False
                     window.after_cancel(start_flash)
+                    flash_tool.stop()
+                    """
                     Thor.sendline("exit")
                     Thor.terminate()
                     Thor.wait()
+                    """
                     print(strings["stopped_thor_possibly"])
+                    """
                     window.after_cancel(update_output)
                     output_thread.join(
                         timeout=0.25
                     )  # Wait for the output thread to finish with a timeout
+                    """
                     Force_Close_Window.destroy()
                     print(strings["stopping_thor_gui"])
                     window.destroy()
