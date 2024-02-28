@@ -7,17 +7,7 @@ import pexpect
 import pyte
 import pyte.graphics
 from pyte.screens import HistoryScreen
-
-COLOR_MAPPINGS = {
-    "black": "black",
-    "red": "#ff0000",
-    "green": "#00ff00",
-    "yellow": "#ffff00",
-    "blue": "#0000ff",
-    "magenta": "#ff00ff",
-    "cyan": "#00ffff",
-    "white": "white",
-}
+from colour import Color
 
 class Terminal(Frame):
     def __init__(
@@ -79,10 +69,7 @@ class Terminal(Frame):
         self.context_menu.add_command(
             label="Dump History", command=self.dump_pyte_history
         )
-        self.context_menu.add_command(
-            label="Repaint Screen", command=self.custom_repaint
-        )
-
+        
         # Bind right-click to show the context menu
         self.text.bind("<Button-3>", self.show_context_menu)  # For Windows/Linux
 
@@ -96,85 +83,6 @@ class Terminal(Frame):
             self.text.insert(tk.INSERT, clipboard_text)
         except tk.TclError:  # If there is no data on clipboard
             pass
-
-    def custom_repaint(self):
-        print("ABABABABABABABABABABABABABABABAB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        # Redraw the terminal screen, update cursor position, and apply color.
-        # Enable text widget editing to update the content
-        self.text.config(state="normal")
-
-        # Clear the current content of the text widget
-        self.text.delete("1.0", tk.END)
-
-        # Extract history as text lines
-        history_lines = []
-        for line_dict in self.screen.history.top:
-            processed_line = ""
-            for index in sorted(line_dict.keys()):
-                char = line_dict[index]
-                processed_line += char.data
-            history_lines.append(processed_line)
-
-        # Combine history and current screen content
-        combined_lines = history_lines
-        for line in self.screen.display:
-            print(line)
-        for line in self.screen.display:
-            # If the line is a string, append it directly
-            if isinstance(line, str):
-                combined_lines.append(line)
-            else:
-                # If the line is not a string, it might be a list or another collection of characters
-                line_str = ""
-                for char in line:
-                    # Check if char has a 'data' attribute
-                    if hasattr(char, "data"):
-                        line_str += char.data
-                    else:
-                        line_str += char  # Assuming char is a character
-                combined_lines.append(line_str)
-
-        # Calculate the terminal screen height in rows
-        _, rows = self.calculate_size(self.text.winfo_width(), self.text.winfo_height())
-        for line in combined_lines:
-            print("combined lines ---------------------------------------")
-            print(line)
-        print("----------------------------------------")
-        # Determine which lines to display based on the terminal size
-        total_lines = len(combined_lines)
-        start_line = max(0, total_lines - rows)
-        lines_to_display = combined_lines[start_line:]
-
-        # Join the lines and insert them into the Text widget
-        full_text = "\n".join(combined_lines)
-        self.text.insert("1.0", full_text)
-
-        # Apply color tags
-        for y, line in enumerate(lines_to_display, 1):
-            for x, char in enumerate(line):
-                char_style = self.screen.buffer[y - 1][x]
-                fg = COLOR_MAPPINGS.get(
-                    char_style.fg, self.bg
-                )  # Default to white if not found
-                bg = COLOR_MAPPINGS.get(
-                    char_style.bg, self.fg
-                )  # Default to black if not found
-                tag_name = f"color_{self.fg}_{self.bg}"
-
-                # Create the tag if it doesn't exist
-                if tag_name not in self.text.tag_names():
-                    self.text.tag_configure(tag_name, foreground=fg, background=bg)
-
-                self.text.tag_add(tag_name, f"{y}.{x}", f"{y}.{x + 1}")
-
-        # Update block cursor position
-        self.update_cursor()
-
-        # Disable editing of the content to prevent user edits
-        self.text.config(state="disabled")
-
-        # Set the scrollbar to the bottom (most recent part of the output)
-        self.text.yview_moveto(1)
 
     def dump_pyte_history(self):
         lines_as_text = []
@@ -354,21 +262,36 @@ class Terminal(Frame):
             lines_as_text.append(processed_line)
         return lines_as_text
 
-    def is_hex_color_code(self, s):
-        # Define the regular expression pattern for a hexadecimal color code
-        pattern = r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+    def is_hex_color(self, string):
+        # Define the regular expression pattern for a hexadecimal color code - Modified to make the "#" optional
+        pattern = r'^(?:#)?([0-9a-fA-F]{3}){1,2}$'
     
-        # Check if the string matches the pattern
-        if re.match(pattern, s):
+        if re.match(pattern, string):
             return True
         else:
+            return False
+
+    def is_valid_text_widget_color(self, string):
+        try:
+            tk.font.nametofont(string)
+            return True
+        except tk.TclError:
+            return False
+
+    def is_color(self, color):
+        try:
+            # Remove spaces - Perhaps not needed
+            color = color.replace(" ", "")
+            Color(color)
+            return True
+        except ValueError:
             return False
 
     # Avg 12%, 28% CPU
     def redraw(self):
         old_fg = None
         old_bg = None
-        fgd_bgd = None
+        old_tag = None
         text_widget = self.text
         text_widget.config(state="normal")
         text_widget.configure(background=self.bg)
@@ -400,30 +323,39 @@ class Terminal(Frame):
                 char_style = self.screen.buffer[y - 1][x]
                 fg = char_style.fg
                 bg = char_style.bg
-                
-                if self.is_hex_color_code(fg):
+
+                if self.is_hex_color(fg):
                     if not fg.startswith("#"):
                         fg = f"#{fg}"
+                elif self.is_color(fg):
+                    pass
+                elif fg == "default":
+                    fg = self.fg
+                elif fg == "brightblack":
+                    fg = self.fg
                 else:
-                    fg = COLOR_MAPPINGS.get(char_style.fg, self.fg)
+                    print(f"Unable to define fg: {fg}")
                 
-                if self.is_hex_color_code(bg):
+                if self.is_hex_color(bg):
                     if not bg.startswith("#"):
                         bg = f"#{bg}"
+                elif bg == "default":
+                    bg = self.bg
+                elif self.is_color(bg):
+                    pass
                 else:
-                    bg = COLOR_MAPPINGS.get(char_style.bg, self.bg)
-                
+                    print(f"Unable to define bg: {bg}")
+            
                 if fg != old_fg:
                     old_fg = fg
-                    print(fg + " fg")
                 if bg != old_bg:
                     old_bg = bg
-                    print(bg + " bg")
                     
                 tag_name = f"color_{fg}_{bg}"
-                if tag_name != fgd_bgd:
-                    fgd_bgd = tag_name
-                    print(tag_name)
+                if tag_name != old_tag:
+                    print(f"Final tag: {tag_name}")
+                    old_tag = tag_name
+                    
                 line_tags.append(
                     (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
                 )

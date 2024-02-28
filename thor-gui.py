@@ -37,6 +37,7 @@ import pexpect
 import pyte
 import sv_ttk
 import zenipy
+from colour import Color
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from tktooltip import ToolTip
 
@@ -130,24 +131,6 @@ tooltip_dict = {
     "Default_Directory_Button": strings["choose_a_directory"],
 }
 
-COLOR_MAPPINGS = {
-    "black": "black",
-    "red": "#ff0000",
-    "green": "#00ff00",
-    #"yellow": "#ffff00",
-    "blue": "#0000ff",
-    "magenta": "#ff00ff",
-    "cyan": "#00ffff",
-    "white": "white",
-    "orange": "#ffa500",
-    "purple": "#800080",
-    "pink": "#ffc0cb",
-    "teal": "#008080",
-    "gray": "#808080",
-    "ffff00": "yellow",
-    # Add more colors as needed
-}
-
 print(
     f"""
  _____ _                   ____ _   _ ___
@@ -159,7 +142,6 @@ print(
               {version}
 """
 )
-
 
 def load_variable_file():
     global dark_theme, tooltips, sudo, initial_directory, first_run, thor_file, thor_command, keep_log_dark, tk_file_dialogs
@@ -263,8 +245,8 @@ class FlashTool:
                         f"{thor_command}", timeout=None, encoding="utf-8"
                     )
                     """
-                    #Terminal.start(command=thor_command)
-                    Terminal.start(command="/bin/bash")
+                    Terminal.start(command=thor_command)
+                    #Terminal.start(command="/bin/bash")
                 else:
 
                     def send_ok():
@@ -422,10 +404,19 @@ class FlashTool:
         except Exception as e:
             print(f"An Exception occurred in start:\n{e}")
 
-
+# Also a work-in-progress - Some things that need to be worked on:
+# 1. Make history colored, or at least make it not treat on-screen text as history
+# 2. Fix the issue where making the terminal bigger and smaller will cause the text to go completely off-screen
 class Terminal(ScrolledText):
     def __init__(
-        self, command, master=None, log_file=None, font_size=8, color=False, *args, **kwargs
+        self,
+        command,
+        master=None,
+        log_file=None,
+        font_size=8,
+        color=False,
+        *args,
+        **kwargs,
     ):
         super().__init__(master)
 
@@ -442,23 +433,29 @@ class Terminal(ScrolledText):
         self.grid_columnconfigure(0, weight=1)
         self.rows = 0
         self.cols = 0
-        
+
         # Configure the font
         self.custom_font = font.Font(family="Monospace", size=font_size)
         self.cached_size = None
 
         self.first = True
 
-        self.configure(font=self.custom_font, highlightthickness=0, borderwidth=0, cursor="xterm", insertbackground=self.bg)
+        self.configure(
+            font=self.custom_font,
+            highlightthickness=0,
+            borderwidth=0,
+            cursor="xterm",
+            insertbackground=self.bg,
+        )
         self.bind("<1>", lambda event: self.focus_set())
 
         self.screen = pyte.HistoryScreen(80, 24)
         self.text_rows = 24
         self.stream = pyte.ByteStream()
         self.stream.attach(self.screen)
-        
+
         self.after_id = None
-        
+
         self.bind("<Configure>", self.on_resize)
         self.bind("<KeyPress>", self.on_key_press, add=True)
 
@@ -469,7 +466,7 @@ class Terminal(ScrolledText):
         self.scrollback_buffer = []
         self.max_scrollback_size = 1000  # Adjust as needed
         self.in_alternate_screen = False  # Flag for alternate screen
-        
+
         # Create a context menu
         self.context_menu = tk.Menu(self, tearoff=0)
         self.context_menu.add_command(label="Copy", command=self.copy_to_clipboard)
@@ -477,10 +474,7 @@ class Terminal(ScrolledText):
         self.context_menu.add_command(
             label="Dump History", command=self.dump_pyte_history
         )
-        self.context_menu.add_command(
-            label="Repaint Screen", command=self.custom_repaint
-        )
-
+        
         # Bind right-click to show the context menu
         self.bind("<Button-3>", self.show_context_menu)  # For Windows/Linux
 
@@ -507,85 +501,6 @@ class Terminal(ScrolledText):
             self.insert(tk.INSERT, clipboard_text)
         except tk.TclError:  # If there is no data on clipboard
             pass
-
-    def custom_repaint(self):
-        print("Repainting...")
-        # Redraw the terminal screen, update cursor position, and apply color.
-        # Enable text widget editing to update the content
-        self.config(state="normal")
-
-        # Clear the current content of the text widget
-        self.delete("1.0", tk.END)
-
-        # Extract history as text lines
-        history_lines = []
-        for line_dict in self.screen.history.top:
-            processed_line = ""
-            for index in sorted(line_dict.keys()):
-                char = line_dict[index]
-                processed_line += char.data
-            history_lines.append(processed_line)
-
-        # Combine history and current screen content
-        combined_lines = history_lines
-        for line in self.screen.display:
-            print(line)
-        for line in self.screen.display:
-            # If the line is a string, append it directly
-            if isinstance(line, str):
-                combined_lines.append(line)
-            else:
-                # If the line is not a string, it might be a list or another collection of characters
-                line_str = ""
-                for char in line:
-                    # Check if char has a 'data' attribute
-                    if hasattr(char, "data"):
-                        line_str += char.data
-                    else:
-                        line_str += char  # Assuming char is a character
-                combined_lines.append(line_str)
-
-        # Calculate the terminal screen height in rows
-        _, rows = self.calculate_size(self.winfo_width(), self.winfo_height())
-        for line in combined_lines:
-            print("combined lines ---------------------------------------")
-            print(line)
-        print("----------------------------------------")
-        # Determine which lines to display based on the terminal size
-        total_lines = len(combined_lines)
-        start_line = max(0, total_lines - rows)
-        lines_to_display = combined_lines[start_line:]
-
-        # Join the lines and insert them into the Text widget
-        full_text = "\n".join(combined_lines)
-        self.insert("1.0", full_text)
-
-        # Apply color tags
-        for y, line in enumerate(lines_to_display, 1):
-            for x, char in enumerate(line):
-                char_style = self.screen.buffer[y - 1][x]
-                fg = COLOR_MAPPINGS.get(
-                    char_style.fg, self.bg
-                )  # Default to white if not found
-                bg = COLOR_MAPPINGS.get(
-                    char_style.bg, self.fg
-                )  # Default to black if not found
-                tag_name = f"color_{self.fg}_{self.bg}"
-
-                # Create the tag if it doesn't exist
-                if tag_name not in self.tag_names():
-                    self.tag_configure(tag_name, foreground=fg, background=bg)
-
-                self.tag_add(tag_name, f"{y}.{x}", f"{y}.{x + 1}")
-
-        # Update block cursor position
-        self.update_cursor()
-
-        # Disable editing of the content to prevent user edits
-        self.config(state="disabled")
-
-        # Set the scrollbar to the bottom (most recent part of the output)
-        self.yview_moveto(1)
 
     def dump_pyte_history(self):
         lines_as_text = []
@@ -707,7 +622,7 @@ class Terminal(ScrolledText):
 
     def on_resize(self, event):
         if self.child:
-            #and self.first == True:
+            # and self.first == True:
             print("resizing...")
             if self.after_id:
                 self.after_cancel(self.after_id)
@@ -771,65 +686,39 @@ class Terminal(ScrolledText):
             lines_as_text.append(processed_line)
         return lines_as_text
 
-    """
-    # Avg 1.5%, 3% CPU, no color
-    def redraw(self):
-        text_widget = self
-        text_widget.config(state="normal")
-        text_widget.delete("1.0", tk.END)
-        text_widget.tag_configure("sel", background="blue", foreground="white")
+    def is_hex_color(self, string):
+        # Define the regular expression pattern for a hexadecimal color code - Modified to make the "#" optional
+        pattern = r"^(?:#)?([0-9a-fA-F]{3}){1,2}$"
 
-        history_lines = self.extract_history_as_text(self.screen)
-        combined_lines = history_lines if not self.in_alternate_screen else []
-        for line in self.screen.display:
-            if isinstance(line, str):
-                combined_lines.append(line)
-            else:
-                line_str = "".join(
-                    char.data if hasattr(char, "data") else char for char in line
-                )
-                combined_lines.append(line_str)
+        if re.match(pattern, string):
+            return True
+        else:
+            return False
 
-        full_text = "\n".join(combined_lines)
-        text_widget.insert("1.0", full_text)
-        text_widget.yview_moveto(1)
+    def is_valid_text_widget_color(self, string):
+        try:
+            tk.font.nametofont(string)
+            return True
+        except tk.TclError:
+            return False
 
-        start_line, rows = self.calculate_size(
-            text_widget.winfo_width(), text_widget.winfo_height()
-        )
+    def is_color(self, color):
+        try:
+            # Remove spaces - Perhaps not needed
+            color = color.replace(" ", "")
+            Color(color)
+            return True
+        except ValueError:
+            return False
 
-        # Create tag ranges for styling blocks of text
-        tag_ranges = []
-        tag_start = "1.0"
-        for y, line in enumerate(self.screen.display, start=start_line + 1):
-            line_text = "".join(
-                char.data if hasattr(char, "data") else char for char in line
-            )
-            tag_ranges.append((tag_start, f"{tag_start}+{len(line_text)}c"))
-            tag_start = f"{tag_start}+{len(line_text)+1}c"
-        
-        # Apply tags to tag ranges
-        for tag_range in tag_ranges:
-            text_widget.tag_add("block_style", tag_range[0], tag_range[1])
-
-        # Configure the block_style tag
-        text_widget.tag_configure("block_style", foreground=self.fg, background=self.bg)
-        
-        # Set cursor position and focus
-        cursor_line, cursor_col = self.screen.cursor.y + 1, self.screen.cursor.x + 1
-        text_widget.mark_set("insert", f"{cursor_line}.{cursor_col}")
-
-        text_widget.see("insert")
-        text_widget.focus_set()
-        """
     # Avg 12%, 28% CPU
     def redraw(self):
-        fgd = None
-        bgd = None
-        fgd_bgd = None
-        text_widget = self
-        text_widget.config(state="normal")
-        text_widget.configure(background=self.bg)
+        old_fg = None
+        old_bg = None
+        old_tag = None
+        #text_widget = self.text
+        self.config(state="normal")
+        self.configure(background=self.bg)
 
         history_lines = self.extract_history_as_text(self.screen)
         combined_lines = history_lines if not self.in_alternate_screen else []
@@ -848,7 +737,7 @@ class Terminal(ScrolledText):
         offset = total_lines - len(self.screen.display)
 
         full_text = "\n".join(combined_lines)
-        text_widget.replace("1.0", tk.END, full_text)
+        self.replace("1.0", tk.END, full_text)
 
         tag_ranges = {}
         tag_names = set()
@@ -856,25 +745,41 @@ class Terminal(ScrolledText):
             line_tags = []
             for x, char in enumerate(line):
                 char_style = self.screen.buffer[y - 1][x]
-                fgd2 = char_style.fg
-                bgd2 = char_style.bg
-                if fgd2 != fgd:
-                    fgd = fgd2
-                    print(fgd + " fg")
-                bgd2 = char_style.bg
-                if bgd2 != bgd:
-                    bgd = bgd2
-                    print(bgd + " bg")
-                fg = COLOR_MAPPINGS.get(char_style.fg, self.fg)
-                if COLOR_MAPPINGS.get(char_style.fg):
-                    print(f"Yo: {char_style.fg}")
+                fg = char_style.fg
+                bg = char_style.bg
+
+                if self.is_hex_color(fg):
+                    if not fg.startswith("#"):
+                        fg = f"#{fg}"
+                elif self.is_color(fg):
+                    pass
+                elif fg == "default":
+                    fg = self.fg
+                elif fg == "brightblack":
+                    fg = self.fg
                 else:
-                    print(f"No: {char_style.fg}")
-                bg = COLOR_MAPPINGS.get(char_style.bg, self.bg)
+                    print(f"Unable to define fg: {fg}")
+
+                if self.is_hex_color(bg):
+                    if not bg.startswith("#"):
+                        bg = f"#{bg}"
+                elif bg == "default":
+                    bg = self.bg
+                elif self.is_color(bg):
+                    pass
+                else:
+                    print(f"Unable to define bg: {bg}")
+
+                if fg != old_fg:
+                    old_fg = fg
+                if bg != old_bg:
+                    old_bg = bg
+
                 tag_name = f"color_{fg}_{bg}"
-                if tag_name != fgd_bgd:
-                    fgd_bgd = tag_name
-                    print(tag_name)
+                if tag_name != old_tag:
+                    print(f"Final tag: {tag_name}")
+                    old_tag = tag_name
+
                 line_tags.append(
                     (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
                 )
@@ -884,25 +789,23 @@ class Terminal(ScrolledText):
 
         for tag_name in tag_names:
             fg, bg = tag_name.split("_")[1:]
-            #print(fg + " fg2")
-            #print(bg + " bg2")
-            text_widget.tag_configure(tag_name, foreground=fg, background=bg)
+            self.tag_configure(tag_name, foreground=fg, background=bg)
 
         for y, line_tags in tag_ranges.items():
             for tag_name, start_pos, end_pos in line_tags:
-                text_widget.tag_add(tag_name, start_pos, end_pos)
+                self.tag_add(tag_name, start_pos, end_pos)
 
-        text_widget.tag_raise("block_cursor")
-        text_widget.tag_raise("sel")
+        self.tag_raise("block_cursor")
+        self.tag_raise("sel")
 
         cursor_line, cursor_col = (
             self.screen.cursor.y + 1 + offset,
             self.screen.cursor.x + 1,
         )
-        text_widget.mark_set("insert", f"{cursor_line}.{cursor_col}")
-        text_widget.see("insert")
+        self.mark_set("insert", f"{cursor_line}.{cursor_col}")
+        self.see("insert")
 
-        text_widget.focus_set()
+        self.focus_set()
 
     def destroy(self):
         if self.child:
@@ -1699,6 +1602,7 @@ class ToplevelWindow:
     def __getattr__(self, attr):
         return getattr(self.window, attr)
 
+
 # Opens the file picker
 def open_file(type):
     global initial_directory
@@ -2190,24 +2094,24 @@ def toggle_variable(variable):
         dark_theme = not dark_theme
         if sv_ttk.get_theme() == "dark":
             sv_ttk.set_theme("light")
-            #Terminal.tag_configure("default", foreground="#1c1c1c")
+            # Terminal.tag_configure("default", foreground="#1c1c1c")
         elif sv_ttk.get_theme() == "light":
             sv_ttk.set_theme("dark")
             Terminal.configure(bg="#1c1c1c")
-            #Terminal.tag_configure("default", foreground="#fafafa")
+            # Terminal.tag_configure("default", foreground="#fafafa")
         if keep_log_dark == True and dark_theme == False:
             Terminal.configure(bg="#1c1c1c")
-            #Terminal.tag_configure("default", foreground="#fafafa")
+            # Terminal.tag_configure("default", foreground="#fafafa")
 
     elif variable == "keep_log_dark":
         keep_log_dark = not keep_log_dark
         if keep_log_dark == True:
             Terminal.configure(bg="#1c1c1c")
-            #Terminal.tag_configure("default", foreground="#fafafa")
+            # Terminal.tag_configure("default", foreground="#fafafa")
         elif keep_log_dark == False:
             if dark_theme == False:
                 Terminal.configure(bg="#fafafa")
-                #Terminal.tag_configure("default", foreground="#1c1c1c")
+                # Terminal.tag_configure("default", foreground="#1c1c1c")
 
     elif variable == "tooltips":
         tooltips = not tooltips
@@ -2505,6 +2409,7 @@ class Button:
     def __getattr__(self, attr):
         return getattr(self.button, attr)
 
+
 # Creates entries
 class Entry:
     def __init__(
@@ -2547,6 +2452,7 @@ class Entry:
 
     def __getattr__(self, attr):
         return getattr(self.entry, attr)
+
 
 # Creates checkbuttons
 class Checkbutton:
@@ -2667,7 +2573,9 @@ Title_Label.grid(row=0, column=0, columnspan=7, rowspan=2, sticky="nesw", padx=5
 # Version_Label = ttk.Label(window, text=f'{version}', font=('Monospace', 15), anchor='center')
 # Version_Label.grid(row=0, column=4, columnspan=3, rowspan=2, sticky='sw', padx=5, pady=20)
 
-Start_Button = Button("Start", window, strings["start_thor"], toggle_start, "normal", 8, 0, "we", 5)
+Start_Button = Button(
+    "Start", window, strings["start_thor"], toggle_start, "normal", 8, 0, "we", 5
+)
 Begin_Button = Button(
     "Begin",
     window,
@@ -2874,7 +2782,7 @@ About_Button = Button(
 
 # Creates the Log Frame
 Log_Frame = ttk.Frame(window)
-Log_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
+Log_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky="nesw", padx=5)
 Log_Frame.grid_columnconfigure(0, weight=1)
 Log_Frame.grid_rowconfigure(0, weight=1)
 
@@ -2886,13 +2794,13 @@ ui_config = {
     "font_size": 10,
 }
 Terminal = Terminal("/bin/bash", Log_Frame, log_file=log_file, **ui_config)
-Terminal.grid(row=0, column=0, rowspan=6, sticky='nesw')
+Terminal.grid(row=0, column=0, rowspan=6, sticky="nesw")
 
 # Output_Text = ScrolledText(Log_Frame, state='disabled', highlightthickness=0, font=('Monospace', 9), borderwidth=0)
 # Output_Text.grid(row=0, column=0, rowspan=6, sticky='nesw')
 
-#Log_Frame = Terminal(window, log_file=log_file, **ui_config)
-#Log_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky="nesw", padx=5)
+# Log_Frame = Terminal(window, log_file=log_file, **ui_config)
+# Log_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky="nesw", padx=5)
 
 # Creates the 'Options' frame and check-boxes
 Options_Frame = ttk.Frame(window)
@@ -3325,15 +3233,15 @@ window.protocol("WM_DELETE_WINDOW", on_window_close)
 # Sets what theme to use
 if dark_theme:
     sv_ttk.set_theme("dark")
-    Terminal.configure(bg='#1c1c1c')
-    #Terminal.tag_configure('default', foreground='#fafafa')
+    Terminal.configure(bg="#1c1c1c")
+    # Terminal.tag_configure('default', foreground='#fafafa')
 else:
     sv_ttk.set_theme("light")
-    #Terminal.tag_configure('default', foreground='#1c1c1c')
+    # Terminal.tag_configure('default', foreground='#1c1c1c')
 
 if keep_log_dark == True:
-    Terminal.configure(bg='#1c1c1c')
-    #Terminal.tag_configure('default', foreground='#fafafa')
+    Terminal.configure(bg="#1c1c1c")
+    # Terminal.tag_configure('default', foreground='#fafafa')
     pass
 
 # Creates tooltips for buttons and things
