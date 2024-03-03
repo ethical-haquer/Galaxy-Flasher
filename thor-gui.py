@@ -757,7 +757,7 @@ class Terminal(ScrolledText):
                         print(f"Is hex: {fg}")
                         if not fg.startswith("#"):
                             fg = f"#{fg}"
-                        #print(f"The color is: {webcolors.hex_to_name(fg)}")
+                        #print(f"The fg color is: {webcolors.hex_to_name(fg)}")
                         fg = webcolors.hex_to_name(fg)
                     elif self.is_color(fg):
                         pass
@@ -775,7 +775,7 @@ class Terminal(ScrolledText):
                     if self.is_hex_color(bg):
                         if not bg.startswith("#"):
                             bg = f"#{bg}"
-                        #print(f"The color is: {webcolors.hex_to_name(bg)}")
+                        #print(f"The bg color is: {webcolors.hex_to_name(bg)}")
                         bg = webcolors.hex_to_name(bg)
                     elif bg == "default":
                         bg = self.bg
@@ -806,11 +806,11 @@ class Terminal(ScrolledText):
 
             for tag_name in tag_names:
                 fg, bg = tag_name.split("_")[1:]
-                text_widget.tag_configure(tag_name, foreground=fg, background=bg)
+                self.tag_configure(tag_name, foreground=fg, background=bg)
 
             for y, line_tags in tag_ranges.items():
                 for tag_name, start_pos, end_pos in line_tags:
-                    text_widget.tag_add(tag_name, start_pos, end_pos)
+                    self.tag_add(tag_name, start_pos, end_pos)
         else:
             self.configure(bg=self.bg, fg=self.fg)
 
@@ -1325,9 +1325,6 @@ def reset():
         USERDATA_Entry.delete(0, "end")
     except Exception as e:
         print(strings["exception_reset"].format(e=f"{e}"))
-
-
-prev_frame = None
 
 
 # Moves the correct frame to the top

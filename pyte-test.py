@@ -141,12 +141,15 @@ class Terminal(Frame):
             self.update_cursor()
 
         while True:
-            if self.child:
-                data = self.child.read_nonblocking(4096, timeout=None)
-                #print(data)
-            if not data:
+            try:
+                if self.child:
+                    data = self.child.read_nonblocking(4096, timeout=None)
+                    # print(data)
+                if not data:
+                    break
+                update_ui(data)
+            except pexpect.exceptions.EOF:
                 break
-            update_ui(data)
 
     def handle_escape_sequences(self, data_str):
         # Entering alternate screen
@@ -273,15 +276,6 @@ class Terminal(Frame):
         if re.match(pattern, string):
             return True
         else:
-            return False
-
-    def is_valid_text_widget_color(self, string):
-        try:
-            tk.font.nametofont(string)
-            #print(f"Is color: {string}")
-            return True
-        except tk.TclError:
-            #print(f"Is not color: {string}")
             return False
 
     def is_color(self, color):
