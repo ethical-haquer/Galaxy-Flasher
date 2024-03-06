@@ -698,7 +698,6 @@ class Terminal(ScrolledText):
         return lines_as_text
 
     def is_hex_color(self, string):
-        # Define the regular expression pattern for a hexadecimal color code - Modified to make the "#" optional
         pattern = r"^(?:#)?([0-9a-fA-F]{3}){1,2}$"
 
         if re.match(pattern, string):
@@ -824,7 +823,8 @@ class Terminal(ScrolledText):
         self.mark_set("insert", f"{cursor_line}.{cursor_col}")
         self.see("insert")
 
-        self.focus_set()
+        # Is annoying if you're using the Command Entry
+        #self.focus_set()
 
     """
     def destroy(self):
@@ -2949,6 +2949,100 @@ thor_file_entry_var.trace("w", on_thor_file_entry_change)
 thor_command_entry_var = tk.StringVar()
 thor_command_entry_var.trace("w", on_thor_command_entry_change)
 
+def go_to_setting(page):
+    if page == "appearance":
+        create_label("Theme", Settings_Frame, strings["appearance"], ("Monospace", 12), "w")
+        Theme_Checkbutton = Checkbutton(
+            "Theme",
+            Settings_Frame,
+            lambda: toggle_variable("dark_theme"),
+            theme_checkbutton_var,
+            strings["dark_theme"],
+            "Switch.TCheckbutton",
+            "normal",
+            0,
+            1,
+            sticky="w",
+            padx=10,
+            pady=(5, 0),
+        )
+        Dark_Log_Checkbutton = Checkbutton(
+            "Dark_Log",
+            Settings_Frame,
+            lambda: toggle_variable("keep_log_dark"),
+            dark_log_checkbutton_var,
+            strings["keep_log_dark"],
+            "Switch.TCheckbutton",
+            "normal",
+            0,
+            2,
+            "w",
+            padx=10,
+        )
+        File_Dialog_Checkbutton = Checkbutton(
+            "File_Dialog",
+            Settings_Frame,
+            lambda: toggle_variable("tk_file_dialogs"),
+            file_dialog_checkbutton_var,
+            strings["use_tk_dialogs"],
+            "Switch.TCheckbutton",
+            "normal",
+            0,
+            4,
+            "w",
+            padx=10,
+            pady=0,
+        )
+        Tooltip_Checkbutton = Checkbutton(
+            "Tooltip",
+            Settings_Frame,
+            lambda: toggle_variable("tooltips"),
+            tooltip_checkbutton_var,
+            strings["tooltips"],
+            "Switch.TCheckbutton",
+            "normal",
+            0,
+            5,
+            sticky="w",
+            padx=10,
+            pady=(5, 0),
+        )
+        create_label(
+            "Tooltip",
+            Settings_Frame,
+            strings["restart_required_tooltips"],
+            ("Monospace", 8),
+            sticky="w",
+            padx=15,
+            pady=(0, 0),
+            columnspan=2,
+        )
+
+Appearance_Button = Button(
+    name = "Appearance",
+    master = Settings_Frame,
+    text = "Appearance",
+    command = lambda: go_to_setting("appearance"),
+    state = "normal",
+    column = 0,
+    row = 0,
+    sticky = "w",
+    padx = (0, 15),
+    pady = 0,
+)
+Flash_Tool_Button = Button(
+    name = "Flash_Tool",
+    master = Settings_Frame,
+    text = "Flash Tool",
+    command = lambda: go_to_setting("flash_tool"),
+    state = "normal",
+    column = 1,
+    row = 0,
+    sticky = "w",
+    padx = (0, 15),
+    pady = 0,
+)
+"""
 create_label("Theme", Settings_Frame, strings["appearance"], ("Monospace", 12), "w")
 Theme_Checkbutton = Checkbutton(
     "Theme",
@@ -3114,6 +3208,7 @@ Default_Directory_Button = Button(
     (0, 15),
     0,
 )
+"""
 
 # Creates the 'Help' frame
 Help_Frame = ttk.Frame(window)
