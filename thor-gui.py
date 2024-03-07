@@ -36,11 +36,11 @@ from tkinter.scrolledtext import ScrolledText
 import pexpect
 import pyte
 import sv_ttk
+import webcolors
 import zenipy
 from colour import Color
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from tktooltip import ToolTip
-import webcolors
 
 version = "Alpha v0.4.7"
 
@@ -744,37 +744,37 @@ class Terminal(ScrolledText):
         if self.color == True:
             tag_ranges = {}
             tag_names = set()
-            
+
             for y, line in enumerate(self.screen.display, start=start_line + 1):
                 line_tags = []
                 for x, char in enumerate(line):
                     char_style = self.screen.buffer[y - 1][x]
                     fg = char_style.fg
                     bg = char_style.bg
-                    
+
                     if self.is_hex_color(fg):
                         print(f"Is hex: {fg}")
                         if not fg.startswith("#"):
                             fg = f"#{fg}"
-                        #print(f"The fg color is: {webcolors.hex_to_name(fg)}")
+                        # print(f"The fg color is: {webcolors.hex_to_name(fg)}")
                         fg = webcolors.hex_to_name(fg)
                     elif self.is_color(fg):
                         pass
-                    
+
                     elif fg == "default":
-                        #print(f"Is default: {fg}")
+                        # print(f"Is default: {fg}")
                         fg = self.fg
                     elif fg == "brightblack":
-                        #print(f"Is brightblack: {fg}")
+                        # print(f"Is brightblack: {fg}")
                         fg = self.fg
-                    
+
                     else:
                         print(f"Unable to define fg: {fg}")
 
                     if self.is_hex_color(bg):
                         if not bg.startswith("#"):
                             bg = f"#{bg}"
-                        #print(f"The bg color is: {webcolors.hex_to_name(bg)}")
+                        # print(f"The bg color is: {webcolors.hex_to_name(bg)}")
                         bg = webcolors.hex_to_name(bg)
                     elif bg == "default":
                         bg = self.bg
@@ -782,7 +782,7 @@ class Terminal(ScrolledText):
                         pass
                     else:
                         print(f"Unable to define bg: {bg}")
-                        
+
                     if bg == "black":
                         print("black")
 
@@ -790,12 +790,12 @@ class Terminal(ScrolledText):
                         old_fg = fg
                     if bg != old_bg:
                         old_bg = bg
-                        
+
                     tag_name = f"color_{fg}_{bg}"
                     if tag_name != old_tag:
-                        #print(f"Final tag: {tag_name}")
+                        # print(f"Final tag: {tag_name}")
                         old_tag = tag_name
-                        
+
                     line_tags.append(
                         (tag_name, f"{y + offset}.{x}", f"{y + offset}.{x + 1}")
                     )
@@ -824,7 +824,7 @@ class Terminal(ScrolledText):
         self.see("insert")
 
         # Is annoying if you're using the Command Entry
-        #self.focus_set()
+        # self.focus_set()
 
     """
     def destroy(self):
@@ -2921,7 +2921,7 @@ create_label(
     pady=10,
 )
 
-# Creates the 'Settings' frame
+# Creates the 'Settings' frame - The commented-out lines are for adding a scrollbar
 # Settings_Frame = ScrolledText(window, state='disable', highlightthickness=0, borderwidth=0)
 # Settings_Frame.config(cursor='')
 # Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky='nesw', padx=5)
@@ -2931,6 +2931,7 @@ create_label(
 Settings_Frame = ttk.Frame(window)
 Settings_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky="nesw", padx=5)
 Settings_Frame.grid_columnconfigure(0, weight=1)
+
 # Settings_Frame.window_create('1.0', window=Frame)
 
 # Settings_Frame.tag_add('Frame', '1.0', 'end')
@@ -2938,6 +2939,45 @@ Settings_Frame.grid_columnconfigure(0, weight=1)
 
 # Frame.place(relwidth=1, relheight=1)
 # Frame.grid_columnconfigure(0, weight=1)
+
+Appearance_Button = Button(
+    name="Appearance",
+    master=Settings_Frame,
+    text="Appearance",
+    command=lambda: toggle_settings_frame("Appearance"),
+    state="normal",
+    column=0,
+    row=0,
+    sticky="we",
+    padx=0,
+    pady=5,
+)
+
+Flash_Tool_Button = Button(
+    name="Flash_Tool",
+    master=Settings_Frame,
+    text="Flash Tool",
+    command=lambda: toggle_settings_frame("Flash_Tool"),
+    state="normal",
+    column=0,
+    row=1,
+    sticky="we",
+    padx=0,
+    pady=0,
+)
+
+Other_Button = Button(
+    name="Other",
+    master=Settings_Frame,
+    text="Other",
+    command=lambda: toggle_settings_frame("Other"),
+    state="normal",
+    column=0,
+    row=2,
+    sticky="we",
+    padx=0,
+    pady=5,
+)
 
 theme_checkbutton_var = BooleanVar(value=dark_theme)
 dark_log_checkbutton_var = BooleanVar(value=keep_log_dark)
@@ -2949,99 +2989,200 @@ thor_file_entry_var.trace("w", on_thor_file_entry_change)
 thor_command_entry_var = tk.StringVar()
 thor_command_entry_var.trace("w", on_thor_command_entry_change)
 
-def go_to_setting(page):
-    if page == "appearance":
-        create_label("Theme", Settings_Frame, strings["appearance"], ("Monospace", 12), "w")
-        Theme_Checkbutton = Checkbutton(
-            "Theme",
-            Settings_Frame,
-            lambda: toggle_variable("dark_theme"),
-            theme_checkbutton_var,
-            strings["dark_theme"],
-            "Switch.TCheckbutton",
-            "normal",
-            0,
-            1,
-            sticky="w",
-            padx=10,
-            pady=(5, 0),
-        )
-        Dark_Log_Checkbutton = Checkbutton(
-            "Dark_Log",
-            Settings_Frame,
-            lambda: toggle_variable("keep_log_dark"),
-            dark_log_checkbutton_var,
-            strings["keep_log_dark"],
-            "Switch.TCheckbutton",
-            "normal",
-            0,
-            2,
-            "w",
-            padx=10,
-        )
-        File_Dialog_Checkbutton = Checkbutton(
-            "File_Dialog",
-            Settings_Frame,
-            lambda: toggle_variable("tk_file_dialogs"),
-            file_dialog_checkbutton_var,
-            strings["use_tk_dialogs"],
-            "Switch.TCheckbutton",
-            "normal",
-            0,
-            4,
-            "w",
-            padx=10,
-            pady=0,
-        )
-        Tooltip_Checkbutton = Checkbutton(
-            "Tooltip",
-            Settings_Frame,
-            lambda: toggle_variable("tooltips"),
-            tooltip_checkbutton_var,
-            strings["tooltips"],
-            "Switch.TCheckbutton",
-            "normal",
-            0,
-            5,
-            sticky="w",
-            padx=10,
-            pady=(5, 0),
-        )
-        create_label(
-            "Tooltip",
-            Settings_Frame,
-            strings["restart_required_tooltips"],
-            ("Monospace", 8),
-            sticky="w",
-            padx=15,
-            pady=(0, 0),
-            columnspan=2,
-        )
+def toggle_settings_frame(name):
+    global prev_frame
+    frame_name = name + "_Frame"
+    frame = globals()[frame_name]
+    frame.lift()
 
-Appearance_Button = Button(
-    name = "Appearance",
-    master = Settings_Frame,
-    text = "Appearance",
-    command = lambda: go_to_setting("appearance"),
-    state = "normal",
-    column = 0,
-    row = 0,
-    sticky = "w",
-    padx = (0, 15),
-    pady = 0,
+Appearance_Frame = ttk.Frame(window)
+Appearance_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky="nesw", padx=5)
+Appearance_Frame.grid_columnconfigure(0, weight=1)
+
+create_label("Theme", Appearance_Frame, strings["appearance"], ("Monospace", 12), "w")
+Theme_Checkbutton = Checkbutton(
+    "Theme",
+    Appearance_Frame,
+    lambda: toggle_variable("dark_theme"),
+    theme_checkbutton_var,
+    strings["dark_theme"],
+    "Switch.TCheckbutton",
+    "normal",
+    column=0,
+    row=2,
+    sticky="w",
+    padx=10,
+    pady=(5, 0),
 )
-Flash_Tool_Button = Button(
-    name = "Flash_Tool",
-    master = Settings_Frame,
-    text = "Flash Tool",
-    command = lambda: go_to_setting("flash_tool"),
-    state = "normal",
-    column = 1,
-    row = 0,
-    sticky = "w",
-    padx = (0, 15),
-    pady = 0,
+Dark_Log_Checkbutton = Checkbutton(
+    "Dark_Log",
+    Appearance_Frame,
+    lambda: toggle_variable("keep_log_dark"),
+    dark_log_checkbutton_var,
+    strings["keep_log_dark"],
+    "Switch.TCheckbutton",
+    "normal",
+    column=0,
+    row=3,
+    sticky="w",
+    padx=10,
 )
+"""
+File_Dialog_Checkbutton = Checkbutton(
+    "File_Dialog",
+    Appearance_Frame,
+    lambda: toggle_variable("tk_file_dialogs"),
+    file_dialog_checkbutton_var,
+    strings["use_tk_dialogs"],
+    "Switch.TCheckbutton",
+    "normal",
+    column=0,
+    row=4,
+    sticky="w",
+    padx=10,
+    pady=0,
+)
+"""
+def selection_changed(event):
+    selection = combo.get()
+
+combo = ttk.OptionMenu(Appearance_Frame, file_dialog_checkbutton_var, ("tk", "zenipy"))
+combo.grid(column=0, row=4, sticky="w", padx=10)
+
+Tooltip_Checkbutton = Checkbutton(
+    "Tooltip",
+    Appearance_Frame,
+    lambda: toggle_variable("tooltips"),
+    tooltip_checkbutton_var,
+    strings["tooltips"],
+    "Switch.TCheckbutton",
+    "normal",
+    column=0,
+    row=5,
+    sticky="w",
+    padx=10,
+    pady=(5, 0),
+)
+create_label(
+    "Tooltip",
+    Appearance_Frame,
+    strings["restart_required_tooltips"],
+    ("Monospace", 8),
+    sticky="w",
+    padx=15,
+    pady=(0, 0),
+    columnspan=2,
+)
+
+Flash_Tool_Frame = ttk.Frame(window)
+Flash_Tool_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky="nesw", padx=5)
+Flash_Tool_Frame.grid_columnconfigure(0, weight=1)
+
+create_label("Flash_Tool", Flash_Tool_Frame, "Flash Tool", ("Monospace", 12), "w")
+create_label(
+    "Thor_File",
+    Flash_Tool_Frame,
+    strings["the_thor_file"],
+    ("Monospace", 9),
+    sticky="w",
+    padx=15,
+    pady=(5, 0),
+    columnspan=2,
+)
+Thor_File_Entry = Entry(
+    "Thor_File",
+    Flash_Tool_Frame,
+    "normal",
+    column=0,
+    row=9,
+    sticky="we",
+    padx=(15, 5),
+    pady=0,
+    textvariable=thor_file_entry_var,
+)
+Thor_File_Entry.insert(tk.END, thor_file)
+Thor_File_Button = Button(
+    "Thor_File",
+    Flash_Tool_Frame,
+    strings["choose"],
+    lambda: open_file("Thor"),
+    "normal",
+    column=1,
+    row=9,
+    sticky="w",
+    padx=(0, 15),
+    pady=0,
+)
+Sudo_Checkbutton = Checkbutton(
+    "Sudo",
+    Flash_Tool_Frame,
+    lambda: toggle_variable("sudo"),
+    sudo_checkbutton_var,
+    strings["run_thor_sudo"],
+    "Switch.TCheckbutton",
+    "normal",
+    column=0,
+    row=10,
+    sticky="w",
+    padx=10,
+    pady=(10, 7),
+)
+create_label(
+    "Thor_Command",
+    Flash_Tool_Frame,
+    text=strings["command_used_thor"],
+    font=("Monospace", 9),
+    sticky="w",
+    padx=15,
+    pady=0,
+    columnspan=2,
+)
+Thor_Command_Entry = Entry(
+    "Thor_Command",
+    Flash_Tool_Frame,
+    "normal",
+    column=0,
+    row=12,
+    sticky="we",
+    padx=15,
+    pady=(0, 15),
+    columnspan=2,
+    textvariable=thor_command_entry_var,
+)
+Thor_Command_Entry.insert(tk.END, thor_command)
+
+Other_Frame = ttk.Frame(window)
+Other_Frame.grid(row=3, rowspan=6, column=0, columnspan=7, sticky="nesw", padx=5)
+Other_Frame.grid_columnconfigure(0, weight=1)
+
+create_label("Flashing", Other_Frame, "Other", ("Monospace", 12), "w")
+create_label(
+    "Default_Directory",
+    Other_Frame,
+    strings["file_picker_directory"],
+    ("Monospace", 9),
+    "w",
+    padx=15,
+    pady=5,
+    columnspan=2,
+)
+Default_Directory_Entry = Entry(
+    "Default_Directory", Other_Frame, "normal", 0, 15, "we", (15, 5), 0
+)
+Default_Directory_Entry.insert(tk.END, initial_directory)
+Default_Directory_Button = Button(
+    "Default_Directory",
+    Other_Frame,
+    strings["choose"],
+    lambda: open_file("Default"),
+    "normal",
+    column=1,
+    row=15,
+    sticky="w",
+    padx=(0, 15),
+    pady=0,
+)
+
 """
 create_label("Theme", Settings_Frame, strings["appearance"], ("Monospace", 12), "w")
 Theme_Checkbutton = Checkbutton(
@@ -3346,7 +3487,7 @@ Output_Text.tag_configure('orange', foreground='#E9AD0C')
 Output_Text.tag_configure('dark_blue', foreground='#2A7BDE')
 """
 
-# Raises the 'Log' frame to top on start-up
+# Raises the correct frames to top on start-up
 toggle_frame("Log")
 
 # Binds the on_window_close function to the window's close event
@@ -3356,14 +3497,14 @@ window.protocol("WM_DELETE_WINDOW", on_window_close)
 if dark_theme:
     sv_ttk.set_theme("dark")
     Terminal.configure(bg="#1c1c1c")
-    Terminal.tag_configure('default', foreground='#fafafa')
+    Terminal.tag_configure("default", foreground="#fafafa")
 else:
     sv_ttk.set_theme("light")
-    Terminal.tag_configure('default', foreground='#1c1c1c')
+    Terminal.tag_configure("default", foreground="#1c1c1c")
 
 if keep_log_dark == True:
     Terminal.configure(bg="#1c1c1c")
-    Terminal.tag_configure('default', foreground='#fafafa')
+    Terminal.tag_configure("default", foreground="#fafafa")
     pass
 
 # Creates tooltips for buttons and things
