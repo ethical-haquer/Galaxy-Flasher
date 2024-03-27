@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import platform
+import tarfile
+
 import gi
 import os
 import sys
@@ -27,19 +30,21 @@ gi.require_version("Vte", "3.91")
 from gi.repository import Gtk, Adw, GLib, Gio, Vte
 
 version = "Alpha v0.4.6"
-json_file = "locales/en_US.json"
+# TODO: Base this off locales
+json_file = "locales/en.json"
 cwd = os.getcwd()
-# TODO: Base this off of OS.
-thor_exec = [f"{cwd}/Thor/linux-x64/TheAirBlow.Thor.Shell"]
-
+arch = platform.architecture()[0][:2]
+system = platform.system().lower()
+# TODO: Add option for sudo/no sudo
+thor_exec = ["sudo", f"{cwd}/Thor/{system}-x{arch}/TheAirBlow.Thor.Shell"]
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         self.currently_running = False
+        self.last_text = ""
         super().__init__(*args, **kwargs)
         with open(json_file) as json_string:
             self.strings = json.load(json_string)
-        self.tool = "thor"
         # Define main grid
         self.grid = Gtk.Grid()
         self.grid.set_column_spacing(10)
@@ -60,6 +65,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.grid.attach_next_to(
             self.stack, self.stack_switcher, Gtk.PositionType.BOTTOM, 1, 6
         )
+        # Check if Thor file exists
+        if not os.path.isfile(thor_exec[1]):
+            print(f"Error: File {thor_exec[1]} not found")
+            self.error_dialog(
+                self.strings["file_not_found2"].format(file=thor_exec[1]), "__init__"
+            )
         # Setup Thor output box
         self.vte_term = Vte.Terminal()
         self.vte_term.spawn_async(
@@ -75,7 +86,8 @@ class MainWindow(Gtk.ApplicationWindow):
             None,  # Callback
             None,  # User Data
         )
-        self.vte_term.set_opacity(0.8)
+        # Set clear background
+        self.vte_term.set_clear_background(False)
         # Create scrolled window
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_child(self.vte_term)
@@ -180,6 +192,7 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         self.create_label("Thor", 0, 0, self.settings_grid)
         self.create_check_button("Run Thor with sudo", 0, 1, self.settings_grid)
+        self.vte_term.connect("contents-changed", self.scan_output)
         print(
             f"""
          _____ _                   ____ _   _ ___
@@ -191,6 +204,94 @@ class MainWindow(Gtk.ApplicationWindow):
                       {version}
         """
         )
+
+    def select_partitions(self):
+        def toggled_callback(button):
+            if button.get_active():
+                self.selected_buttons[btn_array[button] - 1] = True
+
+        file_names = []
+        self.selected_buttons = []
+        btn_array = {}
+        window, grid = self.dialog("Select Partitions")
+        self.create_label("Select the partitions to flash", 0, 0, grid)
+        row = 1
+        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
+            file_path = getattr(self, f"{slot}_entry").get_text()
+            if file_path:
+                # TODO: Implement handling multiple files
+                with tarfile.open(file_path) as tar_file:
+                    for member in tar_file.getmembers():
+                        self.selected_buttons.append("")
+                        split = member.name.split(".")
+                        # Skip Pit file
+                        if split[1] != "pit":
+                            name = split[0].upper()
+                            file_names.append(name)
+                            btn = self.create_check_button(name, 0, row, grid)
+                            btn.connect("toggled", toggled_callback)
+                            btn_array[btn] = row
+                            row += 1
+        self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
+        self.create_button(
+            "OK", 2, row, grid, lambda _: (self.send_selected_partitions(), window.destroy())
+        )
+        window.present()
+
+    def dialog(self, title):
+        # Create grid
+        grid = Gtk.Grid()
+        window = Gtk.Window()
+        window.set_modal(True)
+        window.set_title(title)
+        window.set_child(grid)
+        window.set_transient_for(self)
+        return window, grid
+
+    def scan_output(self, vte):
+        # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
+        terminal_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
+        if terminal_text.strip().rsplit("shell>")[-1].strip() == "":
+            try:
+                terminal_text = terminal_text.strip().rsplit("shell>")[-2].strip()
+            except:
+                terminal_text = terminal_text.strip().rsplit("shell>")[-1].strip()
+        else:
+            terminal_text = terminal_text.strip().rsplit("shell>")[-1].strip()
+        if terminal_text != self.last_text:
+            if "> [ ]" in terminal_text and "> [ ]" not in self.last_text:
+                self.select_partitions()
+            if (
+                "Are you absolutely sure you want to flash those?" in terminal_text
+                and "Are you absolutely sure you want to flash those?"
+                not in self.last_text
+            ):
+                self.verify_flash()
+            if (
+                "Choose a device to connect to:" in terminal_text
+                and "Choose a device to connect to:" not in self.last_text
+            ):
+                # TODO: Implement device chooser
+                pass
+            self.last_text = terminal_text
+    def verify_flash(self):
+        window, grid = self.dialog(self.strings["verify_flash"])
+        self.create_label(self.strings["are_you_sure"], 0, 0, grid)
+        self.create_button(
+            self.strings["yes"],
+            1,
+            1,
+            grid,
+            lambda _: (self.send_cmd("y" + "\n"), window.destroy()),
+        ).set_margin_end(5)
+        self.create_button(
+            self.strings["no"],
+            2,
+            1,
+            grid,
+            lambda _: (self.send_cmd("n" + "\n"), window.destroy()),
+        )
+        window.present()
 
     def option_changed(self, button):
         print(
@@ -212,11 +313,34 @@ class MainWindow(Gtk.ApplicationWindow):
             self.send_cmd(f"options blupdate {button.get_active()}\n")
 
     def flash(self):
+        paths = {}
         for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
             entry = getattr(self, f"{slot}_entry")
             if entry.get_text():
-                # TODO Implement flashing here
                 print(f"Flashing {entry.get_text()} to {slot}")
+                path = os.path.dirname(entry.get_text())
+                paths[slot] = os.path.dirname(entry.get_text())
+        if len(set(paths.values())) > 1:
+            print("The files NEED to be in the same dir...")
+            self.error_dialog(self.strings["invalid_files"], "flash")
+        else:
+            self.send_cmd(f"flashTar {list(paths.values())[0]}\n")
+            self.scan_output(self.vte_term)
+
+    def send_selected_partitions(self):
+        for item in self.selected_buttons:
+            if item:
+                self.send_cmd("\x20")
+            self.send_cmd("\x1b[B")
+        self.send_cmd("\n")
+
+    def error_dialog(self, message, function):
+        dialog = Gtk.AlertDialog()
+        dialog.set_modal(True)
+        dialog.set_message(f"Error in {function} function")
+        dialog.set_detail(message)
+        dialog.set_buttons(["OK"])
+        dialog.show()
 
     def start_odin(self):
         self.send_cmd("begin odin\n")
