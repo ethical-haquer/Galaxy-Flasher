@@ -16,27 +16,32 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import json
+import locale
+import os
 import platform
+import sys
 import tarfile
 
 import gi
-import os
-import sys
-import json
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Vte", "3.91")
-from gi.repository import Gtk, Adw, GLib, Gio, Vte
+from gi.repository import Adw, Gio, GLib, Gtk, Vte
 
 version = "Alpha v0.4.6"
-# TODO: Base this off locales
-json_file = "locales/en.json"
+locale.setlocale(locale.LC_ALL, "")
+locale = locale.getlocale(locale.LC_MESSAGES)[0]
+seperator = "_"
+lang = locale.split(seperator, 1)[0]
+json_file = f"locales/{lang}.json"
 cwd = os.getcwd()
 arch = platform.architecture()[0][:2]
 system = platform.system().lower()
 # TODO: Add option for sudo/no sudo
 thor_exec = ["sudo", f"{cwd}/Thor/{system}-x{arch}/TheAirBlow.Thor.Shell"]
+
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
@@ -68,10 +73,11 @@ class MainWindow(Gtk.ApplicationWindow):
         # Check if Thor file exists
         if not os.path.isfile(thor_exec[1]):
             print(f"Error: File {thor_exec[1]} not found")
+            # TODO: Wait until main window is fully created
             self.error_dialog(
                 self.strings["file_not_found2"].format(file=thor_exec[1]), "__init__"
             )
-        # Setup Thor output box
+        # Create Thor output box
         self.vte_term = Vte.Terminal()
         self.vte_term.spawn_async(
             Vte.PtyFlags.DEFAULT,  # Pty Flags
@@ -99,9 +105,9 @@ class MainWindow(Gtk.ApplicationWindow):
             grid.set_row_spacing(10)
             self.stack.add_titled(grid, tab, tab)
             setattr(self, f"{tab.lower()}_grid", grid)
-        # Define current row
-        row = 3
-        # Setup slots
+        # Set initial row
+        row = 2
+        # Create file slots
         for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
             button = self.create_button(
                 slot, 1, row, self.grid, lambda _, x=slot: self.open_file(x)
@@ -112,42 +118,44 @@ class MainWindow(Gtk.ApplicationWindow):
             setattr(self, f"{slot}_entry", entry)
             setattr(self, f"{slot}_button", button)
             row = row + 1
-        # Setup command entry
-        self.command_entry = self.create_entry(1, 1, self.grid, 2, 1)
-        self.command_entry.connect("activate", self.on_command_enter)
-        # Setup enter, pgup, pgdown, start_thor, start_odin and space button
+        # Create command entry
+        self.command_entry = self.create_entry(
+            column=1,
+            row=1,
+            grid=self.grid,
+            width=3,
+            height=1,
+        )
+        self.command_entry.connect("activate", self.on_command_enter, None)
+        # Create connect, start_odin, and flash buttons
         self.connect_button = self.create_button(
             self.strings["connect"],
-            2,
-            0,
-            self.grid,
-            lambda _: self.send_cmd("connect\n"),
-        )
-        self.enter_button = self.create_button(
-            self.strings["enter"], 3, 1, self.grid, lambda _: self.send_cmd("\n")
-        )
-        self.space_button = self.create_button(
-            self.strings["space"], 1, 2, self.grid, lambda _: self.send_cmd("\x20")
-        )
-        self.page_up_button = self.create_button(
-            "PgUp", 2, 2, self.grid, lambda _: self.send_cmd("\x1b[A")
-        )
-        self.page_down_button = self.create_button(
-            "PgDn", 3, 2, self.grid, lambda _: self.send_cmd("\x1b[B")
+            column=1,
+            row=0,
+            grid=self.grid,
+            command=lambda _: self.send_cmd("connect\n"),
         )
         self.start_odin_button = self.create_button(
             self.strings["start_odin_protocol"],
-            3,
-            0,
-            self.grid,
-            lambda _: self.start_odin(),
+            column=2,
+            row=0,
+            grid=self.grid,
+            command=lambda _: self.start_odin(),
         )
-        # self.set_widget_state(self.command_entry, self.enter_button, self.space_button, self.page_up_button, self.page_down_button, self.connect_button, state=False)
+        self.flash_button = self.create_button(
+            "Flash!",
+            column=3,
+            row=0,
+            grid=self.grid,
+            command=lambda _: self.flash(),
+        )
+        self.set_widget_state(self.start_odin_button, self.flash_button, state=False)
+        # @justaCasualCoder, I don't know which of these comments you want:
         # Setup header
         # Setup HeaderBar
         header = Gtk.HeaderBar()
         self.set_titlebar(header)
-        # Connect about action
+        # Create about action
         about_action = Gio.SimpleAction.new("about", None)
         about_action.connect("activate", self.about_window)
         self.add_action(about_action)
@@ -167,7 +175,7 @@ class MainWindow(Gtk.ApplicationWindow):
         hamburger.set_popover(popover)
         hamburger.set_icon_name("open-menu-symbolic")
         header.pack_start(hamburger)
-        self.create_button("Flash!", 1, 0, self.grid, lambda _: self.flash())
+        # Set initial row
         row = 0
         self.options = [
             {"option": "T Flash", "label": f"{self.strings['tflash_temporarily']}"},
@@ -184,6 +192,7 @@ class MainWindow(Gtk.ApplicationWindow):
             check_button = self.create_check_button(option, 0, row, self.options_grid)
             check_button.connect("toggled", self.option_changed)
             row = row + 1
+        # Create place-holder label for Pit tab
         self.create_label(
             f"{self.strings['just_a_test']}\n\n{self.strings['pull_requests_welcome']}",
             0,
@@ -234,7 +243,11 @@ class MainWindow(Gtk.ApplicationWindow):
                             row += 1
         self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
         self.create_button(
-            "OK", 2, row, grid, lambda _: (self.send_selected_partitions(), window.destroy())
+            "OK",
+            2,
+            row,
+            grid,
+            lambda _: (self.send_selected_partitions(), window.destroy()),
         )
         window.present()
 
@@ -259,14 +272,40 @@ class MainWindow(Gtk.ApplicationWindow):
         else:
             terminal_text = terminal_text.strip().rsplit("shell>")[-1].strip()
         if terminal_text != self.last_text:
+            if (
+                "[sudo] password for" in terminal_text
+                and "[sudo] password for" not in self.last_text
+            ):
+                self.set_password_entry(self.command_entry, True)
+
+            if (
+                "Welcome to Thor Shell" in terminal_text
+                and "Welcome to Thor Shell" not in self.last_text
+            ):
+                self.set_password_entry(self.command_entry, False)
+
+            if (
+                "Successfully connected to the device!" in terminal_text
+                and "Successfully connected to the device!" not in self.last_text
+            ):
+                self.set_widget_state(self.begin_odin_button, True)
+
+            if (
+                "Successfully began an Odin session!" in terminal_text
+                and "Successfully began an Odin session!" not in self.last_text
+            ):
+                self.set_widget_state(self.start_odin_button, False)
+
             if "> [ ]" in terminal_text and "> [ ]" not in self.last_text:
                 self.select_partitions()
+
             if (
                 "Are you absolutely sure you want to flash those?" in terminal_text
                 and "Are you absolutely sure you want to flash those?"
                 not in self.last_text
             ):
                 self.verify_flash()
+
             if (
                 "Choose a device to connect to:" in terminal_text
                 and "Choose a device to connect to:" not in self.last_text
@@ -274,6 +313,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 # TODO: Implement device chooser
                 pass
             self.last_text = terminal_text
+
     def verify_flash(self):
         window, grid = self.dialog(self.strings["verify_flash"])
         self.create_label(self.strings["are_you_sure"], 0, 0, grid)
@@ -344,7 +384,6 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def start_odin(self):
         self.send_cmd("begin odin\n")
-        self.set_widget_state(self.start_odin_button, state=False)
 
     def on_command_enter(self, *args):
         text = self.command_entry.get_text()
@@ -352,13 +391,29 @@ class MainWindow(Gtk.ApplicationWindow):
         self.command_entry.set_text("")
         self.send_cmd(text + "\n")
 
-    def set_widget_state(*args, state=True):
+    def set_widget_state(self, *args, state=True):
         for widget in args:
-            # TODO This NEEDS to be fixed. I have not looked into it yet.
-            if widget.get_name() == "__main__+MainWindow":
-                pass
-            else:
-                widget.set_sensitive(state)
+            widget.set_sensitive(state)
+
+    # TODO: Figure out why the icon isn't found
+    def toggle_entry_visibility(self, entry):
+        visible = entry.get_visibility()
+        if visible:
+            entry.set_visibility(False)
+            # entry.set_icon_from_icon_name(Gtk.EntryIconPosition(1), "view-reveal-symbolic.symbolic")
+        else:
+            entry.set_visibility(True)
+            # entry.set_icon_from_icon_name(Gtk.EntryIconPosition(1), "view-conceal-symbolic.symbolic")
+
+    def set_password_entry(self, entry, state):
+        if state:
+            entry.set_visibility(False)
+        else:
+            entry.set_visibility(True)
+        # TODO: Connect icon-press to the toggle_entry_visibility func - This isn't the way to do it
+        # self.signal_connect(entry, "icon-press", self.toggle_entry_visibility)
+        # Nor is this
+        # entry.signal_connect(entry, "icon-press", self.toggle_entry_visibility)
 
     def send_cmd(self, cmd):
         self.vte_term.feed_child(cmd.encode("utf-8"))
@@ -421,10 +476,13 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.set_developer_name("ethical_haquer")
         dialog.set_license_type(Gtk.License(Gtk.License.GPL_3_0))
         dialog.add_credit_section(
-            "TheAirBlow", ["Github Profile https://github.com/TheAirBlow"]
+            "justaCasualCoder", ["Github Profile https://github.com/justaCasualCoder"]
         )
         dialog.add_credit_section(
             "ethical_haquer", ["Github Profile https://github.com/ethical-haquer"]
+        )
+        dialog.add_credit_section(
+            "TheAirBlow", ["Github Profile https://github.com/TheAirBlow"]
         )
         dialog.set_website("https://github.com/ethical-haquer/Thor_GUI")
         dialog.set_issue_url("https://github.com/ethical-haquer/Thor_GUI/issues")
