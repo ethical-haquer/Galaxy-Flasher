@@ -288,7 +288,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Successfully connected to the device!" in terminal_text
                 and "Successfully connected to the device!" not in self.last_text
             ):
-                self.set_widget_state(self.begin_odin_button, True)
+                self.set_widget_state(self.start_odin_button, True)
 
             if (
                 "Successfully began an Odin session!" in terminal_text
@@ -310,9 +310,47 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Choose a device to connect to:" in terminal_text
                 and "Choose a device to connect to:" not in self.last_text
             ):
-                # TODO: Implement device chooser
-                pass
+                self.select_device(terminal_text)
             self.last_text = terminal_text
+
+    def select_device(self, text):
+        def set_selected_device(btn, row):
+            if btn.get_active:
+                self.device_index = row
+
+        self.devices = (
+            text.split("Choose a device to connect to:")[1]
+            .split("Cancel operation")[0]
+            .strip()
+            .strip("> ")
+            .splitlines()
+        )
+        window, grid = self.dialog(self.strings["connect_device"])
+        self.create_label(self.strings["choose_a_device"], 0, 0, grid)
+        group = None
+        row = 1
+        for index, item in enumerate(self.devices):
+            checkbutton = self.create_check_button(item.strip(), 0, row, grid)
+            if index == 0:
+                group = checkbutton
+            else:
+                checkbutton.set_group(group)
+            checkbutton.connect("toggled", set_selected_device, row)
+            row = row + 1
+        self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
+        self.create_button(
+            "OK",
+            2,
+            row,
+            grid,
+            lambda btn: (self.send_selected_device(btn), window.destroy()),
+        )
+        window.present()
+
+    def send_selected_device(self, btn):
+        for _ in range(self.device_index - 1):
+            self.send_cmd("\x1b[B")
+        self.send_cmd("\n")
 
     def verify_flash(self):
         window, grid = self.dialog(self.strings["verify_flash"])
