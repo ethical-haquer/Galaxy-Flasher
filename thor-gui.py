@@ -395,25 +395,31 @@ class MainWindow(Gtk.ApplicationWindow):
         for widget in args:
             widget.set_sensitive(state)
 
-    # TODO: Figure out why the icon isn't found
-    def toggle_entry_visibility(self, entry):
+    def toggle_entry_visibility(self, entry, icon_pos):
         visible = entry.get_visibility()
         if visible:
             entry.set_visibility(False)
-            # entry.set_icon_from_icon_name(Gtk.EntryIconPosition(1), "view-reveal-symbolic.symbolic")
+            entry.set_icon_from_icon_name(
+                Gtk.EntryIconPosition(icon_pos), "view-reveal-symbolic"
+            )
         else:
             entry.set_visibility(True)
-            # entry.set_icon_from_icon_name(Gtk.EntryIconPosition(1), "view-conceal-symbolic.symbolic")
+            entry.set_icon_from_icon_name(
+                Gtk.EntryIconPosition(icon_pos), "view-conceal-symbolic"
+            )
 
     def set_password_entry(self, entry, state):
         if state:
             entry.set_visibility(False)
+            entry.set_icon_from_icon_name(
+                Gtk.EntryIconPosition(1), "view-reveal-symbolic"
+            )
         else:
             entry.set_visibility(True)
-        # TODO: Connect icon-press to the toggle_entry_visibility func - This isn't the way to do it
-        # self.signal_connect(entry, "icon-press", self.toggle_entry_visibility)
-        # Nor is this
-        # entry.signal_connect(entry, "icon-press", self.toggle_entry_visibility)
+            entry.set_icon_from_icon_name(
+                Gtk.EntryIconPosition(1), "view-conceal-symbolic"
+            )
+        self.command_entry.connect("icon-press", self.toggle_entry_visibility)
 
     def send_cmd(self, cmd):
         self.vte_term.feed_child(cmd.encode("utf-8"))
