@@ -288,13 +288,13 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Successfully connected to the device!" in terminal_text
                 and "Successfully connected to the device!" not in self.last_text
             ):
-                self.set_widget_state(self.start_odin_button, True)
+                self.set_widget_state(self.start_odin_button, state=True)
 
             if (
                 "Successfully began an Odin session!" in terminal_text
                 and "Successfully began an Odin session!" not in self.last_text
             ):
-                self.set_widget_state(self.start_odin_button, False)
+                self.set_widget_state(self.start_odin_button, state=False)
 
             if "> [ ]" in terminal_text and "> [ ]" not in self.last_text:
                 self.select_partitions()
