@@ -217,7 +217,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def select_partitions(self):
         def toggled_callback(button):
             if button.get_active():
-                self.selected_buttons[btn_array[button] - 1] = True
+                self.selected_buttons[btn_array[button] - 1][0] = True
+            else:
+                self.selected_buttons[btn_array[button] - 1][0] = False
 
         file_names = []
         self.selected_buttons = []
@@ -228,10 +230,9 @@ class MainWindow(Gtk.ApplicationWindow):
         for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
             file_path = getattr(self, f"{slot}_entry").get_text()
             if file_path:
-                # TODO: Implement handling multiple files
                 with tarfile.open(file_path) as tar_file:
                     for member in tar_file.getmembers():
-                        self.selected_buttons.append("")
+                        self.selected_buttons.append([False, file_path])
                         split = member.name.split(".")
                         # Skip Pit file
                         if split[1] != "pit":
@@ -294,7 +295,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Successfully began an Odin session!" in terminal_text
                 and "Successfully began an Odin session!" not in self.last_text
             ):
-                self.set_widget_state(self.start_odin_button, state=False)
+                self.set_widget_state(self.start_odin_button, self.flash_button, state=True)
 
             if "> [ ]" in terminal_text and "> [ ]" not in self.last_text:
                 self.select_partitions()
@@ -406,10 +407,14 @@ class MainWindow(Gtk.ApplicationWindow):
             self.scan_output(self.vte_term)
 
     def send_selected_partitions(self):
-        for item in self.selected_buttons:
-            if item:
+        last_file = ""
+        for selected, file_path in self.selected_buttons:
+            if last_file and last_file != file_path:
+                self.send_cmd("\n")
+            if selected:
                 self.send_cmd("\x20")
             self.send_cmd("\x1b[B")
+            last_file = file_path
         self.send_cmd("\n")
 
     def error_dialog(self, message, function):
