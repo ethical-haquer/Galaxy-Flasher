@@ -214,7 +214,7 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         )
 
-    def select_partitions(self):
+    def flash(self):
         def toggled_callback(button):
             if button.get_active():
                 self.selected_buttons[btn_array[button] - 1][0] = True
@@ -227,21 +227,33 @@ class MainWindow(Gtk.ApplicationWindow):
         window, grid = self.dialog("Select Partitions")
         self.create_label("Select the partitions to flash", 0, 0, grid)
         row = 1
+        paths = {}
         for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
-            file_path = getattr(self, f"{slot}_entry").get_text()
-            if file_path:
-                with tarfile.open(file_path) as tar_file:
-                    for member in tar_file.getmembers():
-                        self.selected_buttons.append([False, file_path])
-                        split = member.name.split(".")
-                        # Skip Pit file
-                        if split[1] != "pit":
-                            name = split[0].upper()
-                            file_names.append(name)
-                            btn = self.create_check_button(name, 0, row, grid)
-                            btn.connect("toggled", toggled_callback)
-                            btn_array[btn] = row
-                            row += 1
+            entry = getattr(self, f"{slot}_entry")
+            if entry.get_text():
+                print(f"Flashing {entry.get_text()} to {slot}")
+                paths[slot] = os.path.dirname(entry.get_text())
+        if len(set(paths.values())) > 1:
+            print("The files NEED to be in the same dir...")
+            self.error_dialog(self.strings["invalid_files"], "flash")
+        else:
+            base_dir = list(paths.values())[0]
+            self.send_cmd(f"flashTar {base_dir}\n")
+            for file_path in os.listdir(base_dir):
+                if file_path.endswith(".md5") or file_path.endswith(".tar"):
+                    file_path = os.path.join(base_dir, file_path)
+                    with tarfile.open(file_path) as tar_file:
+                        for member in tar_file.getmembers():
+                            self.selected_buttons.append([False, file_path])
+                            split = member.name.split(".")
+                            # Skip Pit file
+                            if split[1] != "pit":
+                                name = split[0].upper()
+                                file_names.append(name)
+                                btn = self.create_check_button(name, 0, row, grid)
+                                btn.connect("toggled", toggled_callback)
+                                btn_array[btn] = row
+                                row += 1
         self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
         self.create_button(
             "OK",
@@ -296,9 +308,6 @@ class MainWindow(Gtk.ApplicationWindow):
                 and "Successfully began an Odin session!" not in self.last_text
             ):
                 self.set_widget_state(self.start_odin_button, self.flash_button, state=True)
-
-            if "> [ ]" in terminal_text and "> [ ]" not in self.last_text:
-                self.select_partitions()
 
             if (
                 "Are you absolutely sure you want to flash those?" in terminal_text
@@ -390,21 +399,6 @@ class MainWindow(Gtk.ApplicationWindow):
             self.send_cmd(f"options resetfc {button.get_active()}\n")
         if button.get_label().lower().replace(" ", "_") == "bootloader_update":
             self.send_cmd(f"options blupdate {button.get_active()}\n")
-
-    def flash(self):
-        paths = {}
-        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
-            entry = getattr(self, f"{slot}_entry")
-            if entry.get_text():
-                print(f"Flashing {entry.get_text()} to {slot}")
-                path = os.path.dirname(entry.get_text())
-                paths[slot] = os.path.dirname(entry.get_text())
-        if len(set(paths.values())) > 1:
-            print("The files NEED to be in the same dir...")
-            self.error_dialog(self.strings["invalid_files"], "flash")
-        else:
-            self.send_cmd(f"flashTar {list(paths.values())[0]}\n")
-            self.scan_output(self.vte_term)
 
     def send_selected_partitions(self):
         last_file = ""
