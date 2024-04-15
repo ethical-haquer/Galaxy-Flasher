@@ -28,19 +28,20 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Vte", "3.91")
+
 from gi.repository import Adw, Gio, GLib, Gtk, Vte
 
-version = "Alpha v0.4.6"
 locale.setlocale(locale.LC_ALL, "")
 locale = locale.getlocale(locale.LC_MESSAGES)[0]
 seperator = "_"
 lang = locale.split(seperator, 1)[0]
-json_file = f"locales/{lang}.json"
+
+version = "Alpha v0.5.0"
+settings_file = "settings.json"
+locale_file = f"locales/{lang}.json"
 cwd = os.getcwd()
 arch = platform.architecture()[0][:2]
 system = platform.system().lower()
-# TODO: Add option for sudo/no sudo
-thor_exec = ["sudo", f"{cwd}/Thor/{system}-x{arch}/TheAirBlow.Thor.Shell"]
 
 
 class MainWindow(Gtk.ApplicationWindow):
@@ -48,8 +49,16 @@ class MainWindow(Gtk.ApplicationWindow):
         self.currently_running = False
         self.last_text = ""
         super().__init__(*args, **kwargs)
-        with open(json_file) as json_string:
+        # Load strings
+        with open(locale_file) as json_string:
             self.strings = json.load(json_string)
+        # Load settings
+        self.load_settings()
+        thor_path = f"{cwd}/Thor/{system}-x{arch}/TheAirBlow.Thor.Shell"
+        if self.settings["sudo"]:
+            thor_exec = ["sudo", thor_path]
+        else:
+            thor_exec = [thor_path]
         # Define main grid
         self.grid = Gtk.Grid()
         self.grid.set_column_spacing(10)
@@ -71,11 +80,11 @@ class MainWindow(Gtk.ApplicationWindow):
             self.stack, self.stack_switcher, Gtk.PositionType.BOTTOM, 1, 6
         )
         # Check if Thor file exists
-        if not os.path.isfile(thor_exec[1]):
-            print(f"Error: File {thor_exec[1]} not found")
+        if not os.path.isfile(thor_path):
+            print(f"Error: File {thor_path} not found")
             # TODO: Wait until main window is fully created
             self.error_dialog(
-                self.strings["file_not_found2"].format(file=thor_exec[1]), "__init__"
+                self.strings["file_not_found2"].format(file=thor_path), "__init__"
             )
         # Create Thor output box
         self.vte_term = Vte.Terminal()
@@ -149,10 +158,10 @@ class MainWindow(Gtk.ApplicationWindow):
             grid=self.grid,
             command=lambda _: self.flash(),
         )
-        self.set_widget_state(self.start_odin_button, self.flash_button, state=False)
-        # @justaCasualCoder, I don't know which of these comments you want:
+        self.set_widget_state(
+            self.connect_button, self.start_odin_button, self.flash_button, state=False
+        )
         # Setup header
-        # Setup HeaderBar
         header = Gtk.HeaderBar()
         self.set_titlebar(header)
         # Create about action
@@ -175,7 +184,7 @@ class MainWindow(Gtk.ApplicationWindow):
         hamburger.set_popover(popover)
         hamburger.set_icon_name("open-menu-symbolic")
         header.pack_start(hamburger)
-        # Set initial row
+        # Create the option tab widgets
         row = 0
         self.options = [
             {"option": "T Flash", "label": f"{self.strings['tflash_temporarily']}"},
@@ -199,8 +208,24 @@ class MainWindow(Gtk.ApplicationWindow):
             0,
             self.pit_grid,
         )
-        self.create_label("Thor", 0, 0, self.settings_grid)
-        self.create_check_button("Run Thor with sudo", 0, 1, self.settings_grid)
+        # Create the settings tab widgets
+        row = 0
+        self.options = [
+            {"label": "Run Thor with sudo", "setting": "sudo"},
+        ]
+        for item in self.options:
+            text = item["label"]
+            setting = item["setting"]
+            label = self.create_label(
+                text, 1, row, self.settings_grid, align=Gtk.Align.START
+            )
+            switch = self.create_switch(0, row, self.settings_grid)
+            switch.set_active(self.settings.get(setting, False))
+            switch.connect("state-set", self.switch_changed, setting)
+            active = switch.get_active()
+            self.settings[setting] = active
+            row = row + 1
+        # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
         print(
             f"""
@@ -213,6 +238,16 @@ class MainWindow(Gtk.ApplicationWindow):
                       {version}
         """
         )
+
+    def load_settings(self):
+        self.settings = {}
+        if os.path.exists(settings_file):
+            with open(settings_file, "r") as file:
+                self.settings = json.load(file)
+
+    def save_settings(self):
+        with open(settings_file, "w") as file:
+            json.dump(self.settings, file)
 
     def flash(self):
         def toggled_callback(button):
@@ -240,6 +275,7 @@ class MainWindow(Gtk.ApplicationWindow):
             base_dir = list(paths.values())[0]
             self.send_cmd(f"flashTar {base_dir}\n")
             for file_path in os.listdir(base_dir):
+                print(f"file_path is: {file_path}")
                 if file_path.endswith(".md5") or file_path.endswith(".tar"):
                     file_path = os.path.join(base_dir, file_path)
                     with tarfile.open(file_path) as tar_file:
@@ -263,6 +299,17 @@ class MainWindow(Gtk.ApplicationWindow):
             lambda _: (self.send_selected_partitions(), window.destroy()),
         )
         window.present()
+
+    def send_selected_partitions(self):
+        last_file = ""
+        for selected, file_path in self.selected_buttons:
+            if last_file and last_file != file_path:
+                self.send_cmd("\n")
+            if selected:
+                self.send_cmd("\x20")
+            self.send_cmd("\x1b[B")
+            last_file = file_path
+        self.send_cmd("\n")
 
     def dialog(self, title):
         # Create grid
@@ -296,6 +343,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 and "Welcome to Thor Shell" not in self.last_text
             ):
                 self.set_password_entry(self.command_entry, False)
+                self.set_widget_state(self.connect_button, state=True)
 
             if (
                 "Successfully connected to the device!" in terminal_text
@@ -307,7 +355,9 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Successfully began an Odin session!" in terminal_text
                 and "Successfully began an Odin session!" not in self.last_text
             ):
-                self.set_widget_state(self.start_odin_button, self.flash_button, state=True)
+                self.set_widget_state(
+                    self.start_odin_button, self.flash_button, state=True
+                )
 
             if (
                 "Are you absolutely sure you want to flash those?" in terminal_text
@@ -347,7 +397,13 @@ class MainWindow(Gtk.ApplicationWindow):
                 checkbutton.set_group(group)
             checkbutton.connect("toggled", set_selected_device, row)
             row = row + 1
-        self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
+        self.create_button(
+            "Cancel",
+            1,
+            row,
+            grid,
+            lambda btn: (self.send_selected_device(btn, True), window.destroy()),
+        )
         self.create_button(
             "OK",
             2,
@@ -357,8 +413,12 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         window.present()
 
-    def send_selected_device(self, btn):
-        for _ in range(self.device_index - 1):
+    def send_selected_device(self, btn, cancel=False):
+        if cancel:
+            times = len(self.devices)
+        else:
+            times = self.device_index - 1
+        for _ in range(times):
             self.send_cmd("\x1b[B")
         self.send_cmd("\n")
 
@@ -400,16 +460,11 @@ class MainWindow(Gtk.ApplicationWindow):
         if button.get_label().lower().replace(" ", "_") == "bootloader_update":
             self.send_cmd(f"options blupdate {button.get_active()}\n")
 
-    def send_selected_partitions(self):
-        last_file = ""
-        for selected, file_path in self.selected_buttons:
-            if last_file and last_file != file_path:
-                self.send_cmd("\n")
-            if selected:
-                self.send_cmd("\x20")
-            self.send_cmd("\x1b[B")
-            last_file = file_path
-        self.send_cmd("\n")
+    def switch_changed(self, switch, state, setting):
+        active = switch.get_active()
+        self.settings[setting] = active
+        print(f"{setting} set to: {self.settings[setting]}")
+        self.save_settings()
 
     def error_dialog(self, message, function):
         dialog = Gtk.AlertDialog()
@@ -489,10 +544,19 @@ class MainWindow(Gtk.ApplicationWindow):
         file_dialog.show()
 
     def create_label(
-        self, text, column, row, grid, font=("monospace", 11), width=1, height=1
+        self,
+        text,
+        column,
+        row,
+        grid,
+        font=("monospace", 11),
+        width=1,
+        height=1,
+        align=Gtk.Align.FILL,
     ):
         label = Gtk.Label()
         label.set_markup(f'<span font_desc="{font[0]} {font[1]}">{text}</span>')
+        label.set_halign(align)
         grid.attach(label, column, row, width, height)
         return label
 
@@ -511,6 +575,11 @@ class MainWindow(Gtk.ApplicationWindow):
         button = Gtk.CheckButton(label=label)
         grid.attach(button, column, row, width, height)
         return button
+
+    def create_switch(self, column, row, grid, width=1, height=1):
+        switch = Gtk.Switch()
+        grid.attach(switch, column, row, width, height)
+        return switch
 
     def about_window(self, *_):
         dialog = Adw.AboutWindow(transient_for=app.get_active_window())
