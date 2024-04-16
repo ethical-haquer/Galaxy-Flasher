@@ -55,7 +55,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # Load settings
         self.load_settings()
         thor_path = f"{cwd}/Thor/{system}-x{arch}/TheAirBlow.Thor.Shell"
-        if self.settings["sudo"]:
+        if self.settings.get("sudo", False):
             thor_exec = ["sudo", thor_path]
         else:
             thor_exec = [thor_path]
