@@ -211,7 +211,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # Create the settings tab widgets
         row = 0
         self.options = [
-            {"label": "Run Thor with sudo", "setting": "sudo"},
+            {"label": self.strings["run_thor_sudo"], "setting": "sudo"},
         ]
         for item in self.options:
             text = item["label"]
@@ -268,7 +268,10 @@ class MainWindow(Gtk.ApplicationWindow):
             if entry.get_text():
                 print(f"Flashing {entry.get_text()} to {slot}")
                 paths[slot] = os.path.dirname(entry.get_text())
-        if len(set(paths.values())) > 1:
+        if len(paths) == 0:
+            print(self.strings["no_files_selected2"])
+            self.error_dialog(self.strings["no_files_selected2"], "flash")
+        elif len(set(paths.values())) > 1:
             print("The files NEED to be in the same dir...")
             self.error_dialog(self.strings["invalid_files"], "flash")
         else:
@@ -290,15 +293,15 @@ class MainWindow(Gtk.ApplicationWindow):
                                 btn.connect("toggled", toggled_callback)
                                 btn_array[btn] = row
                                 row += 1
-        self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
-        self.create_button(
-            "OK",
-            2,
-            row,
-            grid,
-            lambda _: (self.send_selected_partitions(), window.destroy()),
-        )
-        window.present()
+            self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
+            self.create_button(
+                "OK",
+                2,
+                row,
+                grid,
+                lambda _: (self.send_selected_partitions(), window.destroy()),
+            )
+            window.present()
 
     def send_selected_partitions(self):
         last_file = ""
@@ -402,18 +405,18 @@ class MainWindow(Gtk.ApplicationWindow):
             1,
             row,
             grid,
-            lambda btn: (self.send_selected_device(btn, True), window.destroy()),
+            lambda _: (self.send_selected_device(cancel=True), window.destroy()),
         )
         self.create_button(
             "OK",
             2,
             row,
             grid,
-            lambda btn: (self.send_selected_device(btn), window.destroy()),
+            lambda _: (self.send_selected_device(), window.destroy()),
         )
         window.present()
 
-    def send_selected_device(self, btn, cancel=False):
+    def send_selected_device(self, cancel=False):
         if cancel:
             times = len(self.devices)
         else:
@@ -442,23 +445,21 @@ class MainWindow(Gtk.ApplicationWindow):
         window.present()
 
     def option_changed(self, button):
-        print(
-            f"{button.get_label().lower().replace(' ', '_')}_enabled ",
-            button.get_active(),
-        )
-        setattr(
-            self,
-            f"{button.get_label().lower().replace(' ', '_')}_enabled",
-            button.get_active(),
-        )
-        if button.get_label().lower().replace(" ", "_") == "t_flash":
-            self.send_cmd(f"options tflash {button.get_active()}\n")
-        if button.get_label().lower().replace(" ", "_") == "efs_clear":
-            self.send_cmd(f"options efsclear {button.get_active()}\n")
-        if button.get_label().lower().replace(" ", "_") == "reset_flash_count":
-            self.send_cmd(f"options resetfc {button.get_active()}\n")
-        if button.get_label().lower().replace(" ", "_") == "bootloader_update":
-            self.send_cmd(f"options blupdate {button.get_active()}\n")
+        convert = {
+            "t_flash": "tflash",
+            "efs_clear": "efsclear",
+            "reset_flash_count": "resetfc",
+            "bootloader_update": "blupdate",
+        }
+
+        option = button.get_label().lower().replace(" ", "_")
+        value = button.get_active()
+
+        print(f"{option}: {value}")
+        setattr(self, option, value)
+
+        option = convert[option]
+        self.send_cmd(f"options {option} {value}\n")
 
     def switch_changed(self, switch, state, setting):
         active = switch.get_active()
@@ -472,7 +473,7 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.set_message(f"Error in {function} function")
         dialog.set_detail(message)
         dialog.set_buttons(["OK"])
-        dialog.show()
+        dialog.show(self)
 
     def start_odin(self):
         self.send_cmd("begin odin\n")
