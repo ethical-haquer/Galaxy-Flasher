@@ -325,56 +325,42 @@ class MainWindow(Gtk.ApplicationWindow):
         return window, grid
 
     def scan_output(self, vte):
-        # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
-        terminal_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
-        if terminal_text.strip().rsplit("shell>")[-1].strip() == "":
-            try:
-                terminal_text = terminal_text.strip().rsplit("shell>")[-2].strip()
-            except:
-                terminal_text = terminal_text.strip().rsplit("shell>")[-1].strip()
-        else:
-            terminal_text = terminal_text.strip().rsplit("shell>")[-1].strip()
-        if terminal_text != self.last_text:
-            if (
-                "[sudo] password for" in terminal_text
-                and "[sudo] password for" not in self.last_text
-            ):
-                self.set_password_entry(self.command_entry, True)
-
-            if (
-                "Welcome to Thor Shell" in terminal_text
-                and "Welcome to Thor Shell" not in self.last_text
-            ):
-                self.set_password_entry(self.command_entry, False)
-                self.set_widget_state(self.connect_button, state=True)
-
-            if (
-                "Successfully connected to the device!" in terminal_text
-                and "Successfully connected to the device!" not in self.last_text
-            ):
-                self.set_widget_state(self.start_odin_button, state=True)
-
-            if (
-                "Successfully began an Odin session!" in terminal_text
-                and "Successfully began an Odin session!" not in self.last_text
-            ):
-                self.set_widget_state(
+        matches = {
+            "[sudo] password for": [
+                lambda: self.set_password_entry(self.command_entry, True)
+            ],
+            "Welcome to Thor Shell": [
+                lambda: self.set_password_entry(self.command_entry, False),
+                lambda: self.set_widget_state(self.connect_button, state=True),
+            ],
+            "Successfully connected to the device!": [
+                lambda: self.set_widget_state(self.start_odin_button, state=True)
+            ],
+            "Successfully began an Odin session!": [
+                lambda: self.set_widget_state(
                     self.start_odin_button, self.flash_button, state=True
                 )
+            ],
+            "Are you absolutely sure you want to flash those?": [
+                lambda: self.verify_flash()
+            ],
+            "Choose a device to connect to:": [lambda: self.select_device(term_text)],
+        }
 
-            if (
-                "Are you absolutely sure you want to flash those?" in terminal_text
-                and "Are you absolutely sure you want to flash those?"
-                not in self.last_text
-            ):
-                self.verify_flash()
+        term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
+        term_text = (
+            term_text.strip().rsplit("shell>")[-1].strip()
+            if "shell>" in term_text
+            else term_text.strip()
+        )
 
-            if (
-                "Choose a device to connect to:" in terminal_text
-                and "Choose a device to connect to:" not in self.last_text
-            ):
-                self.select_device(terminal_text)
-            self.last_text = terminal_text
+        if term_text != self.last_text:
+            for string, commands in matches.items():
+                if string in term_text and string not in self.last_text:
+                    for command in commands:
+                        command()
+
+            self.last_text = term_text
 
     def select_device(self, text):
         def set_selected_device(btn, row):
@@ -588,15 +574,17 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.set_version(version)
         dialog.set_developer_name("ethical_haquer")
         dialog.set_license_type(Gtk.License(Gtk.License.GPL_3_0))
-        dialog.add_credit_section(
-            "justaCasualCoder", ["Github Profile https://github.com/justaCasualCoder"]
-        )
-        dialog.add_credit_section(
-            "ethical_haquer", ["Github Profile https://github.com/ethical-haquer"]
-        )
-        dialog.add_credit_section(
-            "TheAirBlow", ["Github Profile https://github.com/TheAirBlow"]
-        )
+        credits = [
+            {"name": "justaCasualCoder", "github_profile": "justaCasualCoder"},
+            {"name": "ethical_haquer", "github_profile": "ethical-haquer"},
+            {"name": "TheAirBlow", "github_profile": "TheAirBlow"},
+        ]
+        for credit in credits:
+            name = credit["name"]
+            github_profile = credit["github_profile"]
+            dialog.add_credit_section(
+                name, [f"Github Profile https://github.com/{github_profile}"]
+            )
         dialog.set_website("https://github.com/ethical-haquer/Thor_GUI")
         dialog.set_issue_url("https://github.com/ethical-haquer/Thor_GUI/issues")
         dialog.set_visible(True)
