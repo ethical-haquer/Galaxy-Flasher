@@ -325,7 +325,7 @@ class MainWindow(Gtk.ApplicationWindow):
         return window, grid
 
     def scan_output(self, vte):
-        matches = {
+        strings_to_commands = {
             "[sudo] password for": [
                 lambda: self.set_password_entry(self.command_entry, True)
             ],
@@ -334,28 +334,61 @@ class MainWindow(Gtk.ApplicationWindow):
                 lambda: self.set_widget_state(self.connect_button, state=True),
             ],
             "Successfully connected to the device!": [
-                lambda: self.set_widget_state(self.start_odin_button, state=True)
+                lambda: print("Successfully connected to the device!"),
+                lambda: self.set_widget_state(self.start_odin_button, state=True),
+                lambda: self.connect_button.set_label("Disconnect"),
+                lambda: self.change_button_command(
+                    self.connect_button, lambda _: self.send_cmd("disconnect\n")
+                ),
+            ],
+            "Successfully disconnected the device!": [
+                lambda: print("Successfully disconnected the device!"),
+                lambda: self.set_widget_state(self.start_odin_button, state=False),
+                lambda: self.connect_button.set_label("Connect"),
+                lambda: self.change_button_command(
+                    self.connect_button, lambda _: self.send_cmd("connect\n")
+                ),
             ],
             "Successfully began an Odin session!": [
+                lambda: print("Successfully began an Odin session!"),
+                # TODO: Why do we need to enable the start_odin_button here?
+                # It's supposed to be enabled above ^
                 lambda: self.set_widget_state(
                     self.start_odin_button, self.flash_button, state=True
-                )
+                ),
+                lambda: self.start_odin_button.set_label("End Odin Session"),
+                lambda: self.change_button_command(
+                    self.start_odin_button, lambda _: self.end_odin()
+                ),
+            ],
+            "Successfully ended an Odin session!": [
+                lambda: print("Successfully ended an Odin session!"),
+                lambda: self.set_widget_state(self.flash_button, state=False),
+                lambda: self.start_odin_button.set_label("Start Odin Session"),
+                lambda: self.change_button_command(
+                    self.start_odin_button, lambda _: self.start_odin()
+                ),
+                # We disable it because with Thor:
+                # "You can't reuse the same USB connection after you close an
+                # Odin session, and you can't re-connect the device.
+                # You have to reboot each time."
+                lambda: self.set_widget_state(self.start_odin_button, state=False),
             ],
             "Are you absolutely sure you want to flash those?": [
                 lambda: self.verify_flash()
             ],
             "Choose a device to connect to:": [lambda: self.select_device(term_text)],
         }
-
         term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
-        term_text = (
-            term_text.strip().rsplit("shell>")[-1].strip()
-            if "shell>" in term_text
-            else term_text.strip()
-        )
-
+        if term_text.strip().rsplit("shell>")[-1].strip() == "":
+            try:
+                term_text = term_text.strip().rsplit("shell>")[-2].strip()
+            except:
+                term_text = term_text.strip().rsplit("shell>")[-1].strip()
+        else:
+            term_text = term_text.strip().rsplit("shell>")[-1].strip()
         if term_text != self.last_text:
-            for string, commands in matches.items():
+            for string, commands in strings_to_commands.items():
                 if string in term_text and string not in self.last_text:
                     for command in commands:
                         command()
@@ -464,6 +497,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def start_odin(self):
         self.send_cmd("begin odin\n")
 
+    def end_odin(self):
+        self.send_cmd("end\n")
+
     def on_command_enter(self, *args):
         text = self.command_entry.get_text()
         # Clear Command entry
@@ -549,9 +585,13 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def create_button(self, label, column, row, grid, command, width=1, height=1):
         button = Gtk.Button(label=label)
-        button.connect("clicked", command)
+        button.signal_id = button.connect("clicked", command)
         grid.attach(button, column, row, width, height)
         return button
+
+    def change_button_command(self, button, new_command):
+        button.disconnect(button.signal_id)
+        button.signal_id = button.connect("clicked", new_command)
 
     def create_entry(self, column, row, grid, width=1, height=1):
         text_entry = Gtk.Entry()
