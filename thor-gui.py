@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Thor GUI - A GUI for the Thor Flash Utility
 Copyright (C) 2023-2024 ethical_haquer
@@ -548,30 +549,28 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def open_file(self, partition):
         def file_dialog_callback(dialog, response_id):
-            if response_id == Gtk.ResponseType.OK:
+            if response_id == Gtk.ResponseType.ACCEPT:
                 file = dialog.get_file()
                 if file:
                     print(f"Selected file: {file.get_path()}")
                     entry = getattr(self, f"{partition}_entry")
                     entry.set_text(file.get_path())
             dialog.destroy()
-
-        file_dialog = Gtk.FileChooserDialog(
+        # Add to self to keep reference
+        # https://gitlab.gnome.org/GNOME/pygobject/-/issues/466
+        self.file_dialog = Gtk.FileChooserNative(
             title=f"Select a {partition} file",
             action=Gtk.FileChooserAction.OPEN,
             transient_for=self,
-        )
-        file_dialog.add_buttons(
-            "Open", Gtk.ResponseType.OK, "Cancel", Gtk.ResponseType.CANCEL
         )
         odin_filter = Gtk.FileFilter()
         odin_filter.set_name("ODIN files")
         odin_filter.add_mime_type("application/x-tar")
         odin_filter.add_pattern("*.tar.md5")
         odin_filter.add_pattern("*.tar")
-        file_dialog.add_filter(odin_filter)
-        file_dialog.connect("response", file_dialog_callback)
-        file_dialog.show()
+        self.file_dialog.add_filter(odin_filter)
+        self.file_dialog.connect("response", file_dialog_callback)
+        self.file_dialog.show()
 
     def create_label(
         self,

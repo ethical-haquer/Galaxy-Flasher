@@ -1,0 +1,34 @@
+app-id: com.ethicalhaquer.thorgui
+runtime: org.gnome.Platform
+runtime-version: '46'
+sdk: org.gnome.Sdk
+command: entry
+finish-args:
+  - --share=network
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=all # Needed for accessing Samsung devices.
+  - --socket=wayland
+modules:
+  - name: Thor_GUI
+    buildsystem: simple
+    build-commands:
+      - cp -r locales /app/locales/
+      - cp -r Thor /app/Thor
+      - install -D thor-gui.py /app/thor-gui
+      - install -D entry.sh /app/bin/entry
+    sources:
+      - type: file
+        path: ../thor-gui.py
+      - type: file
+        path: entry.sh
+      - type: dir
+        path: include
+  - name: vte
+    sources:
+      - type: git
+        url: https://gitlab.gnome.org/GNOME/vte.git/
+    buildsystem: meson
+    config-opts:
+      - -Dgtk3=false
+      - -Dgtk4=true

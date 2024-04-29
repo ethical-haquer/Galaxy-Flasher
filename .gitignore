@@ -161,5 +161,6 @@ cython_debug/
 thor_gui_old.py
 /.idea
 /Thor
+.flatpak-builder
 usb.ids
 settings.json
