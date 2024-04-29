@@ -17,9 +17,12 @@ modules:
       - cp -r Thor /app/Thor
       - install -D thor-gui.py /app/thor-gui
       - install -D entry.sh /app/bin/entry
+      - install -D thor-gui.desktop /app/share/applications/com.ethicalhaquer.thorgui.desktop
     sources:
       - type: file
         path: ../thor-gui.py
+      - type: file
+        path: thor-gui.desktop
       - type: file
         path: entry.sh
       - type: dir
