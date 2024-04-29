@@ -46,7 +46,6 @@ system = platform.system().lower()
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
-        self.currently_running = False
         self.last_text = ""
         super().__init__(*args, **kwargs)
         # Load strings
@@ -82,9 +81,8 @@ class MainWindow(Gtk.ApplicationWindow):
         # Check if Thor file exists
         if not os.path.isfile(thor_path):
             print(f"Error: File {thor_path} not found")
-            # TODO: Wait until main window is fully created
-            self.error_dialog(
-                self.strings["file_not_found2"].format(file=thor_path), "__init__"
+            self.realize_id = self.connect(
+                "show", lambda _: self.thor_file_not_found_dialog(thor_path)
             )
         # Create Thor output box
         self.vte_term = Vte.Terminal()
@@ -106,6 +104,10 @@ class MainWindow(Gtk.ApplicationWindow):
         # Create scrolled window
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_child(self.vte_term)
+        scrolled_window.set_hexpand(True)
+        scrolled_window.set_vexpand(True)
+        scrolled_window.set_halign(Gtk.Align.FILL)
+        scrolled_window.set_valign(Gtk.Align.FILL)
         self.stack.add_titled(scrolled_window, "Log", "Log")
         # Creates other tabs
         for tab in ["Options", "Pit", "Settings"]:
@@ -114,15 +116,14 @@ class MainWindow(Gtk.ApplicationWindow):
             grid.set_row_spacing(10)
             self.stack.add_titled(grid, tab, tab)
             setattr(self, f"{tab.lower()}_grid", grid)
-        # Set initial row
-        row = 2
         # Create file slots
+        row = 2
         for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
             button = self.create_button(
                 slot, 1, row, self.grid, lambda _, x=slot: self.open_file(x)
             )
             button.set_margin_top(10)
-            entry = self.create_entry(2, row, self.grid, 2, 1)
+            entry = self.create_entry(2, row, self.grid, 2, 1, True)
             entry.set_margin_top(10)
             setattr(self, f"{slot}_entry", entry)
             setattr(self, f"{slot}_button", button)
@@ -239,6 +240,12 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         )
 
+    def thor_file_not_found_dialog(self, thor_path):
+        self.disconnect(self.realize_id)
+        self.error_dialog(
+            self.strings["file_not_found2"].format(file=thor_path), "__init__"
+        )
+
     def load_settings(self):
         self.settings = {}
         if os.path.exists(settings_file):
@@ -325,7 +332,7 @@ class MainWindow(Gtk.ApplicationWindow):
         return window, grid
 
     def scan_output(self, vte):
-        matches = {
+        strings_to_commands = {
             "[sudo] password for": [
                 lambda: self.set_password_entry(self.command_entry, True)
             ],
@@ -334,28 +341,61 @@ class MainWindow(Gtk.ApplicationWindow):
                 lambda: self.set_widget_state(self.connect_button, state=True),
             ],
             "Successfully connected to the device!": [
-                lambda: self.set_widget_state(self.start_odin_button, state=True)
+                lambda: print("Successfully connected to the device!"),
+                lambda: self.set_widget_state(self.start_odin_button, state=True),
+                lambda: self.connect_button.set_label("Disconnect"),
+                lambda: self.change_button_command(
+                    self.connect_button, lambda _: self.send_cmd("disconnect\n")
+                ),
+            ],
+            "Successfully disconnected the device!": [
+                lambda: print("Successfully disconnected the device!"),
+                lambda: self.set_widget_state(self.start_odin_button, state=False),
+                lambda: self.connect_button.set_label("Connect"),
+                lambda: self.change_button_command(
+                    self.connect_button, lambda _: self.send_cmd("connect\n")
+                ),
             ],
             "Successfully began an Odin session!": [
+                lambda: print("Successfully began an Odin session!"),
+                # TODO: Why do we need to enable the start_odin_button here?
+                # It's supposed to be enabled above ^
                 lambda: self.set_widget_state(
                     self.start_odin_button, self.flash_button, state=True
-                )
+                ),
+                lambda: self.start_odin_button.set_label("End Odin Session"),
+                lambda: self.change_button_command(
+                    self.start_odin_button, lambda _: self.end_odin()
+                ),
+            ],
+            "Successfully ended an Odin session!": [
+                lambda: print("Successfully ended an Odin session!"),
+                lambda: self.set_widget_state(self.flash_button, state=False),
+                lambda: self.start_odin_button.set_label("Start Odin Session"),
+                lambda: self.change_button_command(
+                    self.start_odin_button, lambda _: self.start_odin()
+                ),
+                # We disable it because with Thor:
+                # "You can't reuse the same USB connection after you close an
+                # Odin session, and you can't re-connect the device.
+                # You have to reboot each time."
+                lambda: self.set_widget_state(self.start_odin_button, state=False),
             ],
             "Are you absolutely sure you want to flash those?": [
                 lambda: self.verify_flash()
             ],
             "Choose a device to connect to:": [lambda: self.select_device(term_text)],
         }
-
         term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
-        term_text = (
-            term_text.strip().rsplit("shell>")[-1].strip()
-            if "shell>" in term_text
-            else term_text.strip()
-        )
-
+        if term_text.strip().rsplit("shell>")[-1].strip() == "":
+            try:
+                term_text = term_text.strip().rsplit("shell>")[-2].strip()
+            except:
+                term_text = term_text.strip().rsplit("shell>")[-1].strip()
+        else:
+            term_text = term_text.strip().rsplit("shell>")[-1].strip()
         if term_text != self.last_text:
-            for string, commands in matches.items():
+            for string, commands in strings_to_commands.items():
                 if string in term_text and string not in self.last_text:
                     for command in commands:
                         command()
@@ -464,6 +504,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def start_odin(self):
         self.send_cmd("begin odin\n")
 
+    def end_odin(self):
+        self.send_cmd("end\n")
+
     def on_command_enter(self, *args):
         text = self.command_entry.get_text()
         # Clear Command entry
@@ -549,12 +592,21 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def create_button(self, label, column, row, grid, command, width=1, height=1):
         button = Gtk.Button(label=label)
-        button.connect("clicked", command)
+        button.signal_id = button.connect("clicked", command)
         grid.attach(button, column, row, width, height)
         return button
 
-    def create_entry(self, column, row, grid, width=1, height=1):
+    def change_button_command(self, button, new_command):
+        button.disconnect(button.signal_id)
+        button.signal_id = button.connect("clicked", new_command)
+
+    def create_entry(self, column, row, grid, width=1, height=1, expand=False):
         text_entry = Gtk.Entry()
+        if expand:
+            text_entry.set_hexpand(True)
+            # text_entry.set_vexpand(True)
+            text_entry.set_halign(Gtk.Align.FILL)
+            # text_entry.set_valign(Gtk.Align.FILL)
         grid.attach(text_entry, column, row, width, height)
         return text_entry
 
