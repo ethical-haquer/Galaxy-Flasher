@@ -29,7 +29,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Vte", "3.91")
 
-from gi.repository import Adw, Gio, GLib, Gtk, Vte
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Vte
 
 locale.setlocale(locale.LC_ALL, "")
 locale = locale.getlocale(locale.LC_MESSAGES)[0]
@@ -65,7 +65,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self.set_child(self.grid)
         # Set window title
         self.set_title(f"Thor GUI - {version}")
-        self.create_label("Thor Flash Utility", 0, 0, self.grid, ("Monospace", 20))
         # Define stack to hold tabs
         self.stack = Gtk.Stack()
         self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
@@ -73,8 +72,12 @@ class MainWindow(Gtk.ApplicationWindow):
         # Setup StackSwitcher
         self.stack_switcher = Gtk.StackSwitcher()
         self.stack_switcher.set_stack(self.stack)
+        self.stack_switcher.set_margin_start(10)
+        self.stack_switcher.set_margin_end(0)
+        self.stack_switcher.set_margin_top(10)
+        self.stack_switcher.set_margin_bottom(0)
         # Attach stack/StackSwitcher
-        self.grid.attach(self.stack_switcher, 0, 1, 1, 1)
+        self.grid.attach(self.stack_switcher, 0, 0, 1, 1)
         self.grid.attach_next_to(
             self.stack, self.stack_switcher, Gtk.PositionType.BOTTOM, 1, 6
         )
@@ -86,6 +89,12 @@ class MainWindow(Gtk.ApplicationWindow):
             )
         # Create Thor output box
         self.vte_term = Vte.Terminal()
+        # Set terminal colors
+        foreground = Gdk.RGBA()
+        foreground.parse("#ffffff")
+        background = Gdk.RGBA()
+        background.parse("#242424")
+        self.vte_term.set_colors(foreground, background, None)
         self.vte_term.spawn_async(
             Vte.PtyFlags.DEFAULT,  # Pty Flags
             cwd,  # Working DIR
@@ -99,8 +108,6 @@ class MainWindow(Gtk.ApplicationWindow):
             None,  # Callback
             None,  # User Data
         )
-        # Set clear background
-        self.vte_term.set_clear_background(False)
         # Create scrolled window
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_child(self.vte_term)
@@ -118,47 +125,68 @@ class MainWindow(Gtk.ApplicationWindow):
             setattr(self, f"{tab.lower()}_grid", grid)
         # Create file slots
         row = 2
-        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
+        padding = (0, 0, 0, 0)
+        entry_padding = (0, 10, 0, 0)
+        slots = ["BL", "AP", "CP", "CSC", "USERDATA"]
+        for slot in slots:
+            if slot is slots[-1]:
+                padding = (0, 0, 0, 10)
+                entry_padding = (0, 10, 0, 10)
             button = self.create_button(
-                slot, 1, row, self.grid, lambda _, x=slot: self.open_file(x)
+                slot, 1, row, self.grid, lambda _, x=slot: self.open_file(x), padding
             )
-            button.set_margin_top(10)
-            entry = self.create_entry(2, row, self.grid, 2, 1, True)
-            entry.set_margin_top(10)
-            setattr(self, f"{slot}_entry", entry)
+            entry = self.create_entry(2, row, self.grid, entry_padding, 2, 1, True)
             setattr(self, f"{slot}_button", button)
-            row = row + 1
+            setattr(self, f"{slot}_entry", entry)
+            row += 1
         # Create command entry
         self.command_entry = self.create_entry(
             column=1,
             row=1,
             grid=self.grid,
+            padding=(0, 10, 0, 0),
             width=3,
             height=1,
         )
-        self.command_entry.connect("activate", self.on_command_enter, None)
+        self.command_entry.connect(
+            "activate", lambda _, __: self.on_command_enter(), None
+        )
         # Create connect, start_odin, and flash buttons
-        self.connect_button = self.create_button(
-            self.strings["connect"],
-            column=1,
-            row=0,
-            grid=self.grid,
-            command=lambda _: self.send_cmd("connect\n"),
-        )
-        self.start_odin_button = self.create_button(
-            self.strings["start_odin_protocol"],
-            column=2,
-            row=0,
-            grid=self.grid,
-            command=lambda _: self.start_odin(),
-        )
-        self.flash_button = self.create_button(
-            "Flash!",
-            column=3,
-            row=0,
-            grid=self.grid,
-            command=lambda _: self.flash(),
-        )
+        buttons = [
+            {
+                "name": "connect_button",
+                "text": self.strings["connect"],
+                "command": lambda _: self.send_cmd("connect\n"),
+            },
+            {
+                "name": "start_odin_button",
+                "text": self.strings["start_odin_protocol"],
+                "command": lambda _: self.start_odin(),
+            },
+            {
+                "name": "flash_button",
+                "text": "Flash!",
+                "command": lambda _: self.flash(),
+            },
+        ]
+        column = 1
+        padding = (0, 0, 10, 0)
+        for btn in buttons:
+            name = btn["name"]
+            text = btn["text"]
+            command = btn["command"]
+            if btn is buttons[-1]:
+                padding = (0, 10, 10, 0)
+            button = self.create_button(
+                text,
+                column=column,
+                row=0,
+                grid=self.grid,
+                command=command,
+                padding=padding,
+            )
+            setattr(self, name, button)
+            column += 1
         self.set_widget_state(
             self.connect_button, self.start_odin_button, self.flash_button, state=False
         )
@@ -188,26 +216,25 @@ class MainWindow(Gtk.ApplicationWindow):
         # Create the option tab widgets
         row = 0
         self.options = [
-            {"option": "T Flash", "label": f"{self.strings['tflash_temporarily']}"},
-            {"option": "EFS Clear", "label": ""},
-            {"option": "Bootloader Update", "label": ""},
-            {"option": "Reset Flash Count", "label": ""},
+            {"option": "T Flash"},
+            {"option": "EFS Clear"},
+            {"option": "Bootloader Update"},
+            {"option": "Reset Flash Count"},
         ]
         for item in self.options:
             option = item["option"]
-            label = item["label"]
-            if label:
-                self.create_label(label, 0, row, self.options_grid)
-                row = row + 1
-            check_button = self.create_check_button(option, 0, row, self.options_grid)
+            check_button = self.create_checkbutton(
+                option, 0, row, self.options_grid, (6, 0, 0, 0)
+            )
             check_button.connect("toggled", self.option_changed)
-            row = row + 1
+            row += 1
         # Create place-holder label for Pit tab
         self.create_label(
             f"{self.strings['just_a_test']}\n\n{self.strings['pull_requests_welcome']}",
             0,
             0,
             self.pit_grid,
+            (10, 0, 0, 0),
         )
         # Create the settings tab widgets
         row = 0
@@ -217,15 +244,25 @@ class MainWindow(Gtk.ApplicationWindow):
         for item in self.options:
             text = item["label"]
             setting = item["setting"]
-            label = self.create_label(
-                text, 1, row, self.settings_grid, align=Gtk.Align.START
-            )
-            switch = self.create_switch(0, row, self.settings_grid)
-            switch.set_active(self.settings.get(setting, False))
-            switch.connect("state-set", self.switch_changed, setting)
-            active = switch.get_active()
+            toggle = self.create_toggle_switch(text, 0, row, self.settings_grid)
+            toggle.set_active(self.settings.get(setting, False))
+            toggle.connect("state-set", self.toggle_changed, setting)
+            active = toggle.get_active()
             self.settings[setting] = active
             row = row + 1
+        radiobuttons = [
+            {"text": "Thor"},
+            {"text": "Odin4"},
+        ]
+        self.create_radiobuttons(
+            "Flash Tool:",
+            radiobuttons,
+            0,
+            row,
+            self.settings_grid,
+            (10, 0, 0, 0),
+            (16, 0, 0, 0),
+        )
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
         print(
@@ -296,7 +333,7 @@ class MainWindow(Gtk.ApplicationWindow):
                             if split[1] != "pit":
                                 name = split[0].upper()
                                 file_names.append(name)
-                                btn = self.create_check_button(name, 0, row, grid)
+                                btn = self.create_checkbutton(name, 0, row, grid)
                                 btn.connect("toggled", toggled_callback)
                                 btn_array[btn] = row
                                 row += 1
@@ -358,7 +395,7 @@ class MainWindow(Gtk.ApplicationWindow):
             ],
             "Successfully began an Odin session!": [
                 lambda: print("Successfully began an Odin session!"),
-                # TODO: Why do we need to enable the start_odin_button here?
+                # NOTE: Why do we need to enable the start_odin_button here?
                 # It's supposed to be enabled above ^
                 lambda: self.set_widget_state(
                     self.start_odin_button, self.flash_button, state=True
@@ -419,7 +456,7 @@ class MainWindow(Gtk.ApplicationWindow):
         group = None
         row = 1
         for index, item in enumerate(self.devices):
-            checkbutton = self.create_check_button(item.strip(), 0, row, grid)
+            checkbutton = self.create_checkbutton(item.strip(), 0, row, grid)
             if index == 0:
                 group = checkbutton
             else:
@@ -454,6 +491,21 @@ class MainWindow(Gtk.ApplicationWindow):
     def verify_flash(self):
         window, grid = self.dialog(self.strings["verify_flash"])
         self.create_label(self.strings["are_you_sure"], 0, 0, grid)
+        buttons = [
+            {
+                "text": self.strings["yes"],
+                "command": lambda _: (self.send_cmd("y" + "\n"), window.destroy()),
+            },
+            {
+                "text": self.strings["no"],
+                "command": lambda _: (self.send_cmd("n" + "\n"), window.destroy()),
+            },
+        ]
+        column = 1
+        for btn in buttons:
+            self.create_button(btn["text"], column, 1, grid, btn["command"])
+            column += 1
+        """
         self.create_button(
             self.strings["yes"],
             1,
@@ -468,6 +520,7 @@ class MainWindow(Gtk.ApplicationWindow):
             grid,
             lambda _: (self.send_cmd("n" + "\n"), window.destroy()),
         )
+        """
         window.present()
 
     def option_changed(self, button):
@@ -487,7 +540,7 @@ class MainWindow(Gtk.ApplicationWindow):
         option = convert[option]
         self.send_cmd(f"options {option} {value}\n")
 
-    def switch_changed(self, switch, state, setting):
+    def toggle_changed(self, switch, state, setting):
         active = switch.get_active()
         self.settings[setting] = active
         print(f"{setting} set to: {self.settings[setting]}")
@@ -507,9 +560,8 @@ class MainWindow(Gtk.ApplicationWindow):
     def end_odin(self):
         self.send_cmd("end\n")
 
-    def on_command_enter(self, *args):
+    def on_command_enter(self):
         text = self.command_entry.get_text()
-        # Clear Command entry
         self.command_entry.set_text("")
         self.send_cmd(text + "\n")
 
@@ -520,58 +572,50 @@ class MainWindow(Gtk.ApplicationWindow):
     def toggle_entry_visibility(self, entry, icon_pos):
         visible = entry.get_visibility()
         if visible:
-            entry.set_visibility(False)
-            entry.set_icon_from_icon_name(
-                Gtk.EntryIconPosition(icon_pos), "view-reveal-symbolic"
-            )
+            icon = "view-reveal-symbolic"
         else:
-            entry.set_visibility(True)
-            entry.set_icon_from_icon_name(
-                Gtk.EntryIconPosition(icon_pos), "view-conceal-symbolic"
-            )
+            icon = "view-conceal-symbolic"
+            entry.set_visibility(not visible)
+            entry.set_icon_from_icon_name(Gtk.EntryIconPosition(icon_pos), icon)
 
     def set_password_entry(self, entry, state):
         if state:
-            entry.set_visibility(False)
-            entry.set_icon_from_icon_name(
-                Gtk.EntryIconPosition(1), "view-reveal-symbolic"
-            )
+            icon = "view-reveal-symbolic"
         else:
-            entry.set_visibility(True)
-            entry.set_icon_from_icon_name(
-                Gtk.EntryIconPosition(1), "view-conceal-symbolic"
-            )
+            icon = "view-conceal-symbolic"
+        entry.set_visibility(not state)
+        entry.set_icon_from_icon_name(Gtk.EntryIconPosition(1), icon)
         self.command_entry.connect("icon-press", self.toggle_entry_visibility)
 
     def send_cmd(self, cmd):
         self.vte_term.feed_child(cmd.encode("utf-8"))
 
     def open_file(self, partition):
-        def file_dialog_callback(dialog, response_id):
-            if response_id == Gtk.ResponseType.OK:
-                file = dialog.get_file()
+        def file_dialog_callback(obj, result):
+            try:
+                file = obj.open_finish(result)
                 if file:
-                    print(f"Selected file: {file.get_path()}")
+                    file_path = file.get_path()
+                    print(f"Selected file: {file_path}")
                     entry = getattr(self, f"{partition}_entry")
-                    entry.set_text(file.get_path())
-            dialog.destroy()
+                    entry.set_text(file_path)
+            except GLib.Error as e:
+                # If the user cancelled, pass.
+                if e.code == 2:
+                    pass
+                else:
+                    print(f"Error: {e}")
 
-        file_dialog = Gtk.FileChooserDialog(
-            title=f"Select a {partition} file",
-            action=Gtk.FileChooserAction.OPEN,
-            transient_for=self,
-        )
-        file_dialog.add_buttons(
-            "Open", Gtk.ResponseType.OK, "Cancel", Gtk.ResponseType.CANCEL
-        )
+        file_dialog = Gtk.FileDialog(title=f"Select a {partition} file")
         odin_filter = Gtk.FileFilter()
         odin_filter.set_name("ODIN files")
         odin_filter.add_mime_type("application/x-tar")
         odin_filter.add_pattern("*.tar.md5")
         odin_filter.add_pattern("*.tar")
-        file_dialog.add_filter(odin_filter)
-        file_dialog.connect("response", file_dialog_callback)
-        file_dialog.show()
+        filter_list = Gio.ListStore.new(Gtk.FileFilter)
+        filter_list.append(odin_filter)
+        file_dialog.set_filters(filter_list)
+        file_dialog.open(self, None, file_dialog_callback)
 
     def create_label(
         self,
@@ -579,19 +623,24 @@ class MainWindow(Gtk.ApplicationWindow):
         column,
         row,
         grid,
+        padding=(0, 0, 0, 0),
         font=("monospace", 11),
+        align=Gtk.Align.START,
         width=1,
         height=1,
-        align=Gtk.Align.FILL,
     ):
         label = Gtk.Label()
+        self.set_padding(label, padding)
         label.set_markup(f'<span font_desc="{font[0]} {font[1]}">{text}</span>')
         label.set_halign(align)
         grid.attach(label, column, row, width, height)
         return label
 
-    def create_button(self, label, column, row, grid, command, width=1, height=1):
+    def create_button(
+        self, label, column, row, grid, command, padding=(0, 0, 0, 0), width=1, height=1
+    ):
         button = Gtk.Button(label=label)
+        self.set_padding(button, padding)
         button.signal_id = button.connect("clicked", command)
         grid.attach(button, column, row, width, height)
         return button
@@ -600,25 +649,72 @@ class MainWindow(Gtk.ApplicationWindow):
         button.disconnect(button.signal_id)
         button.signal_id = button.connect("clicked", new_command)
 
-    def create_entry(self, column, row, grid, width=1, height=1, expand=False):
-        text_entry = Gtk.Entry()
+    def create_entry(
+        self, column, row, grid, padding=(0, 0, 0, 0), width=1, height=1, expand=False
+    ):
+        entry = Gtk.Entry()
+        self.set_padding(entry, padding)
         if expand:
-            text_entry.set_hexpand(True)
-            # text_entry.set_vexpand(True)
-            text_entry.set_halign(Gtk.Align.FILL)
-            # text_entry.set_valign(Gtk.Align.FILL)
-        grid.attach(text_entry, column, row, width, height)
-        return text_entry
+            entry.set_hexpand(True)
+            entry.set_halign(Gtk.Align.FILL)
+        grid.attach(entry, column, row, width, height)
+        return entry
 
-    def create_check_button(self, label, column, row, grid, width=1, height=1):
-        button = Gtk.CheckButton(label=label)
-        grid.attach(button, column, row, width, height)
-        return button
+    def create_checkbutton(
+        self, label, column, row, grid, padding=(0, 0, 0, 0), width=1, height=1
+    ):
+        check_button = Gtk.CheckButton(label=label)
+        self.set_padding(check_button, padding)
+        grid.attach(check_button, column, row, width, height)
+        return check_button
 
-    def create_switch(self, column, row, grid, width=1, height=1):
-        switch = Gtk.Switch()
-        grid.attach(switch, column, row, width, height)
-        return switch
+    def create_radiobuttons(
+        self,
+        name,
+        radiobuttons,
+        column,
+        row,
+        grid,
+        padding=(0, 0, 0, 0),
+        radio_padding=(0, 0, 0, 0),
+        font=("monospace", 11),
+    ):
+        self.create_label(name, column, row, grid, padding, font)
+        # Create the first checkbutton
+        row += 1
+        first_checkbutton = self.create_checkbutton(
+            radiobuttons[0]["text"], 0, row, grid, radio_padding
+        )
+        # Create the rest of the checkbuttons
+        row += 1
+        for item in radiobuttons[1:]:
+            text = item["text"]
+            check_button = self.create_checkbutton(text, 0, row, grid, radio_padding)
+            # TODO: Make them change a setting
+            # check_button.set_active(self.settings.get(setting, False))
+            # check_button.connect("toggled", self.option_changed, setting)
+            # Set the group of the new checkbox to the first checkbox
+            check_button.set_group(first_checkbutton)
+            row += 1
+
+    def create_toggle_switch(
+        self, label, column, row, grid, width=1, height=1, padding=(10, 0, 0, 0)
+    ):
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        toggle_switch = Gtk.Switch()
+        toggle_label = Gtk.Label(label=label)
+        box.append(toggle_switch)
+        box.append(toggle_label)
+        box.set_spacing(10)
+        self.set_padding(box, padding)
+        grid.attach(box, column, row, width, height)
+        return toggle_switch
+
+    def set_padding(self, widget, padding):
+        widget.set_margin_start(padding[0])
+        widget.set_margin_end(padding[1])
+        widget.set_margin_top(padding[2])
+        widget.set_margin_bottom(padding[3])
 
     def about_window(self, *_):
         dialog = Adw.AboutWindow(transient_for=app.get_active_window())
@@ -649,6 +745,7 @@ class ThorGUI(Adw.Application):
 
     def on_activate(self, app):
         self.win = MainWindow(application=app)
+        self.win.set_default_size(950, 400)
         self.win.present()
 
 
