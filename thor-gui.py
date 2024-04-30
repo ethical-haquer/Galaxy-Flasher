@@ -591,6 +591,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def send_cmd(self, cmd):
         self.vte_term.feed_child(cmd.encode("utf-8"))
 
+    """
     def open_file(self, partition):
         def file_dialog_callback(obj, result):
             try:
@@ -616,6 +617,33 @@ class MainWindow(Gtk.ApplicationWindow):
         filter_list.append(odin_filter)
         file_dialog.set_filters(filter_list)
         file_dialog.open(self, None, file_dialog_callback)
+        """
+
+    def open_file(self, partition):
+        def file_dialog_callback(dialog, response_id):
+            if response_id == Gtk.ResponseType.ACCEPT:
+                file = dialog.get_file()
+                if file:
+                    print(f"Selected file: {file.get_path()}")
+                    entry = getattr(self, f"{partition}_entry")
+                    entry.set_text(file.get_path())
+            dialog.destroy()
+
+        # Add to self to keep reference
+        # https://gitlab.gnome.org/GNOME/pygobject/-/issues/466
+        self.file_dialog = Gtk.FileChooserNative(
+            title=f"Select a {partition} file",
+            action=Gtk.FileChooserAction.OPEN,
+            transient_for=self,
+        )
+        odin_filter = Gtk.FileFilter()
+        odin_filter.set_name("ODIN files")
+        odin_filter.add_mime_type("application/x-tar")
+        odin_filter.add_pattern("*.tar.md5")
+        odin_filter.add_pattern("*.tar")
+        self.file_dialog.add_filter(odin_filter)
+        self.file_dialog.connect("response", file_dialog_callback)
+        self.file_dialog.show()
 
     def create_label(
         self,
