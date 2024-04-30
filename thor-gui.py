@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Thor GUI - A GUI for the Thor Flash Utility
 Copyright (C) 2023-2024 ethical_haquer
@@ -54,7 +55,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # Load settings
         self.load_settings()
         thor_path = f"{cwd}/Thor/{system}-x{arch}/TheAirBlow.Thor.Shell"
-        if self.settings["sudo"]:
+        if self.settings.get("sudo", False):
             thor_exec = ["sudo", thor_path]
         else:
             thor_exec = [thor_path]
@@ -605,7 +606,6 @@ class MainWindow(Gtk.ApplicationWindow):
                     pass
                 else:
                     print(f"Error: {e}")
-
         file_dialog = Gtk.FileDialog(title=f"Select a {partition} file")
         odin_filter = Gtk.FileFilter()
         odin_filter.set_name("ODIN files")
