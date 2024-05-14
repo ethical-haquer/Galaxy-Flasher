@@ -55,11 +55,17 @@ class MainWindow(Gtk.ApplicationWindow):
             self.strings = json.load(json_string)
         # Load settings
         self.load_settings()
-        thor_path = f"{cwd}/Thor/{system}-x{arch}/TheAirBlow.Thor.Shell"
-        if self.settings.get("sudo", False):
-            thor_exec = ["sudo", thor_path]
+        if self.settings["flash_tool"] == "thor":
+            flashtool_path = f"{cwd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
+        elif self.settings["flash_tool"] == "odin4":
+            flashtool_path = f"{cwd}/flash-tools/odin4/{system}/x{arch}/odin4"
+        elif self.settings["flash_tool"] == "pythor":
+            flashtool_path = f"{cwd}/flash-tools/pythor/{system}/pythor_cli"
+        # PyThor doesn't work with sudo (entered commands don't show up).
+        if self.settings.get("sudo", False) and self.settings["flash_tool"] == "thor":
+            flashtool_exec = ["sudo", flashtool_path]
         else:
-            thor_exec = [thor_path]
+            flashtool_exec = [flashtool_path]
         # Define main grid
         self.grid = Gtk.Grid()
         self.grid.set_column_spacing(10)
@@ -83,13 +89,13 @@ class MainWindow(Gtk.ApplicationWindow):
         self.grid.attach_next_to(
             self.stack, self.stack_switcher, Gtk.PositionType.BOTTOM, 1, 6
         )
-        # Check if Thor file exists
-        if not os.path.isfile(thor_path):
-            print(f"Error: File {thor_path} not found")
+        # Check if flash-tool executable exists
+        if not os.path.isfile(flashtool_path):
+            print(f"Error: File {flashtool_path} not found")
             self.realize_id = self.connect(
-                "show", lambda _: self.thor_file_not_found_dialog(thor_path)
+                "show", lambda _: self.flashtool_not_found_dialog(flashtool_path)
             )
-        # Create Thor output box
+        # Create flash-tool output box
         self.vte_term = Vte.Terminal()
         # Set terminal colors
         foreground = Gdk.RGBA()
@@ -100,7 +106,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.vte_term.spawn_async(
             Vte.PtyFlags.DEFAULT,  # Pty Flags
             cwd,  # Working DIR
-            thor_exec,  # Command/BIN (argv)
+            flashtool_exec,  # Command/BIN (argv)
             None,  # Environmental Variables (env)
             GLib.SpawnFlags.DEFAULT,  # Spawn Flags
             None,
@@ -215,7 +221,7 @@ class MainWindow(Gtk.ApplicationWindow):
         hamburger.set_popover(popover)
         hamburger.set_icon_name("open-menu-symbolic")
         header.pack_start(hamburger)
-        # Create the Option tab widgets
+        # Create the Option tab widgets.
         row = 0
         self.options = [
             {"option": "T Flash"},
@@ -230,7 +236,7 @@ class MainWindow(Gtk.ApplicationWindow):
             )
             check_button.connect("toggled", self.option_changed)
             row += 1
-        # Create place-holder label for Pit tab
+        # Create place-holder label for Pit tab.
         self.create_label(
             f"{self.strings['just_a_test']}\n\n{self.strings['pull_requests_welcome']}",
             0,
@@ -238,7 +244,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.pit_grid,
             (10, 0, 0, 0),
         )
-        # Create the Settings tab widgets
+        # Create the Settings tab widgets.
         row = 0
         self.options = [
             {"label": self.strings["run_thor_sudo"], "setting": "sudo"},
@@ -252,22 +258,22 @@ class MainWindow(Gtk.ApplicationWindow):
             active = toggle.get_active()
             self.settings[setting] = active
             row = row + 1
-        radiobuttons = [
-            {"text": "Thor"},
-            {"text": "Odin4"},
-            {"text": "PyThor"}
-        ]
+        radiobuttons = [{"text": "Thor"}, {"text": "Odin4"}, {"text": "PyThor"}]
         self.create_radiobuttons(
-            "Flash Tool:",
-            radiobuttons,
-            0,
-            row,
-            self.settings_grid,
-            (10, 0, 0, 0),
-            (16, 0, 0, 0),
+            name="Flash Tool:",
+            setting="flash_tool",
+            default_value="thor",
+            radiobuttons=radiobuttons,
+            column=0,
+            row=row,
+            grid=self.settings_grid,
+            padding=(10, 0, 0, 0),
+            radio_padding=(16, 0, 0, 0),
         )
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
+        # Print out the ASCII text "Galaxy Flasher", created with figlet.
+        # The triple back-slash "\\\" is needed to escape the double back-slash "\\".
         print(
             f"""
   ____       _                    _____ _           _
@@ -281,10 +287,10 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         )
 
-    def thor_file_not_found_dialog(self, thor_path):
+    def flashtool_not_found_dialog(self, flashtool_path):
         self.disconnect(self.realize_id)
         self.error_dialog(
-            self.strings["file_not_found2"].format(file=thor_path), "__init__"
+            self.strings["file_not_found2"].format(file=flashtool_path), "__init__"
         )
 
     def load_settings(self):
@@ -400,7 +406,7 @@ class MainWindow(Gtk.ApplicationWindow):
             "Successfully began an Odin session!": [
                 lambda: print("Successfully began an Odin session!"),
                 # NOTE: Why do we need to enable the start_odin_button here?
-                # It's supposed to be enabled above ^
+                # It's supposed to be enabled above ^.
                 lambda: self.set_widget_state(
                     self.start_odin_button, self.flash_button, state=True
                 ),
@@ -550,6 +556,17 @@ class MainWindow(Gtk.ApplicationWindow):
         print(f"{setting} set to: {self.settings[setting]}")
         self.save_settings()
 
+    def on_radiobutton_toggled(self, radiobutton, setting, value):
+        # The "toggled" signal emits from a radiobutton that's getting de-selected
+        # as well, so ignore signals coming from an inactive radiobutton.
+        if radiobutton.get_active():
+            self.set_setting(setting, value)
+
+    def set_setting(self, setting, value):
+        self.settings[setting] = value
+        print(f"{setting} set to: '{value}'")
+        self.save_settings()
+
     def error_dialog(self, message, function):
         dialog = Gtk.AlertDialog()
         dialog.set_modal(True)
@@ -674,6 +691,8 @@ class MainWindow(Gtk.ApplicationWindow):
     def create_radiobuttons(
         self,
         name,
+        setting,
+        default_value,
         radiobuttons,
         column,
         row,
@@ -682,23 +701,27 @@ class MainWindow(Gtk.ApplicationWindow):
         radio_padding=(0, 0, 0, 0),
         font=("monospace", 11),
     ):
+        current_value = self.settings.get(setting, default_value)
+        # Create the label
         self.create_label(name, column, row, grid, padding, font)
-        # Create the first checkbutton
-        row += 1
-        first_checkbutton = self.create_checkbutton(
-            radiobuttons[0]["text"], 0, row, grid, radio_padding
-        )
-        # Create the rest of the checkbuttons
-        row += 1
-        for item in radiobuttons[1:]:
+        # Create the radiobuttons
+        radiobutton_group = None
+        for i, item in enumerate(radiobuttons):
             text = item["text"]
-            check_button = self.create_checkbutton(text, 0, row, grid, radio_padding)
-            # TODO: Make them change a setting
-            # check_button.set_active(self.settings.get(setting, False))
-            # check_button.connect("toggled", self.option_changed, setting)
-            # Set the group of the new checkbox to the first checkbox
-            check_button.set_group(first_checkbutton)
-            row += 1
+            value = text.lower()
+            radiobutton = self.create_checkbutton(
+                text, 0, row + i + 1, grid, radio_padding
+            )
+            if current_value == value:
+                radiobutton.set_active(True)
+            if radiobutton_group is None:
+                radiobutton_group = radiobutton
+            else:
+                radiobutton.set_group(radiobutton_group)
+            handler = lambda widget, value=value: self.on_radiobutton_toggled(
+                widget, setting, value
+            )
+            radiobutton.connect("toggled", handler)
 
     def create_toggle_switch(
         self, label, column, row, grid, width=1, height=1, padding=(10, 0, 0, 0)
