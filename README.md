@@ -1,13 +1,13 @@
 
-# Thor GUI
+# Galaxy Flasher
 
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Github Releases](https://img.shields.io/github/downloads/ethical-haquer/Thor_GUI/total.svg?style=flat)](https://github.com/ethical-haquer/Thor_GUI/releases)
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Github Releases](https://img.shields.io/github/downloads/ethical-haquer/Galaxy-Flasher/total.svg?style=flat)](https://github.com/ethical-haquer/Galaxy-Flasher/releases)
 
 A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
   <img alt="Screenshot of Thor GUI">
 </picture>
 <details>
