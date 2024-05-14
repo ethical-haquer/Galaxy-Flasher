@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Thor GUI - A GUI for the Thor Flash Utility
+Galaxy Flasher - A GUI for Samsung Flash Tools
 Copyright (C) 2023-2024 ethical_haquer
 
 This program is free software: you can redistribute it and/or modify
@@ -65,7 +65,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.grid.set_row_spacing(10)
         self.set_child(self.grid)
         # Set window title
-        self.set_title(f"Thor GUI - {version}")
+        self.set_title(f"Galaxy Flasher - {version}")
         # Define stack to hold tabs
         self.stack = Gtk.Stack()
         self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
@@ -254,6 +254,7 @@ class MainWindow(Gtk.ApplicationWindow):
         radiobuttons = [
             {"text": "Thor"},
             {"text": "Odin4"},
+            {"text": "PyThor"}
         ]
         self.create_radiobuttons(
             "Flash Tool:",
@@ -268,13 +269,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.vte_term.connect("contents-changed", self.scan_output)
         print(
             f"""
-         _____ _                   ____ _   _ ___
-        |_   _| |__   ___  _ __   / ___| | | |_ _|
-          | | | '_ \ / _ \| '__| | |  _| | | || |
-          | | | | | | (_) | |    | |_| | |_| || |
-          |_| |_| |_|\___/|_|     \____|\___/|___|
+  ____       _                    _____ _           _
+ / ___| __ _| | __ ___  ___   _  |  ___| | __ _ ___| |__   ___ _ __ 
+| |  _ / _` | |/ _` \ \/ / | | | | |_  | |/ _` / __| '_ \ / _ \ '__|
+| |_| | (_| | | (_| |>  <| |_| | |  _| | | (_| \__ \ | | |  __/ |
+ \____|\__,_|_|\__,_/_/\_\\\__, | |_|   |_|\__,_|___/_| |_|\___|_|
+                          |___/
 
-                      {version}
+                          {version}
         """
         )
 
@@ -718,7 +720,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def about_window(self, *_):
         dialog = Adw.AboutWindow(transient_for=app.get_active_window())
-        dialog.set_application_name("Thor GUI")
+        dialog.set_application_name("Galaxy Flasher")
         dialog.set_version(version)
         dialog.set_developer_name("ethical_haquer")
         dialog.set_license_type(Gtk.License(Gtk.License.GPL_3_0))
@@ -738,7 +740,7 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.set_visible(True)
 
 
-class ThorGUI(Adw.Application):
+class GalaxyFlasher(Adw.Application):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.connect("activate", self.on_activate)
@@ -749,5 +751,5 @@ class ThorGUI(Adw.Application):
         self.win.present()
 
 
-app = ThorGUI(application_id="com.ethicalhaquer.thorgui")
+app = GalaxyFlasher(application_id="com.ethicalhaquer.galaxyflasher")
 app.run(sys.argv)
