@@ -3,7 +3,7 @@
 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Github Releases](https://img.shields.io/github/downloads/ethical-haquer/Galaxy-Flasher/total.svg?style=flat)](https://github.com/ethical-haquer/Galaxy-Flasher/releases)
 
-A GUI for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
+A GUI for Samsung Flash Tools.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
@@ -95,42 +95,18 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Thor GUI is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and possibly unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and possibly unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
-In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Thor GUI's:
+In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Galaxy Flasher's:
 
-Functional:
-+ Flashing Odin archives is currently broken. The code that handles this needs to be re-written.
-+ Currently, the only interactive Thor commands (ones that require user input, such as "flashFile") that can be used are "connect" and "flashTar". This doesn't affect non-interactive Thor commands that don't require input, such as "help", "begin odin", etc.
-
-Aesthetic:
-+ The output from interactive commands (ones that require user input, such as flashTar, connect, etc.) is echoed. So if Thor outputs interactive text, it will be displayed two times. Also, when Thor GUI sends Thor keypresses to select things and such, Thor will send the new output, also echoed. Like when a "[ ]" changes to a "[X]", that whole section of output will be displayed again.
 
 ## Supported platforms
 
 - [x] Linux (x64 and arm64)
 - [ ] Windows
 - [ ] macOS
-
-## Implemented Thor features
-
-- [x] Connecting/Disconnecting devices
-- [x] Starting/Stopping an Odin session
-- [x] Setting options
-- [x] Typing and sending Thor a command
-- [ ] Flashing Odin archives
-- [ ] Flashing a single partition
-- [ ] Printing a description of a device's partition table
-- [ ] Dumping a device's partition table into a PIT file
-- [ ] Printing a description of any PIT file
-
-## To-Do
-
-+ Add Windows and macOS support
-+ Improve documentation
-+ Automate updating screenshots and screen-recordings (for this README)
 
 ## Prerequisites
 
