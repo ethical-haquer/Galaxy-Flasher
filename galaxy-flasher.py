@@ -50,6 +50,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.last_text = ""
         super().__init__(*args, **kwargs)
         # Load strings
+        # TODO: Remove unneeded strings from en.json
         with open(locale_file) as json_string:
             self.strings = json.load(json_string)
         # Load settings
@@ -117,7 +118,7 @@ class MainWindow(Gtk.ApplicationWindow):
         scrolled_window.set_halign(Gtk.Align.FILL)
         scrolled_window.set_valign(Gtk.Align.FILL)
         self.stack.add_titled(scrolled_window, "Log", "Log")
-        # Creates other tabs
+        # Create other tabs
         for tab in ["Options", "Pit", "Settings"]:
             grid = Gtk.Grid()
             grid.set_column_spacing(10)
@@ -214,7 +215,7 @@ class MainWindow(Gtk.ApplicationWindow):
         hamburger.set_popover(popover)
         hamburger.set_icon_name("open-menu-symbolic")
         header.pack_start(hamburger)
-        # Create the option tab widgets
+        # Create the Option tab widgets
         row = 0
         self.options = [
             {"option": "T Flash"},
@@ -237,7 +238,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.pit_grid,
             (10, 0, 0, 0),
         )
-        # Create the settings tab widgets
+        # Create the Settings tab widgets
         row = 0
         self.options = [
             {"label": self.strings["run_thor_sudo"], "setting": "sudo"},
@@ -735,8 +736,8 @@ class MainWindow(Gtk.ApplicationWindow):
             dialog.add_credit_section(
                 name, [f"Github Profile https://github.com/{github_profile}"]
             )
-        dialog.set_website("https://github.com/ethical-haquer/Thor_GUI")
-        dialog.set_issue_url("https://github.com/ethical-haquer/Thor_GUI/issues")
+        dialog.set_website("https://github.com/ethical-haquer/Galaxy-Flasher")
+        dialog.set_issue_url("https://github.com/ethical-haquer/Galaxy-Flasher/issues")
         dialog.set_visible(True)
 
 

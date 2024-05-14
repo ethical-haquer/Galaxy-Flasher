@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Thor GUI
+Name=Galaxy Flasher
 Exec=/app/bin/entry
 Terminal=false
 Categories=Utility;Application;

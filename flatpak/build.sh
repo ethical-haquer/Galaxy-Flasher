@@ -7,5 +7,5 @@ fi
 mkdir include
 cp -r ../Thor ../locales include
 # Build it.
-flatpak-builder --user --install --force-clean build com.ethicalhaquer.thorgui.yml
+flatpak-builder --user --install --force-clean build com.ethicalhaquer.galaxyflasher.yml
 rm -r include
