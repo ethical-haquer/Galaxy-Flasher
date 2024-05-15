@@ -55,13 +55,17 @@ class MainWindow(Gtk.ApplicationWindow):
             self.strings = json.load(json_string)
         # Load settings
         self.load_settings()
-        if self.settings["flash_tool"] == "thor":
-            flashtool_path = f"{cwd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
-        elif self.settings["flash_tool"] == "odin4":
-            flashtool_path = f"{cwd}/flash-tools/odin4/{system}/x{arch}/odin4"
-        elif self.settings["flash_tool"] == "pythor":
+        # Set the flash-tool path
+        self.flashtool = self.settings["flash_tool"]
+        if self.flashtool == "thor":
+            flashtool_path = (
+                f"{cwd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
+            )
+        elif self.flashtool == "odin4":
+            flashtool_path = f"{cwd}/odin-wrapper.sh"
+        elif self.flashtool == "pythor":
             flashtool_path = f"{cwd}/flash-tools/pythor/{system}/pythor_cli"
-        # PyThor doesn't work with sudo (entered commands don't show up).
+        # Only use the sudo setting for Thor.
         if self.settings.get("sudo", False) and self.settings["flash_tool"] == "thor":
             flashtool_exec = ["sudo", flashtool_path]
         else:
@@ -146,6 +150,9 @@ class MainWindow(Gtk.ApplicationWindow):
             entry = self.create_entry(2, row, self.grid, entry_padding, 2, 1, True)
             setattr(self, f"{slot}_button", button)
             setattr(self, f"{slot}_entry", entry)
+            if self.flashtool == "pythor":
+                button.set_sensitive(False)
+                entry.set_sensitive(False)
             row += 1
         # Create command entry
         self.command_entry = self.create_entry(
@@ -160,23 +167,60 @@ class MainWindow(Gtk.ApplicationWindow):
             "activate", lambda _, __: self.on_command_enter(), None
         )
         # Create connect, start_odin, and flash buttons
-        buttons = [
-            {
-                "name": "connect_button",
-                "text": self.strings["connect"],
-                "command": lambda _: self.send_cmd("connect\n"),
-            },
-            {
-                "name": "start_odin_button",
-                "text": self.strings["start_odin_protocol"],
-                "command": lambda _: self.start_odin(),
-            },
-            {
-                "name": "flash_button",
-                "text": "Flash!",
-                "command": lambda _: self.flash(),
-            },
-        ]
+        if self.flashtool == "thor":
+            buttons = [
+                {
+                    "name": "connect_button",
+                    "text": self.strings["connect"],
+                    "command": lambda _: self.connect(),
+                },
+                {
+                    "name": "start_odin_button",
+                    "text": self.strings["start_odin_protocol"],
+                    "command": lambda _: self.start_odin_session(),
+                },
+                {
+                    "name": "flash_button",
+                    "text": "Flash!",
+                    "command": lambda _: self.flash(),
+                },
+            ]
+        elif self.flashtool == "pythor":
+            buttons = [
+                {
+                    "name": "help_button",
+                    "text": "Help",
+                    "command": lambda _: self.send_cmd("help\n"),
+                },
+                {
+                    "name": "connect_button",
+                    "text": "Connect",
+                    "command": lambda _: self.connect(),
+                },
+                {
+                    "name": "start_odin_button",
+                    "text": "Start Session",
+                    "command": lambda _: self.start_odin_session(),
+                },
+            ]
+        elif self.flashtool == "odin4":
+            buttons = [
+                {
+                    "name": "connect_button",
+                    "text": self.strings["connect"],
+                    "command": lambda _: self.connect(),
+                },
+                {
+                    "name": "start_odin_button",
+                    "text": self.strings["start_odin_protocol"],
+                    "command": lambda _: self.start_odin_session(),
+                },
+                {
+                    "name": "flash_button",
+                    "text": "Flash!",
+                    "command": lambda _: self.flash(),
+                },
+            ]
         column = 1
         padding = (0, 0, 10, 0)
         for btn in buttons:
@@ -195,9 +239,17 @@ class MainWindow(Gtk.ApplicationWindow):
             )
             setattr(self, name, button)
             column += 1
-        self.set_widget_state(
-            self.connect_button, self.start_odin_button, self.flash_button, state=False
-        )
+        if self.flashtool == "thor":
+            self.set_widget_state(
+                self.connect_button,
+                self.start_odin_button,
+                self.flash_button,
+                state=False,
+            )
+        elif self.flashtool == "pythor":
+            self.set_widget_state(
+                self.connect_button, state=False
+            )
         # Setup header
         header = Gtk.HeaderBar()
         self.set_titlebar(header)
@@ -223,19 +275,28 @@ class MainWindow(Gtk.ApplicationWindow):
         header.pack_start(hamburger)
         # Create the Option tab widgets.
         row = 0
-        self.options = [
-            {"option": "T Flash"},
-            {"option": "EFS Clear"},
-            {"option": "Bootloader Update"},
-            {"option": "Reset Flash Count"},
-        ]
-        for item in self.options:
-            option = item["option"]
-            check_button = self.create_checkbutton(
-                option, 0, row, self.options_grid, (6, 0, 0, 0)
-            )
-            check_button.connect("toggled", self.option_changed)
-            row += 1
+        if self.flashtool == "thor":
+            self.options = [
+                {"option": "T Flash"},
+                {"option": "EFS Clear"},
+                {"option": "Bootloader Update"},
+                {"option": "Reset Flash Count"},
+            ]
+            for item in self.options:
+                option = item["option"]
+                check_button = self.create_checkbutton(
+                    option, 0, row, self.options_grid, (6, 0, 0, 0)
+                )
+                check_button.connect("toggled", self.option_changed)
+                row += 1
+        elif self.flashtool == "pythor":
+            self.create_label(
+            "Currently, PyThor has no options.",
+            0,
+            0,
+            self.options_grid,
+            (10, 0, 0, 0),
+        )
         # Create place-holder label for Pit tab.
         self.create_label(
             f"{self.strings['just_a_test']}\n\n{self.strings['pull_requests_welcome']}",
@@ -246,18 +307,6 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         # Create the Settings tab widgets.
         row = 0
-        self.options = [
-            {"label": self.strings["run_thor_sudo"], "setting": "sudo"},
-        ]
-        for item in self.options:
-            text = item["label"]
-            setting = item["setting"]
-            toggle = self.create_toggle_switch(text, 0, row, self.settings_grid)
-            toggle.set_active(self.settings.get(setting, False))
-            toggle.connect("state-set", self.toggle_changed, setting)
-            active = toggle.get_active()
-            self.settings[setting] = active
-            row = row + 1
         radiobuttons = [{"text": "Thor"}, {"text": "Odin4"}, {"text": "PyThor"}]
         self.create_radiobuttons(
             name="Flash Tool:",
@@ -270,6 +319,18 @@ class MainWindow(Gtk.ApplicationWindow):
             padding=(10, 0, 0, 0),
             radio_padding=(16, 0, 0, 0),
         )
+        row = row + len(radiobuttons) + 1
+        self.options = [
+            {"label": self.strings["run_thor_sudo"], "setting": "sudo"},
+        ]
+        for item in self.options:
+            text = item["label"]
+            setting = item["setting"]
+            toggle = self.create_toggle_switch(text, 0, row, self.settings_grid)
+            toggle.set_active(self.settings.get(setting, False))
+            toggle.connect("state-set", self.toggle_changed, setting)
+            active = toggle.get_active()
+            self.settings[setting] = active
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
@@ -379,60 +440,72 @@ class MainWindow(Gtk.ApplicationWindow):
         return window, grid
 
     def scan_output(self, vte):
-        strings_to_commands = {
-            "[sudo] password for": [
-                lambda: self.set_password_entry(self.command_entry, True)
-            ],
-            "Welcome to Thor Shell": [
-                lambda: self.set_password_entry(self.command_entry, False),
-                lambda: self.set_widget_state(self.connect_button, state=True),
-            ],
-            "Successfully connected to the device!": [
-                lambda: print("Successfully connected to the device!"),
-                lambda: self.set_widget_state(self.start_odin_button, state=True),
-                lambda: self.connect_button.set_label("Disconnect"),
-                lambda: self.change_button_command(
-                    self.connect_button, lambda _: self.send_cmd("disconnect\n")
-                ),
-            ],
-            "Successfully disconnected the device!": [
-                lambda: print("Successfully disconnected the device!"),
-                lambda: self.set_widget_state(self.start_odin_button, state=False),
-                lambda: self.connect_button.set_label("Connect"),
-                lambda: self.change_button_command(
-                    self.connect_button, lambda _: self.send_cmd("connect\n")
-                ),
-            ],
-            "Successfully began an Odin session!": [
-                lambda: print("Successfully began an Odin session!"),
-                # NOTE: Why do we need to enable the start_odin_button here?
-                # It's supposed to be enabled above ^.
-                lambda: self.set_widget_state(
-                    self.start_odin_button, self.flash_button, state=True
-                ),
-                lambda: self.start_odin_button.set_label("End Odin Session"),
-                lambda: self.change_button_command(
-                    self.start_odin_button, lambda _: self.end_odin()
-                ),
-            ],
-            "Successfully ended an Odin session!": [
-                lambda: print("Successfully ended an Odin session!"),
-                lambda: self.set_widget_state(self.flash_button, state=False),
-                lambda: self.start_odin_button.set_label("Start Odin Session"),
-                lambda: self.change_button_command(
-                    self.start_odin_button, lambda _: self.start_odin()
-                ),
-                # We disable it because with Thor:
-                # "You can't reuse the same USB connection after you close an
-                # Odin session, and you can't re-connect the device.
-                # You have to reboot each time."
-                lambda: self.set_widget_state(self.start_odin_button, state=False),
-            ],
-            "Are you absolutely sure you want to flash those?": [
-                lambda: self.verify_flash()
-            ],
-            "Choose a device to connect to:": [lambda: self.select_device(term_text)],
-        }
+        if self.flashtool == "thor":
+            strings_to_commands = {
+                "[sudo] password for": [
+                    lambda: self.set_password_entry(self.command_entry, True)
+                ],
+                "Welcome to Thor Shell": [
+                    lambda: self.set_password_entry(self.command_entry, False),
+                    lambda: self.set_widget_state(self.connect_button, state=True),
+                ],
+                "Successfully connected to the device!": [
+                    lambda: print("Successfully connected to the device!"),
+                    lambda: self.set_widget_state(self.start_odin_button, state=True),
+                    lambda: self.connect_button.set_label("Disconnect"),
+                    lambda: self.change_button_command(
+                        self.connect_button, lambda _: self.send_cmd("disconnect\n")
+                    ),
+                ],
+                "Successfully disconnected the device!": [
+                    lambda: print("Successfully disconnected the device!"),
+                    lambda: self.set_widget_state(self.start_odin_button, state=False),
+                    lambda: self.connect_button.set_label("Connect"),
+                    lambda: self.change_button_command(
+                        self.connect_button, lambda _: self.send_cmd("connect\n")
+                    ),
+                ],
+                "Successfully began an Odin session!": [
+                    lambda: print("Successfully began an Odin session!"),
+                    # NOTE: Why do we need to enable the start_odin_button here?
+                    # It's supposed to be enabled above ^.
+                    lambda: self.set_widget_state(
+                        self.start_odin_button, self.flash_button, state=True
+                    ),
+                    lambda: self.start_odin_button.set_label("End Odin Session"),
+                    lambda: self.change_button_command(
+                        self.start_odin_button, lambda _: self.end_odin()
+                    ),
+                ],
+                "Successfully ended an Odin session!": [
+                    lambda: print("Successfully ended an Odin session!"),
+                    lambda: self.set_widget_state(self.flash_button, state=False),
+                    lambda: self.start_odin_button.set_label("Start Odin Session"),
+                    lambda: self.change_button_command(
+                        self.start_odin_button, lambda _: self.start_odin_session()
+                    ),
+                    # We disable it because with Thor:
+                    # "You can't reuse the same USB connection after you close an
+                    # Odin session, and you can't re-connect the device.
+                    # You have to reboot each time."
+                    lambda: self.set_widget_state(self.start_odin_button, state=False),
+                ],
+                "Are you absolutely sure you want to flash those?": [
+                    lambda: self.verify_flash()
+                ],
+                "Choose a device to connect to:": [
+                    lambda: self.select_device(term_text)
+                ],
+            }
+        elif self.flashtool == "pythor":
+            strings_to_commands = {
+                ">>": [lambda: self.set_widget_state(self.connect_button, state=True)]
+            }
+        elif self.flashtool == "odin4":
+            strings_to_commands = {
+                ">>": [lambda: self.set_widget_state(self.connect_button, state=True)]
+            }
+
         term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
         if term_text.strip().rsplit("shell>")[-1].strip() == "":
             try:
@@ -575,8 +648,14 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.set_buttons(["OK"])
         dialog.show(self)
 
-    def start_odin(self):
-        self.send_cmd("begin odin\n")
+    def connect(self):
+        self.send_cmd("connect\n")
+
+    def start_odin_session(self):
+        if self.flashtool == "thor":
+            self.send_cmd("begin odin\n")
+        elif self.flashtool == "pythor":
+            self.send_cmd("begin\n")
 
     def end_odin(self):
         self.send_cmd("end\n")
@@ -626,6 +705,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     pass
                 else:
                     print(f"Error: {e}")
+
         file_dialog = Gtk.FileDialog(title=f"Select a {partition} file")
         odin_filter = Gtk.FileFilter()
         odin_filter.set_name("ODIN files")
