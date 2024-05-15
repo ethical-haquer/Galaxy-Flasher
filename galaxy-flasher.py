@@ -56,7 +56,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # Load settings
         self.load_settings()
         # Set the flash-tool path
-        self.flashtool = self.settings["flash_tool"]
+        self.flashtool = self.settings.get("flash_tool") or "thor"
         if self.flashtool == "thor":
             flashtool_path = (
                 f"{cwd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
@@ -172,7 +172,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "connect_button",
                     "text": self.strings["connect"],
-                    "command": lambda _: self.connect(),
+                    "command": lambda _: self.connect_device(),
                 },
                 {
                     "name": "start_odin_button",
@@ -195,7 +195,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "connect_button",
                     "text": "Connect",
-                    "command": lambda _: self.connect(),
+                    "command": lambda _: self.connect_device(),
                 },
                 {
                     "name": "start_odin_button",
@@ -208,7 +208,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "connect_button",
                     "text": self.strings["connect"],
-                    "command": lambda _: self.connect(),
+                    "command": lambda _: self.connect_device(),
                 },
                 {
                     "name": "start_odin_button",
@@ -648,7 +648,7 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.set_buttons(["OK"])
         dialog.show(self)
 
-    def connect(self):
+    def connect_device(self):
         self.send_cmd("connect\n")
 
     def start_odin_session(self):
