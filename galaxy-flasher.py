@@ -62,7 +62,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 f"{cwd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
             )
         elif self.flashtool == "odin4":
-            flashtool_path = f"{cwd}/odin-wrapper.sh"
+            flashtool_path = f"{cwd}/odin4-wrapper.sh"
         elif self.flashtool == "pythor":
             flashtool_path = f"{cwd}/flash-tools/pythor/{system}/pythor_cli"
         # Only use the sudo setting for Thor.
