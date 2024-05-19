@@ -1,11 +1,23 @@
 #!/bin/bash
 
-# An interactive wrapper for Odin4, made for Galaxy Flasher.
-# Eventually it may be it's own project.
-# Odin4 Wrapper is a terrible name, any ideas?
+# Interactive Odin4 - An interactive wrapper for Odin4
+# Copyright (C) 2023-2024 ethical_haquer
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Aside from the prompt (">> ") and entered commands,
-# anything white is output coming from odin4.
+# anything not colored is output coming from Odin4.
 
 BASEDIR=$(dirname $0)
 
@@ -30,7 +42,7 @@ flash_help() {
     echo -e "${cyan}    -V             Validate home binary with pit file${end}"
 }
 
-echo -e "${green}Welcome to Odin4 Wrapper!${end}"
+echo -e "${green}Welcome to Interactive Odin4!${end}"
 echo -e "${green}Type \"help\" to view available commands.${end}"
 
 while IFS=""; read -r -e -d $'\n' -p '>> ' cmd; do 
@@ -50,7 +62,6 @@ while IFS=""; read -r -e -d $'\n' -p '>> ' cmd; do
             flash_help
             ;;
         version)
-            echo -e "${green}Odin4 Wrapper Version 0.0.0${end}"
             $odin4_exec -v
             ;;
         license)
@@ -74,7 +85,7 @@ while IFS=""; read -r -e -d $'\n' -p '>> ' cmd; do
             elif [ "$flash_cmd" = "help" ]; then
                 flash_help
             else
-                $odin4_exec $flash_cmd
+                eval "$odin4_exec $flash_cmd"
             fi
             ;;
         *)            

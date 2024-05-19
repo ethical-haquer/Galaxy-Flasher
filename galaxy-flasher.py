@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 Galaxy Flasher - A GUI for Samsung Flash Tools
 Copyright (C) 2023-2024 ethical_haquer
@@ -247,9 +248,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 state=False,
             )
         elif self.flashtool == "pythor":
-            self.set_widget_state(
-                self.connect_button, state=False
-            )
+            self.set_widget_state(self.connect_button, state=False)
         # Setup header
         header = Gtk.HeaderBar()
         self.set_titlebar(header)
@@ -291,12 +290,12 @@ class MainWindow(Gtk.ApplicationWindow):
                 row += 1
         elif self.flashtool == "pythor":
             self.create_label(
-            "Currently, PyThor has no options.",
-            0,
-            0,
-            self.options_grid,
-            (10, 0, 0, 0),
-        )
+                "Currently, PyThor has no options.",
+                0,
+                0,
+                self.options_grid,
+                (10, 0, 0, 0),
+            )
         # Create place-holder label for Pit tab.
         self.create_label(
             f"{self.strings['just_a_test']}\n\n{self.strings['pull_requests_welcome']}",
