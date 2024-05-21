@@ -26,6 +26,7 @@ import sys
 import tarfile
 
 import gi
+import xdg
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -39,7 +40,12 @@ seperator = "_"
 lang = locale.split(seperator, 1)[0]
 
 version = "Alpha v0.5.0"
-settings_file = "settings.json"
+config_dir = xdg.XDG_CONFIG_HOME
+app_dir = "galaxy-flasher"
+app_config_dir = os.path.join(config_dir, app_dir)
+if not os.path.exists(app_config_dir):
+    os.makedirs(app_config_dir)
+settings_file = os.path.join(app_config_dir, "settings.json")
 locale_file = f"locales/{lang}.json"
 cwd = os.getcwd()
 arch = platform.architecture()[0][:2]
@@ -207,14 +213,14 @@ class MainWindow(Gtk.ApplicationWindow):
         elif self.flashtool == "odin4":
             buttons = [
                 {
-                    "name": "connect_button",
-                    "text": self.strings["connect"],
-                    "command": lambda _: self.connect_device(),
+                    "name": "help_button",
+                    "text": "Help",
+                    "command": lambda _: self.send_cmd("help\n"),
                 },
                 {
-                    "name": "start_odin_button",
-                    "text": self.strings["start_odin_protocol"],
-                    "command": lambda _: self.start_odin_session(),
+                    "name": "list_button",
+                    "text": "List Devices",
+                    "command": lambda _: self.send_cmd("list\n"),
                 },
                 {
                     "name": "flash_button",
@@ -246,6 +252,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.start_odin_button,
                 self.flash_button,
                 state=False,
+            )
+        elif self.flashtool == "odin4":
+            self.set_widget_state(
+                self.help_button, self.list_button, self.flash_button, state=False
             )
         elif self.flashtool == "pythor":
             self.set_widget_state(self.connect_button, state=False)
@@ -306,7 +316,11 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         # Create the Settings tab widgets.
         row = 0
-        radiobuttons = [{"text": "Thor"}, {"text": "Odin4"}, {"text": "PyThor"}]
+        radiobuttons = [
+            {"text": "Thor", "value": "thor"},
+            {"text": "Odin4", "value": "odin4"},
+            {"text": "PyThor (in development)", "value": "pythor"},
+        ]
         self.create_radiobuttons(
             name="Flash Tool:",
             setting="flash_tool",
@@ -364,58 +378,63 @@ class MainWindow(Gtk.ApplicationWindow):
             json.dump(self.settings, file)
 
     def flash(self):
-        def toggled_callback(button):
-            if button.get_active():
-                self.selected_buttons[btn_array[button] - 1][0] = True
-            else:
-                self.selected_buttons[btn_array[button] - 1][0] = False
+        if self.flashtool == "thor":
 
-        file_names = []
-        self.selected_buttons = []
-        btn_array = {}
-        window, grid = self.dialog("Select Partitions")
-        self.create_label("Select the partitions to flash", 0, 0, grid)
-        row = 1
-        paths = {}
-        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
-            entry = getattr(self, f"{slot}_entry")
-            if entry.get_text():
-                print(f"Flashing {entry.get_text()} to {slot}")
-                paths[slot] = os.path.dirname(entry.get_text())
-        if len(paths) == 0:
-            print(self.strings["no_files_selected2"])
-            self.error_dialog(self.strings["no_files_selected2"], "flash")
-        elif len(set(paths.values())) > 1:
-            print("The files NEED to be in the same dir...")
-            self.error_dialog(self.strings["invalid_files"], "flash")
-        else:
-            base_dir = list(paths.values())[0]
-            self.send_cmd(f"flashTar {base_dir}\n")
-            for file_path in os.listdir(base_dir):
-                print(f"file_path is: {file_path}")
-                if file_path.endswith(".md5") or file_path.endswith(".tar"):
-                    file_path = os.path.join(base_dir, file_path)
-                    with tarfile.open(file_path) as tar_file:
-                        for member in tar_file.getmembers():
-                            self.selected_buttons.append([False, file_path])
-                            split = member.name.split(".")
-                            # Skip Pit file
-                            if split[1] != "pit":
-                                name = split[0].upper()
-                                file_names.append(name)
-                                btn = self.create_checkbutton(name, 0, row, grid)
-                                btn.connect("toggled", toggled_callback)
-                                btn_array[btn] = row
-                                row += 1
-            self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
-            self.create_button(
-                "OK",
-                2,
-                row,
-                grid,
-                lambda _: (self.send_selected_partitions(), window.destroy()),
-            )
-            window.present()
+            def toggled_callback(button):
+                if button.get_active():
+                    self.selected_buttons[btn_array[button] - 1][0] = True
+                else:
+                    self.selected_buttons[btn_array[button] - 1][0] = False
+
+            file_names = []
+            self.selected_buttons = []
+            btn_array = {}
+            window, grid = self.dialog("Select Partitions")
+            self.create_label("Select the partitions to flash", 0, 0, grid)
+            row = 1
+            paths = {}
+            for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
+                entry = getattr(self, f"{slot}_entry")
+                if entry.get_text():
+                    print(f"Flashing {entry.get_text()} to {slot}")
+                    paths[slot] = os.path.dirname(entry.get_text())
+            if len(paths) == 0:
+                print(self.strings["no_files_selected2"])
+                self.error_dialog(self.strings["no_files_selected2"], "flash")
+            elif len(set(paths.values())) > 1:
+                print("The files NEED to be in the same dir...")
+                self.error_dialog(self.strings["invalid_files"], "flash")
+            else:
+                base_dir = list(paths.values())[0]
+                self.send_cmd(f"flashTar {base_dir}\n")
+                for file_path in os.listdir(base_dir):
+                    print(f"file_path is: {file_path}")
+                    if file_path.endswith(".md5") or file_path.endswith(".tar"):
+                        file_path = os.path.join(base_dir, file_path)
+                        with tarfile.open(file_path) as tar_file:
+                            for member in tar_file.getmembers():
+                                self.selected_buttons.append([False, file_path])
+                                split = member.name.split(".")
+                                # Skip Pit file
+                                if split[1] != "pit":
+                                    name = split[0].upper()
+                                    file_names.append(name)
+                                    btn = self.create_checkbutton(name, 0, row, grid)
+                                    btn.connect("toggled", toggled_callback)
+                                    btn_array[btn] = row
+                                    row += 1
+                self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
+                self.create_button(
+                    "OK",
+                    2,
+                    row,
+                    grid,
+                    lambda _: (self.send_selected_partitions(), window.destroy()),
+                )
+                window.present()
+        elif self.flashtool == "odin4":
+            # TODO: Add flash support for Odin4
+            pass
 
     def send_selected_partitions(self):
         last_file = ""
@@ -496,11 +515,18 @@ class MainWindow(Gtk.ApplicationWindow):
                     lambda: self.select_device(term_text)
                 ],
             }
-        elif self.flashtool == "pythor":
-            strings_to_commands = {
-                ">>": [lambda: self.set_widget_state(self.connect_button, state=True)]
-            }
         elif self.flashtool == "odin4":
+            strings_to_commands = {
+                "Welcome to Interactive Odin4!": [
+                    lambda: self.set_widget_state(
+                        self.help_button,
+                        self.list_button,
+                        self.flash_button,
+                        state=True,
+                    )
+                ]
+            }
+        elif self.flashtool == "pythor":
             strings_to_commands = {
                 ">>": [lambda: self.set_widget_state(self.connect_button, state=True)]
             }
@@ -787,7 +813,7 @@ class MainWindow(Gtk.ApplicationWindow):
         radiobutton_group = None
         for i, item in enumerate(radiobuttons):
             text = item["text"]
-            value = text.lower()
+            value = item["value"]
             radiobutton = self.create_checkbutton(
                 text, 0, row + i + 1, grid, radio_padding
             )

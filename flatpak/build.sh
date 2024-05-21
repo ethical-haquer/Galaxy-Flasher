@@ -5,7 +5,7 @@ if ! command -v flatpak-builder &> /dev/null; then
 fi
 # Create includes dir
 mkdir include
-cp -r ../flash-tools ../locales include
+cp -r ../flash-tools ../locales ../odin4-wrapper.sh include
 # Build it.
 flatpak-builder --user --install --force-clean build com.ethicalhaquer.galaxyflasher.yml
 rm -r include
