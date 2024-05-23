@@ -298,6 +298,14 @@ class MainWindow(Gtk.ApplicationWindow):
                 )
                 check_button.connect("toggled", self.option_changed)
                 row += 1
+        elif self.flashtool == "odin4":
+            self.create_label(
+                "TODO: Add an option for specifying a device (with the \"-d\" arg)",
+                0,
+                0,
+                self.options_grid,
+                (10, 0, 0, 0),
+            )
         elif self.flashtool == "pythor":
             self.create_label(
                 "Currently, PyThor has no options.",
@@ -432,9 +440,20 @@ class MainWindow(Gtk.ApplicationWindow):
                     lambda _: (self.send_selected_partitions(), window.destroy()),
                 )
                 window.present()
+
         elif self.flashtool == "odin4":
-            # TODO: Add flash support for Odin4
-            pass
+            # TODO: Add an option for specifying a device with "-d".
+            files = []
+            for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
+                slot_to_arg = {"BL": "-b", "AP": "-a", "CP": "-c", "CSC": "-s", "USERDATA": "-u"}
+                entry = getattr(self, f"{slot}_entry")
+                file = entry.get_text()
+                if file:
+                    arg = slot_to_arg[slot]
+                    file_arg = f"{arg} {file}"
+                    files.append(file_arg)
+            print("Running: " + " ".join(["flash"] + files))
+            self.send_cmd(" ".join(["flash"] + files) + "\n")
 
     def send_selected_partitions(self):
         last_file = ""

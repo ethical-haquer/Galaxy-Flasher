@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Interactive Odin4 - An interactive wrapper for Odin4
-# Copyright (C) 2023-2024 ethical_haquer
+# Copyright (C) 2024 ethical_haquer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
