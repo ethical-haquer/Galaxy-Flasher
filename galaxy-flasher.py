@@ -27,7 +27,6 @@ import tarfile
 import time
 
 import gi
-import xdg
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -41,7 +40,7 @@ seperator = "_"
 lang = locale.split(seperator, 1)[0]
 
 version = "Alpha v0.5.0"
-config_dir = xdg.XDG_CONFIG_HOME
+config_dir = GLib.get_user_config_dir()
 app_dir = "galaxy-flasher"
 app_config_dir = os.path.join(config_dir, app_dir)
 if not os.path.exists(app_config_dir):
@@ -183,7 +182,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "connect_button",
                     "text": self.strings["connect"],
-                    "command": lambda _: self.select_device(),
+                    "command": lambda _: self.thor_select_device(),
                 },
                 {
                     "name": "start_odin_button",
@@ -588,94 +587,6 @@ class MainWindow(Gtk.ApplicationWindow):
                         command()
 
             self.last_text = term_text
-    # TODO: Don't ask if there's only one device.
-    def select_device(self):
-        def set_selected_device(btn, row):
-            if btn.get_active:
-                self.device_index = row
-
-        self.devices = self.get_command_output(
-            "connect", "Choose a device to connect to:", "Cancel operation"
-        )
-        if not self.devices or self.devices == "Timeout":
-            print("No devices were found!")
-            return
-        else:
-            self.devices = self.devices.split("\n")
-
-        window, grid = self.dialog(self.strings["connect_device"])
-        self.create_label(self.strings["choose_a_device"], 0, 0, grid)
-        group = None
-        row = 1
-        for index, item in enumerate(self.devices):
-            checkbutton = self.create_checkbutton(item.strip(), 0, row, grid)
-            if index == 0:
-                group = checkbutton
-            else:
-                checkbutton.set_group(group)
-            checkbutton.connect("toggled", set_selected_device, row)
-            row = row + 1
-        self.create_button(
-            "Cancel",
-            1,
-            row,
-            grid,
-            lambda _: (self.send_selected_device(cancel=True), window.destroy()),
-        )
-        self.create_button(
-            "OK",
-            2,
-            row,
-            grid,
-            lambda _: (self.send_selected_device(), window.destroy()),
-        )
-        window.present()
-
-    def send_selected_device(self, cancel=False):
-        if cancel:
-            times = len(self.devices)
-        else:
-            times = self.device_index - 1
-        for _ in range(times):
-            self.send_cmd("\x1b[B", False)
-        self.send_cmd("\n", False)
-
-    def verify_flash(self):
-        window, grid = self.dialog(self.strings["verify_flash"])
-        self.create_label(self.strings["are_you_sure"], 0, 0, grid)
-        buttons = [
-            {
-                "text": self.strings["yes"],
-                "command": lambda _: (self.send_cmd("y"), window.destroy()),
-            },
-            {
-                "text": self.strings["no"],
-                "command": lambda _: (self.send_cmd("n"), window.destroy()),
-            },
-        ]
-        column = 1
-        for btn in buttons:
-            self.create_button(btn["text"], column, 1, grid, btn["command"])
-            column += 1
-        window.present()
-
-    def option_changed(self, button):
-        if self.flashtool == "thor":
-            convert = {
-                "t_flash": "tflash",
-                "efs_clear": "efsclear",
-                "reset_flash_count": "resetfc",
-                "bootloader_update": "blupdate",
-            }
-
-            option = button.get_label().lower().replace(" ", "_")
-            value = button.get_active()
-
-            print(f"{option}: {value}")
-            setattr(self, option, value)
-
-            option = convert[option]
-            self.send_cmd(f"options {option} {value}")
 
     def remove_blank_lines(self, string):
         lines = string.splitlines()
@@ -683,11 +594,9 @@ class MainWindow(Gtk.ApplicationWindow):
         new_string = "\n".join(filtered_lines)
         return new_string
 
-    def check_command_output(self, vte_term, command, result, start, end, timeout):
+    def check_output(self, vte, command, result, start, end, timeout):
         # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
-        old_output = vte_term.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[
-            0
-        ]
+        old_output = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
         old_output = self.remove_blank_lines(old_output)
         if command:
             self.send_cmd(command)
@@ -702,15 +611,16 @@ class MainWindow(Gtk.ApplicationWindow):
                 start = self.prompt + command
             else:
                 print(
-                    "get_command_output requires that if the start arg isn't specified, the command arg must be."
+                    """get_output requires that if the start arg isn't
+                specified, the command arg must be."""
                 )
         if end:
             end = end.strip()
 
-        def check_output():
+        def check():
             nonlocal cycles
             # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
-            current_output = vte_term.get_text_range_format(
+            current_output = vte.get_text_range_format(
                 Vte.Format(1), 0, 0, 10000, 10000
             )[0]
             current_output = self.remove_blank_lines(current_output)
@@ -755,30 +665,89 @@ class MainWindow(Gtk.ApplicationWindow):
             cycles += 1
             return GLib.SOURCE_CONTINUE
 
-        GLib.idle_add(check_output)
+        GLib.idle_add(check)
 
-    # TODO: Add support for interactive commands, not necessarily here though.
-    def get_command_output(self, command=None, start=None, end=">>", timeout=2):
+    def get_output(self, command=None, start=None, end=">>", timeout=2):
         """
         The command and start args are optional, but if the command arg is not
         specified the start arg has to be.
         If the start arg is not specified start is set to the command.
         If a command is given, it runs the command.
         It returns the output after start, up to the line matching the optional
-        end arg, which by default is ">> ".
+        end arg, which by default is ">>".
         If end is specified as None, all of the new output will be returned.
         It returns None if the command finished with no output.
         It returns "Timeout" if the command doesn't finish within the number of
         seconds specified by the optional timeout arg, which by default is 2.
         """
         result = []
-        self.check_command_output(self.vte_term, command, result, start, end, timeout)
+        self.check_output(self.vte_term, command, result, start, end, timeout)
         while not result:
             GLib.main_context_default().iteration(True)
         return result[0]
 
+    def thor_select_device(self):
+        def set_selected_device(btn, device_index):
+            if btn.get_active:
+                self.device_index = device_index
+
+        def send_selected_device(cancel=False):
+            if cancel:
+                times = len(devices)
+            else:
+                times = self.device_index - 1
+            for _ in range(times):
+                # Send "Down Arrow"
+                self.send_cmd("\x1b[B", False)
+            # Send "Enter"
+            self.send_cmd("\n", False)
+
+        devices = self.get_output(
+            "connect", "Choose a device to connect to:", "Cancel operation"
+        )
+        # TODO: I haven't actually tested this with two devices connected.
+        # devices = "/dev/device1\n/dev/device2"
+        if not devices or devices == "Timeout":
+            print("No devices were found!")
+        else:
+            devices = devices.split("\n")
+            if len(devices) == 1:
+                self.device_index = 1
+                send_selected_device()
+            else:
+                window, grid = self.dialog(self.strings["connect_device"])
+                self.create_label(self.strings["choose_a_device"], 0, 0, grid)
+                group = None
+                row = 1
+                for index, device in enumerate(devices):
+                    checkbutton = self.create_checkbutton(device.strip(), 0, row, grid)
+                    if index == 0:
+                        group = checkbutton
+                    else:
+                        checkbutton.set_group(group)
+                    checkbutton.connect("toggled", set_selected_device, row)
+                    row = row + 1
+                self.create_button(
+                    "Cancel",
+                    1,
+                    row,
+                    grid,
+                    lambda _: (
+                        send_selected_device(cancel=True),
+                        window.destroy(),
+                    ),
+                )
+                self.create_button(
+                    "OK",
+                    2,
+                    row,
+                    grid,
+                    lambda _: (send_selected_device(), window.destroy()),
+                )
+                window.present()
+
     def odin4_select_device(self):
-        devices = self.get_command_output("list")
+        devices = self.get_output("list")
         # TODO: I haven't actually tested this with two devices connected.
         # devices = "/dev/device1\n/dev/device2"
         if not devices or devices == "Timeout":
@@ -830,6 +799,43 @@ class MainWindow(Gtk.ApplicationWindow):
                 )
                 window.present()
 
+    def verify_flash(self):
+        window, grid = self.dialog(self.strings["verify_flash"])
+        self.create_label(self.strings["are_you_sure"], 0, 0, grid)
+        buttons = [
+            {
+                "text": self.strings["yes"],
+                "command": lambda _: (self.send_cmd("y"), window.destroy()),
+            },
+            {
+                "text": self.strings["no"],
+                "command": lambda _: (self.send_cmd("n"), window.destroy()),
+            },
+        ]
+        column = 1
+        for btn in buttons:
+            self.create_button(btn["text"], column, 1, grid, btn["command"])
+            column += 1
+        window.present()
+
+    def option_changed(self, button):
+        if self.flashtool == "thor":
+            convert = {
+                "t_flash": "tflash",
+                "efs_clear": "efsclear",
+                "reset_flash_count": "resetfc",
+                "bootloader_update": "blupdate",
+            }
+
+            option = button.get_label().lower().replace(" ", "_")
+            value = button.get_active()
+
+            print(f"{option}: {value}")
+            setattr(self, option, value)
+
+            option = convert[option]
+            self.send_cmd(f"options {option} {value}")
+
     def toggle_changed(self, switch, state, setting):
         active = switch.get_active()
         self.settings[setting] = active
@@ -870,7 +876,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def on_command_enter(self):
         text = self.command_entry.get_text()
         self.command_entry.set_text("")
-        self.send_cmd(text)
+        self.send_cmd_entry(text)
 
     def set_widget_state(self, *args, state=True):
         for widget in args:
@@ -898,6 +904,16 @@ class MainWindow(Gtk.ApplicationWindow):
         if add_enter == True:
             cmd = cmd + "\n"
         self.vte_term.feed_child(cmd.encode("utf-8"))
+
+    def send_cmd_entry(self, cmd):
+        cmd = cmd.strip() + "\n"
+        special = False
+        if self.flashtool == "thor":
+            if cmd == "connect\n":
+                special = True
+                self.thor_select_device()
+        if not special:
+            self.vte_term.feed_child(cmd.encode("utf-8"))
 
     def open_file(self, partition):
         def file_dialog_callback(obj, result):
