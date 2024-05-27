@@ -69,10 +69,13 @@ class MainWindow(Gtk.ApplicationWindow):
             flashtool_path = (
                 f"{cwd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
             )
+            self.prompt = "shell> "
         elif self.flashtool == "odin4":
             flashtool_path = f"{cwd}/odin4-wrapper.sh"
+            self.prompt = ">> "
         elif self.flashtool == "pythor":
             flashtool_path = f"{cwd}/flash-tools/pythor/{system}/pythor_cli"
+            self.prompt = ">> "
         # Only use the sudo setting for Thor.
         if self.settings.get("sudo", False) and self.settings["flash_tool"] == "thor":
             flashtool_exec = ["sudo", flashtool_path]
@@ -180,7 +183,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "connect_button",
                     "text": self.strings["connect"],
-                    "command": lambda _: self.connect_device(),
+                    "command": lambda _: self.select_device(),
                 },
                 {
                     "name": "start_odin_button",
@@ -552,9 +555,6 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Are you absolutely sure you want to flash those?": [
                     lambda: self.verify_flash()
                 ],
-                "Choose a device to connect to:": [
-                    lambda: self.select_device(term_text)
-                ],
             }
         elif self.flashtool == "odin4":
             strings_to_commands = {
@@ -588,21 +588,21 @@ class MainWindow(Gtk.ApplicationWindow):
                         command()
 
             self.last_text = term_text
-
-    # TODO: Re-write this using get_command_output,
-    # and don't ask if there's only one device.
-    def select_device(self, text):
+    # TODO: Don't ask if there's only one device.
+    def select_device(self):
         def set_selected_device(btn, row):
             if btn.get_active:
                 self.device_index = row
 
-        self.devices = (
-            text.split("Choose a device to connect to:")[1]
-            .split("Cancel operation")[0]
-            .strip()
-            .strip("> ")
-            .splitlines()
+        self.devices = self.get_command_output(
+            "connect", "Choose a device to connect to:", "Cancel operation"
         )
+        if not self.devices or self.devices == "Timeout":
+            print("No devices were found!")
+            return
+        else:
+            self.devices = self.devices.split("\n")
+
         window, grid = self.dialog(self.strings["connect_device"])
         self.create_label(self.strings["choose_a_device"], 0, 0, grid)
         group = None
@@ -683,46 +683,71 @@ class MainWindow(Gtk.ApplicationWindow):
         new_string = "\n".join(filtered_lines)
         return new_string
 
-    def check_command_output(self, vte_term, command, result, timeout):
+    def check_command_output(self, vte_term, command, result, start, end, timeout):
         # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
-        old_output = vte_term.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
+        old_output = vte_term.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[
+            0
+        ]
         old_output = self.remove_blank_lines(old_output)
-        self.send_cmd(command)
+        if command:
+            self.send_cmd(command)
 
         cycles = 0
         start_time = time.time()
+        if start:
+            start = start.strip()
+        else:
+            # If start isn't specified, use the command as start.
+            if command:
+                start = self.prompt + command
+            else:
+                print(
+                    "get_command_output requires that if the start arg isn't specified, the command arg must be."
+                )
+        if end:
+            end = end.strip()
 
         def check_output():
             nonlocal cycles
             # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
-            current_output = vte_term.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
+            current_output = vte_term.get_text_range_format(
+                Vte.Format(1), 0, 0, 10000, 10000
+            )[0]
             current_output = self.remove_blank_lines(current_output)
-            # If the output has changed and the command has finished.
-            if current_output != old_output and current_output.endswith(">> "):
+            # If the output has changed.
+            if current_output != old_output:
                 lines = current_output.splitlines()
                 new_lines = []
-                command_index = -1
-                # Find the last occurence of the command.
+                start_index = -1
+                # Find the last occurence of start.
                 for i in range(len(lines) - 1, -1, -1):
-                    if lines[i].startswith(">> " + command):
-                        command_index = i
+                    if lines[i].startswith(start):
+                        start_index = i
                         break
-                # Get all the lines after the command, if it was found.
-                # Otherwise get all of the lines.
-                # Ignore the last line, which is the prompt.
-                if command_index != -1:
-                    new_lines = lines[command_index + 1 : -1]
-                else:
-                    new_lines = lines[:-1]
-                cleaned_new_output = "\n".join(new_lines)
-                # Check if cleaned_new_output is empty or contains only whitespace.
-                if cleaned_new_output.strip():
-                    result.append(cleaned_new_output)
-                    # print(f'Output from "{command}":\n{cleaned_new_output}')
-                else:
-                    result.append(None)
-                    # print("The command finished with no output.")
-                return GLib.SOURCE_REMOVE
+                # Get all the lines after start and up to end, if it's
+                # found, otherwise get everything after start.
+                if start_index != -1:
+                    new_lines = lines[start_index + 1 :]
+                end_index = None
+                if end:
+                    for i, line in enumerate(new_lines):
+                        if line.strip() == end:
+                            end_index = i
+                            break
+                # If end was found or was None, return the result,
+                # otherwise continue.
+                if end_index != None or end == None:
+                    if end != None:
+                        new_lines = new_lines[:end_index]
+                    cleaned_new_output = "\n".join(new_lines)
+                    # Check if cleaned_new_output is empty or contains only whitespace.
+                    if cleaned_new_output.strip():
+                        result.append(cleaned_new_output)
+                        # print(f'Output from "{command}":\n{cleaned_new_output}')
+                    else:
+                        result.append(None)
+                        # print("The command finished with no output.")
+                    return GLib.SOURCE_REMOVE
             if time.time() - start_time > timeout:
                 result.append("Timeout")
                 # print("Timeout reached!")
@@ -733,15 +758,21 @@ class MainWindow(Gtk.ApplicationWindow):
         GLib.idle_add(check_output)
 
     # TODO: Add support for interactive commands, not necessarily here though.
-    def get_command_output(self, command, timeout=2):
+    def get_command_output(self, command=None, start=None, end=">>", timeout=2):
         """
-        Given a command, runs that command and returns its output.
-        Returns None if the command finished with no output.
-        Returns "Timeout" if the command doesn't finish within the number of
+        The command and start args are optional, but if the command arg is not
+        specified the start arg has to be.
+        If the start arg is not specified start is set to the command.
+        If a command is given, it runs the command.
+        It returns the output after start, up to the line matching the optional
+        end arg, which by default is ">> ".
+        If end is specified as None, all of the new output will be returned.
+        It returns None if the command finished with no output.
+        It returns "Timeout" if the command doesn't finish within the number of
         seconds specified by the optional timeout arg, which by default is 2.
         """
         result = []
-        self.check_command_output(self.vte_term, command, result, timeout)
+        self.check_command_output(self.vte_term, command, result, start, end, timeout)
         while not result:
             GLib.main_context_default().iteration(True)
         return result[0]
