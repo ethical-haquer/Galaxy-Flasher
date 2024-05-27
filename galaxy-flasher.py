@@ -571,7 +571,7 @@ class MainWindow(Gtk.ApplicationWindow):
             strings_to_commands = {
                 ">>": [lambda: self.set_widget_state(self.connect_button, state=True)]
             }
-
+        # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
         term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
         # TODO: Look into why this is needed, obviously it's only for Thor.
         if term_text.strip().rsplit("shell>")[-1].strip() == "":
@@ -589,6 +589,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
             self.last_text = term_text
 
+    # TODO: Re-write this using get_command_output,
+    # and don't ask if there's only one device.
     def select_device(self, text):
         def set_selected_device(btn, row):
             if btn.get_active:
@@ -655,22 +657,6 @@ class MainWindow(Gtk.ApplicationWindow):
         for btn in buttons:
             self.create_button(btn["text"], column, 1, grid, btn["command"])
             column += 1
-        """
-        self.create_button(
-            self.strings["yes"],
-            1,
-            1,
-            grid,
-            lambda _: (self.send_cmd("y"), window.destroy()),
-        ).set_margin_end(5)
-        self.create_button(
-            self.strings["no"],
-            2,
-            1,
-            grid,
-            lambda _: (self.send_cmd("n"), window.destroy()),
-        )
-        """
         window.present()
 
     def option_changed(self, button):
@@ -698,7 +684,8 @@ class MainWindow(Gtk.ApplicationWindow):
         return new_string
 
     def check_command_output(self, vte_term, command, result, timeout):
-        old_output = vte_term.get_text_format(Vte.Format(1))
+        # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
+        old_output = vte_term.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
         old_output = self.remove_blank_lines(old_output)
         self.send_cmd(command)
 
@@ -707,7 +694,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
         def check_output():
             nonlocal cycles
-            current_output = vte_term.get_text_format(Vte.Format(1))
+            # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
+            current_output = vte_term.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
             current_output = self.remove_blank_lines(current_output)
             # If the output has changed and the command has finished.
             if current_output != old_output and current_output.endswith(">> "):
@@ -744,15 +732,13 @@ class MainWindow(Gtk.ApplicationWindow):
 
         GLib.idle_add(check_output)
 
+    # TODO: Add support for interactive commands, not necessarily here though.
     def get_command_output(self, command, timeout=2):
         """
         Given a command, runs that command and returns its output.
         Returns None if the command finished with no output.
         Returns "Timeout" if the command doesn't finish within the number of
-        seconds specified by the optional arg timeout, which by default is 2.
-        The only issue is it can't see offscreen, so if the output looks the
-        exact same as before the command was run, it will timeout.
-        (try running "list" with no devices connected repeatedly to see what I mean)
+        seconds specified by the optional timeout arg, which by default is 2.
         """
         result = []
         self.check_command_output(self.vte_term, command, result, timeout)
