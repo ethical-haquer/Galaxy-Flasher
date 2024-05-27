@@ -744,17 +744,16 @@ class MainWindow(Gtk.ApplicationWindow):
 
         GLib.idle_add(check_output)
 
-    """
-    Given a command, runs that command and returns its output.
-    Returns None if the command finished with no output.
-    Returns "Timeout" if the command doesn't finish within the number of
-    seconds specified by the optional arg timeout, which by default is 2.
-    The only issue is it can't see offscreen, so if the output looks the
-    exact same as before the command was run, it will timeout.
-    (try running "list" with no devices connected repeatedly to see what I mean)
-    """
-
     def get_command_output(self, command, timeout=2):
+        """
+        Given a command, runs that command and returns its output.
+        Returns None if the command finished with no output.
+        Returns "Timeout" if the command doesn't finish within the number of
+        seconds specified by the optional arg timeout, which by default is 2.
+        The only issue is it can't see offscreen, so if the output looks the
+        exact same as before the command was run, it will timeout.
+        (try running "list" with no devices connected repeatedly to see what I mean)
+        """
         result = []
         self.check_command_output(self.vte_term, command, result, timeout)
         while not result:
