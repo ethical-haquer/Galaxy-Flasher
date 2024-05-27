@@ -24,6 +24,7 @@ import os
 import platform
 import sys
 import tarfile
+import time
 
 import gi
 import xdg
@@ -197,7 +198,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "help_button",
                     "text": "Help",
-                    "command": lambda _: self.send_cmd("help\n"),
+                    "command": lambda _: self.send_cmd("help"),
                 },
                 {
                     "name": "connect_button",
@@ -215,12 +216,12 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "help_button",
                     "text": "Help",
-                    "command": lambda _: self.send_cmd("help\n"),
+                    "command": lambda _: self.send_cmd("help"),
                 },
                 {
                     "name": "list_button",
                     "text": "List Devices",
-                    "command": lambda _: self.send_cmd("list\n"),
+                    "command": lambda _: self.send_cmd("list"),
                 },
                 {
                     "name": "flash_button",
@@ -299,10 +300,11 @@ class MainWindow(Gtk.ApplicationWindow):
                 check_button.connect("toggled", self.option_changed)
                 row += 1
         elif self.flashtool == "odin4":
+            row = 0
             self.create_label(
-                "TODO: Add an option for specifying a device (with the \"-d\" arg)",
+                'The "-V" option will be added once I know what it does.',
                 0,
-                0,
+                row,
                 self.options_grid,
                 (10, 0, 0, 0),
             )
@@ -386,6 +388,9 @@ class MainWindow(Gtk.ApplicationWindow):
             json.dump(self.settings, file)
 
     def flash(self):
+        # This doesn't seem to work as expected.
+        # It makes sure all of the selected files are in the same folder,
+        # but it doesn't take into account that there may also be other files.
         if self.flashtool == "thor":
 
             def toggled_callback(button):
@@ -414,7 +419,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.error_dialog(self.strings["invalid_files"], "flash")
             else:
                 base_dir = list(paths.values())[0]
-                self.send_cmd(f"flashTar {base_dir}\n")
+                self.send_cmd(f"flashTar {base_dir}")
                 for file_path in os.listdir(base_dir):
                     print(f"file_path is: {file_path}")
                     if file_path.endswith(".md5") or file_path.endswith(".tar"):
@@ -442,29 +447,46 @@ class MainWindow(Gtk.ApplicationWindow):
                 window.present()
 
         elif self.flashtool == "odin4":
-            # TODO: Add an option for specifying a device with "-d".
-            files = []
+            args = []
             for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
-                slot_to_arg = {"BL": "-b", "AP": "-a", "CP": "-c", "CSC": "-s", "USERDATA": "-u"}
+                slot_to_arg = {
+                    "BL": "-b",
+                    "AP": "-a",
+                    "CP": "-c",
+                    "CSC": "-s",
+                    "USERDATA": "-u",
+                }
                 entry = getattr(self, f"{slot}_entry")
                 file = entry.get_text()
                 if file:
                     arg = slot_to_arg[slot]
                     file_arg = f"{arg} {file}"
-                    files.append(file_arg)
-            print("Running: " + " ".join(["flash"] + files))
-            self.send_cmd(" ".join(["flash"] + files) + "\n")
+                    args.append(file_arg)
+            if len(args) == 0:
+                print(self.strings["no_files_selected2"])
+                self.error_dialog(self.strings["no_files_selected2"], "flash")
+            else:
+                device = self.odin4_select_device()
+                if not device:
+                    message = "No devices were found - First connect a device that's in Download Mode"
+                    print(message)
+                    self.error_dialog(message, "flash")
+                else:
+                    args.insert(0, f"-d {device}")
+                    command = " ".join(["flash"] + args)
+                    print(f"Running: {command}")
+                    self.send_cmd(command)
 
     def send_selected_partitions(self):
         last_file = ""
         for selected, file_path in self.selected_buttons:
             if last_file and last_file != file_path:
-                self.send_cmd("\n")
+                self.send_cmd("\n", False)
             if selected:
-                self.send_cmd("\x20")
-            self.send_cmd("\x1b[B")
+                self.send_cmd("\x20", False)
+            self.send_cmd("\x1b[B", False)
             last_file = file_path
-        self.send_cmd("\n")
+        self.send_cmd("\n", False)
 
     def dialog(self, title):
         # Create grid
@@ -491,7 +513,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     lambda: self.set_widget_state(self.start_odin_button, state=True),
                     lambda: self.connect_button.set_label("Disconnect"),
                     lambda: self.change_button_command(
-                        self.connect_button, lambda _: self.send_cmd("disconnect\n")
+                        self.connect_button, lambda _: self.send_cmd("disconnect")
                     ),
                 ],
                 "Successfully disconnected the device!": [
@@ -499,7 +521,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     lambda: self.set_widget_state(self.start_odin_button, state=False),
                     lambda: self.connect_button.set_label("Connect"),
                     lambda: self.change_button_command(
-                        self.connect_button, lambda _: self.send_cmd("connect\n")
+                        self.connect_button, lambda _: self.send_cmd("connect")
                     ),
                 ],
                 "Successfully began an Odin session!": [
@@ -551,6 +573,7 @@ class MainWindow(Gtk.ApplicationWindow):
             }
 
         term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
+        # TODO: Look into why this is needed, obviously it's only for Thor.
         if term_text.strip().rsplit("shell>")[-1].strip() == "":
             try:
                 term_text = term_text.strip().rsplit("shell>")[-2].strip()
@@ -612,8 +635,8 @@ class MainWindow(Gtk.ApplicationWindow):
         else:
             times = self.device_index - 1
         for _ in range(times):
-            self.send_cmd("\x1b[B")
-        self.send_cmd("\n")
+            self.send_cmd("\x1b[B", False)
+        self.send_cmd("\n", False)
 
     def verify_flash(self):
         window, grid = self.dialog(self.strings["verify_flash"])
@@ -621,11 +644,11 @@ class MainWindow(Gtk.ApplicationWindow):
         buttons = [
             {
                 "text": self.strings["yes"],
-                "command": lambda _: (self.send_cmd("y" + "\n"), window.destroy()),
+                "command": lambda _: (self.send_cmd("y"), window.destroy()),
             },
             {
                 "text": self.strings["no"],
-                "command": lambda _: (self.send_cmd("n" + "\n"), window.destroy()),
+                "command": lambda _: (self.send_cmd("n"), window.destroy()),
             },
         ]
         column = 1
@@ -638,34 +661,158 @@ class MainWindow(Gtk.ApplicationWindow):
             1,
             1,
             grid,
-            lambda _: (self.send_cmd("y" + "\n"), window.destroy()),
+            lambda _: (self.send_cmd("y"), window.destroy()),
         ).set_margin_end(5)
         self.create_button(
             self.strings["no"],
             2,
             1,
             grid,
-            lambda _: (self.send_cmd("n" + "\n"), window.destroy()),
+            lambda _: (self.send_cmd("n"), window.destroy()),
         )
         """
         window.present()
 
     def option_changed(self, button):
-        convert = {
-            "t_flash": "tflash",
-            "efs_clear": "efsclear",
-            "reset_flash_count": "resetfc",
-            "bootloader_update": "blupdate",
-        }
+        if self.flashtool == "thor":
+            convert = {
+                "t_flash": "tflash",
+                "efs_clear": "efsclear",
+                "reset_flash_count": "resetfc",
+                "bootloader_update": "blupdate",
+            }
 
-        option = button.get_label().lower().replace(" ", "_")
-        value = button.get_active()
+            option = button.get_label().lower().replace(" ", "_")
+            value = button.get_active()
 
-        print(f"{option}: {value}")
-        setattr(self, option, value)
+            print(f"{option}: {value}")
+            setattr(self, option, value)
 
-        option = convert[option]
-        self.send_cmd(f"options {option} {value}\n")
+            option = convert[option]
+            self.send_cmd(f"options {option} {value}")
+
+    def remove_blank_lines(self, string):
+        lines = string.splitlines()
+        filtered_lines = [line for line in lines if line.strip()]
+        new_string = "\n".join(filtered_lines)
+        return new_string
+
+    def check_command_output(self, vte_term, command, result, timeout):
+        old_output = vte_term.get_text_format(Vte.Format(1))
+        old_output = self.remove_blank_lines(old_output)
+        self.send_cmd(command)
+
+        cycles = 0
+        start_time = time.time()
+
+        def check_output():
+            nonlocal cycles
+            current_output = vte_term.get_text_format(Vte.Format(1))
+            current_output = self.remove_blank_lines(current_output)
+            # If the output has changed and the command has finished.
+            if current_output != old_output and current_output.endswith(">> "):
+                lines = current_output.splitlines()
+                new_lines = []
+                command_index = -1
+                # Find the last occurence of the command.
+                for i in range(len(lines) - 1, -1, -1):
+                    if lines[i].startswith(">> " + command):
+                        command_index = i
+                        break
+                # Get all the lines after the command, if it was found.
+                # Otherwise get all of the lines.
+                # Ignore the last line, which is the prompt.
+                if command_index != -1:
+                    new_lines = lines[command_index + 1 : -1]
+                else:
+                    new_lines = lines[:-1]
+                cleaned_new_output = "\n".join(new_lines)
+                # Check if cleaned_new_output is empty or contains only whitespace.
+                if cleaned_new_output.strip():
+                    result.append(cleaned_new_output)
+                    # print(f'Output from "{command}":\n{cleaned_new_output}')
+                else:
+                    result.append(None)
+                    # print("The command finished with no output.")
+                return GLib.SOURCE_REMOVE
+            if time.time() - start_time > timeout:
+                result.append("Timeout")
+                # print("Timeout reached!")
+                return GLib.SOURCE_REMOVE
+            cycles += 1
+            return GLib.SOURCE_CONTINUE
+
+        GLib.idle_add(check_output)
+
+    """
+    Given a command, runs that command and returns its output.
+    Returns None if the command finished with no output.
+    Returns "Timeout" if the command doesn't finish within the number of
+    seconds specified by the optional arg timeout, which by default is 2.
+    The only issue is it can't see offscreen, so if the output looks the
+    exact same as before the command was run, it will timeout.
+    (try running "list" with no devices connected repeatedly to see what I mean)
+    """
+
+    def get_command_output(self, command, timeout=2):
+        result = []
+        self.check_command_output(self.vte_term, command, result, timeout)
+        while not result:
+            GLib.main_context_default().iteration(True)
+        return result[0]
+
+    def odin4_select_device(self):
+        devices = self.get_command_output("list")
+        # TODO: I haven't actually tested this with two devices connected.
+        # devices = "/dev/device1\n/dev/device2"
+        if not devices or devices == "Timeout":
+            return None
+        else:
+            devices = devices.split("\n")
+            if len(devices) == 1:
+                return devices[0]
+            else:
+                self.device = devices[0]
+
+                def set_selected_device(btn, device):
+                    if btn.get_active:
+                        self.device = device
+
+                def return_selected_device(cancel=False):
+                    if cancel or not device:
+                        return None
+                    else:
+                        print(f"Selected device: {self.device}")
+                        return self.device
+
+                window, grid = self.dialog(self.strings["connect_device"])
+                self.create_label(self.strings["choose_a_device"], 0, 0, grid)
+                group = None
+                row = 1
+                for index, device in enumerate(devices):
+                    checkbutton = self.create_checkbutton(device, 0, row, grid)
+                    if index == 0:
+                        group = checkbutton
+                        checkbutton.set_active(True)
+                    else:
+                        checkbutton.set_group(group)
+                    checkbutton.connect("toggled", set_selected_device, device)
+                    row = row + 1
+                self.create_button(
+                    "Cancel",
+                    1,
+                    row,
+                    grid,
+                    lambda _: (return_selected_device(cancel=True), window.destroy()),
+                )
+                self.create_button(
+                    "OK",
+                    2,
+                    row,
+                    grid,
+                    lambda _: (return_selected_device(), window.destroy()),
+                )
+                window.present()
 
     def toggle_changed(self, switch, state, setting):
         active = switch.get_active()
@@ -693,21 +840,21 @@ class MainWindow(Gtk.ApplicationWindow):
         dialog.show(self)
 
     def connect_device(self):
-        self.send_cmd("connect\n")
+        self.send_cmd("connect")
 
     def start_odin_session(self):
         if self.flashtool == "thor":
-            self.send_cmd("begin odin\n")
+            self.send_cmd("begin odin")
         elif self.flashtool == "pythor":
-            self.send_cmd("begin\n")
+            self.send_cmd("begin")
 
     def end_odin(self):
-        self.send_cmd("end\n")
+        self.send_cmd("end")
 
     def on_command_enter(self):
         text = self.command_entry.get_text()
         self.command_entry.set_text("")
-        self.send_cmd(text + "\n")
+        self.send_cmd(text)
 
     def set_widget_state(self, *args, state=True):
         for widget in args:
@@ -731,7 +878,9 @@ class MainWindow(Gtk.ApplicationWindow):
         entry.set_icon_from_icon_name(Gtk.EntryIconPosition(1), icon)
         self.command_entry.connect("icon-press", self.toggle_entry_visibility)
 
-    def send_cmd(self, cmd):
+    def send_cmd(self, cmd, add_enter=True):
+        if add_enter == True:
+            cmd = cmd + "\n"
         self.vte_term.feed_child(cmd.encode("utf-8"))
 
     def open_file(self, partition):
