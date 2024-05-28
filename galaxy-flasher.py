@@ -56,6 +56,19 @@ class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         self.last_text = ""
         super().__init__(*args, **kwargs)
+        # Add the CSS provider to the screen
+        style_provider = Gtk.CssProvider()
+        css = """
+            .mybutton:not(:hover) {
+                background-color: @popover-background-color;
+            }
+        """
+        style_provider.load_from_data(css.encode())
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(),
+            style_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
         # Load strings
         # TODO: Remove unneeded strings from en.json
         with open(locale_file) as json_string:
@@ -328,34 +341,54 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         # Create the Settings tab widgets.
         row = 0
-        radiobuttons = [
-            {"text": "Thor", "value": "thor"},
-            {"text": "Odin4", "value": "odin4"},
-            {"text": "PyThor (in development)", "value": "pythor"},
+        options = [
+            {"name": "Thor", "value": "thor"},
+            {"name": "Odin4", "value": "odin4"},
+            {"name": "PyThor (in development)", "value": "pythor"},
         ]
-        self.create_radiobuttons(
-            name="Flash Tool:",
+        self.create_menu_button(
+            name="Flash Tool",
             setting="flash_tool",
             default_value="thor",
-            radiobuttons=radiobuttons,
+            default_value_name="Thor",
+            options=options,
             column=0,
             row=row,
             grid=self.settings_grid,
-            padding=(10, 0, 0, 0),
-            radio_padding=(16, 0, 0, 0),
+            padding=(40, 40, 10, 10),
         )
-        row = row + len(radiobuttons) + 1
+        row += 1
+        options = [
+            {"name": "System", "value": "system"},
+            {"name": "Light", "value": "light"},
+            {"name": "Dark", "value": "dark"},
+        ]
+        self.create_menu_button(
+            name="Theme (currently does nothing)",
+            setting="theme",
+            default_value="system",
+            default_value_name="System",
+            options=options,
+            column=0,
+            row=row,
+            grid=self.settings_grid,
+            padding=(40, 40, 0, 10),
+        )
+        row += 1
         self.options = [
             {"label": self.strings["run_thor_sudo"], "setting": "sudo"},
         ]
         for item in self.options:
             text = item["label"]
             setting = item["setting"]
-            toggle = self.create_toggle_switch(text, 0, row, self.settings_grid)
+            toggle = self.create_toggle_switch(
+                text, 0, row, self.settings_grid, 1, 1, (40, 0, 0, 0)
+            )
             toggle.set_active(self.settings.get(setting, False))
             toggle.connect("state-set", self.toggle_changed, setting)
             active = toggle.get_active()
             self.settings[setting] = active
+            row += 1
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
@@ -838,9 +871,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def toggle_changed(self, switch, state, setting):
         active = switch.get_active()
-        self.settings[setting] = active
-        print(f"{setting} set to: {self.settings[setting]}")
-        self.save_settings()
+        self.set_setting(setting, active)
 
     def on_radiobutton_toggled(self, radiobutton, setting, value):
         # The "toggled" signal emits from a radiobutton that's getting de-selected
@@ -969,6 +1000,80 @@ class MainWindow(Gtk.ApplicationWindow):
         button.signal_id = button.connect("clicked", command)
         grid.attach(button, column, row, width, height)
         return button
+
+    def on_button_clicked(self, name, setting, value, setting_label, popover):
+        setting_label.set_label(name)
+        popover.set_visible(False)
+        self.set_setting(setting, value)
+
+    # TODO: Make the button look slightly more rounded,
+    # and move the popover to the right.
+    def create_menu_button(
+        self,
+        name,
+        setting,
+        default_value,
+        default_value_name,
+        options,
+        column,
+        row,
+        grid,
+        padding=(10, 10, 10, 10),
+    ):
+        w_margin = 6
+        h_margin = 13
+        button = Gtk.MenuButton()
+        button.set_hexpand(True)
+        self.set_padding(button, padding)
+        label_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        label = Gtk.Label(label=name)
+        label_box.append(label)
+        label_box.set_margin_start(w_margin)
+        setting_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        setting_box.set_margin_top(h_margin)
+        setting_box.set_margin_bottom(h_margin)
+        setting_box.set_margin_end(w_margin)
+        current_setting = (
+            self.settings.get(setting, default_value_name).replace("_", " ").title()
+        )
+        setting_label = Gtk.Label(label=current_setting)
+        setting_box.append(setting_label)
+        icon = Gtk.Image.new_from_icon_name("pan-down-symbolic")
+        setting_box.append(icon)
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        box.set_halign(Gtk.Align.FILL)
+        box.set_hexpand(True)
+        label_box.set_halign(Gtk.Align.START)
+        setting_box.set_halign(Gtk.Align.END)
+        setting_box.set_hexpand(True)
+        box.append(label_box)
+        box.append(setting_box)
+        button.set_child(box)
+        popover = Gtk.Popover()
+        # TODO: Figure out how to make this go to the far right, this isn't it.
+        # popover.set_halign(Gtk.Align.END)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+
+        for option in options:
+            option_button_name = option["name"]
+            option_button_value = option["value"]
+            option_button = Gtk.Button(
+                label=option_button_name, css_classes=["mybutton"]
+            )
+            option_button.connect(
+                "clicked",
+                lambda _, opt=option_button_name, set=setting, val=option_button_value, lab=setting_label, pop=popover: self.on_button_clicked(
+                    opt, set, val, lab, pop
+                ),
+            )
+            vbox.append(option_button)
+
+        popover.set_child(vbox)
+        button.set_popover(popover)
+        setting_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        setting_box.append(button)
+        grid.attach(setting_box, column, row, 1, 1)
+
 
     def change_button_command(self, button, new_command):
         button.disconnect(button.signal_id)
