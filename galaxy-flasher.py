@@ -124,12 +124,9 @@ class MainWindow(Gtk.ApplicationWindow):
             )
         # Create flash-tool output box
         self.vte_term = Vte.Terminal()
-        # Set terminal colors
-        foreground = Gdk.RGBA()
-        foreground.parse("#ffffff")
-        background = Gdk.RGBA()
-        background.parse("#242424")
-        self.vte_term.set_colors(foreground, background, None)
+        # Set the theme
+        theme = self.settings.get("theme") or "system"
+        self.set_theme(theme)
         self.vte_term.spawn_async(
             Vte.PtyFlags.DEFAULT,  # Pty Flags
             cwd,  # Working DIR
@@ -189,7 +186,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.command_entry.connect(
             "activate", lambda _, __: self.on_command_enter(), None
         )
-        # Create connect, start_odin, and flash buttons
+        # Create the upper-right buttons.
         if self.flashtool == "thor":
             buttons = [
                 {
@@ -364,7 +361,7 @@ class MainWindow(Gtk.ApplicationWindow):
             {"name": "Dark", "value": "dark"},
         ]
         self.create_menu_button(
-            name="Theme (currently does nothing)",
+            name="Theme",
             setting="theme",
             default_value="system",
             default_value_name="System",
@@ -880,9 +877,40 @@ class MainWindow(Gtk.ApplicationWindow):
             self.set_setting(setting, value)
 
     def set_setting(self, setting, value):
+        if setting == "theme":
+            self.set_theme(value)
         self.settings[setting] = value
         print(f"{setting} set to: '{value}'")
         self.save_settings()
+
+    # TODO: There has to be a better way to handle the terminal's colors...
+    def set_theme(self, theme):
+        if theme == "system":
+            color_scheme = Adw.ColorScheme.PREFER_LIGHT
+        elif theme == "light":
+            color_scheme = Adw.ColorScheme.FORCE_LIGHT
+        elif theme == "dark":
+            color_scheme = Adw.ColorScheme.FORCE_DARK
+        else:
+            print(
+                "Error in set_theme function: theme argument can be either "
+                f'"system", "light", or "dark". Not "{theme}".'
+            )
+            return
+        style_manager = Adw.StyleManager.get_default()
+        style_manager.set_color_scheme(color_scheme)
+        if Adw.StyleManager.get_dark(style_manager):
+            terminal_foreground = "#ffffff"
+            terminal_background = "#242424"
+        else:
+            terminal_foreground = "#000000"
+            terminal_background = "#fafafa"
+
+        foreground = Gdk.RGBA()
+        foreground.parse(terminal_foreground)
+        background = Gdk.RGBA()
+        background.parse(terminal_background)
+        self.vte_term.set_colors(foreground, background, None)
 
     def error_dialog(self, message, function):
         dialog = Gtk.AlertDialog()
@@ -1006,8 +1034,10 @@ class MainWindow(Gtk.ApplicationWindow):
         popover.set_visible(False)
         self.set_setting(setting, value)
 
-    # TODO: Make the button look slightly more rounded,
-    # and move the popover to the right.
+    # TODO:
+    # Make the button look slightly more rounded.
+    # Move the popover to the right.
+    # Add support for True/False settings with a switch.
     def create_menu_button(
         self,
         name,
@@ -1020,40 +1050,40 @@ class MainWindow(Gtk.ApplicationWindow):
         grid,
         padding=(10, 10, 10, 10),
     ):
-        w_margin = 6
-        h_margin = 13
-        button = Gtk.MenuButton()
-        button.set_hexpand(True)
-        self.set_padding(button, padding)
-        label_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        label = Gtk.Label(label=name)
-        label_box.append(label)
-        label_box.set_margin_start(w_margin)
-        setting_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        setting_box.set_margin_top(h_margin)
-        setting_box.set_margin_bottom(h_margin)
-        setting_box.set_margin_end(w_margin)
+        width_margin = 6
+        height_margin = 13
         current_setting = (
             self.settings.get(setting, default_value_name).replace("_", " ").title()
         )
-        setting_label = Gtk.Label(label=current_setting)
-        setting_box.append(setting_label)
-        icon = Gtk.Image.new_from_icon_name("pan-down-symbolic")
-        setting_box.append(icon)
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        box.set_halign(Gtk.Align.FILL)
-        box.set_hexpand(True)
-        label_box.set_halign(Gtk.Align.START)
+        # Create the menu_button.
+        menu_button = Gtk.MenuButton()
+        menu_button.set_hexpand(True)
+        # Create the label.
+        label = Gtk.Label(label=name)
+        label.set_halign(Gtk.Align.START)
+        # Create a box to hold the current_value_label and icon.
+        setting_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        setting_box.set_margin_top(height_margin)
+        setting_box.set_margin_bottom(height_margin)
         setting_box.set_halign(Gtk.Align.END)
         setting_box.set_hexpand(True)
-        box.append(label_box)
-        box.append(setting_box)
-        button.set_child(box)
+        current_value_label = Gtk.Label(label=current_setting)
+        icon = Gtk.Image.new_from_icon_name("pan-down-symbolic")
+        setting_box.append(current_value_label)
+        setting_box.append(icon)
+        # Create the main_box that holds the label_box and setting_box.
+        main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        main_box.set_margin_start(width_margin)
+        main_box.set_margin_end(width_margin)
+        main_box.set_halign(Gtk.Align.FILL)
+        main_box.set_hexpand(True)
+        main_box.append(label)
+        main_box.append(setting_box)
+        # Create the popover and popover options.
         popover = Gtk.Popover()
         # TODO: Figure out how to make this go to the far right, this isn't it.
         # popover.set_halign(Gtk.Align.END)
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-
+        option_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         for option in options:
             option_button_name = option["name"]
             option_button_value = option["value"]
@@ -1062,18 +1092,17 @@ class MainWindow(Gtk.ApplicationWindow):
             )
             option_button.connect(
                 "clicked",
-                lambda _, opt=option_button_name, set=setting, val=option_button_value, lab=setting_label, pop=popover: self.on_button_clicked(
+                lambda _, opt=option_button_name, set=setting, val=option_button_value, lab=current_value_label, pop=popover: self.on_button_clicked(
                     opt, set, val, lab, pop
                 ),
             )
-            vbox.append(option_button)
+            option_box.append(option_button)
 
-        popover.set_child(vbox)
-        button.set_popover(popover)
-        setting_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        setting_box.append(button)
-        grid.attach(setting_box, column, row, 1, 1)
-
+        popover.set_child(option_box)
+        menu_button.set_child(main_box)
+        menu_button.set_popover(popover)
+        self.set_padding(menu_button, padding)
+        grid.attach(menu_button, column, row, 1, 1)
 
     def change_button_command(self, button, new_command):
         button.disconnect(button.signal_id)
