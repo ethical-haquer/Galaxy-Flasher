@@ -22,6 +22,7 @@ import json
 import locale
 import os
 import platform
+import re
 import sys
 import tarfile
 import time
@@ -76,6 +77,8 @@ class MainWindow(Gtk.ApplicationWindow):
         # Load settings
         self.load_settings()
         # Set the flash-tool path
+        # TODO: Handle cases where the OS isn't linux or
+        # the architecture isn't x64.
         self.flashtool = self.settings.get("flash_tool") or "thor"
         if self.flashtool == "thor":
             flashtool_path = (
@@ -124,9 +127,6 @@ class MainWindow(Gtk.ApplicationWindow):
             )
         # Create flash-tool output box
         self.vte_term = Vte.Terminal()
-        # Set the theme
-        theme = self.settings.get("theme") or "system"
-        self.set_theme(theme)
         self.vte_term.spawn_async(
             Vte.PtyFlags.DEFAULT,  # Pty Flags
             cwd,  # Working DIR
@@ -148,6 +148,9 @@ class MainWindow(Gtk.ApplicationWindow):
         scrolled_window.set_halign(Gtk.Align.FILL)
         scrolled_window.set_valign(Gtk.Align.FILL)
         self.stack.add_titled(scrolled_window, "Log", "Log")
+        # Set the theme
+        theme = self.settings.get("theme") or "system"
+        self.set_theme(theme)
         # Create other tabs
         for tab in ["Options", "Pit", "Settings"]:
             grid = Gtk.Grid()
@@ -202,7 +205,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "flash_button",
                     "text": "Flash!",
-                    "command": lambda _: self.flash(),
+                    "command": lambda _: self.thor_flash(),
                 },
             ]
         elif self.flashtool == "pythor":
@@ -509,16 +512,114 @@ class MainWindow(Gtk.ApplicationWindow):
                     print(f"Running: {command}")
                     self.send_cmd(command)
 
-    def send_selected_partitions(self):
-        last_file = ""
-        for selected, file_path in self.selected_buttons:
-            if last_file and last_file != file_path:
-                self.send_cmd("\n", False)
-            if selected:
-                self.send_cmd("\x20", False)
-            self.send_cmd("\x1b[B", False)
-            last_file = file_path
-        self.send_cmd("\n", False)
+    # TODO: Let the user choose what partitions to flash.
+    def thor_select_partitions(self, files, base_dir):
+        run = 1
+        self.prev_file = None
+
+        def select():
+            nonlocal run
+            print(f"RUN {run}")
+            # If this is the first run, run the flashTar command.
+            if run == 1:
+                command = f"flashTar {base_dir}"
+                print(f'RUNNING: "{command}"')
+                self.send_cmd(command)
+
+            # Get the filename from the output.
+            file = self.get_output(
+                command=None,
+                start="Choose what partitions to flash from",
+                end="> [ ]*",
+                wait=False,
+            )
+            if not file[0] or file[0] == "Timeout":
+                print("No file was found.")
+                return GLib.SOURCE_REMOVE
+            # In some cases we are too fast and the output will still have
+            # the old file displayed, in that case skip it.
+            elif file == self.prev_file:
+                print("SKIP")
+                return GLib.SOURCE_CONTINUE
+            else:
+                # This joins the file together if it's displayed on multiple
+                # lines.
+                joined_file = None
+                if len(file) > 1:
+                    joined_file = "".join(file)
+                else:
+                    joined_file = file[0]
+                if joined_file.endswith(":"):
+                    joined_file = joined_file[:-1]
+                print(f'FILE: "{joined_file}"')
+                # If the file was selected by the user.
+                if joined_file in files:
+                    print("File was selected.")
+                    start = file[-1]
+                    time.sleep(0.2)
+                    # Something to try: Use only one call to get_output,
+                    # and extract the file and partitins from it.
+                    partitions = self.get_output(
+                        command=None,
+                        start=start,
+                        end="(Press <space> to select, <enter> to accept)",
+                        wait=False,
+                    )
+                    if not partitions[0] or partitions[0] == "Timeout":
+                        print(f"No partitions were detected. {partitions[0]}")
+                    else:
+                        print(f"PARTITIONS: {partitions}")
+                        n_partitions = len(partitions)
+                        partition_run = 1
+                        for partition in partitions:
+                            print('SENDING: "Space"')
+                            self.send_cmd("\x20", False)
+                            time.sleep(0.05)
+                            # If it's the last partition displayed,
+                            # we don't need to send a down arrow.
+                            if not partition_run == n_partitions:
+                                print('SENDING: "Down Arrow"')
+                                self.send_cmd("\x1b[B", False)
+                                time.sleep(0.05)
+                            partition_run += 1
+                        # Send "Enter" once we've selected the partitions
+                        # that we want.
+                        print('SENDING: "Enter"')
+                        self.send_cmd("\n", False)
+                # If the file wasn't selected by the user.
+                else:
+                    print("File was NOT selected.")
+                    print('SENDING: "Enter"')
+                    self.send_cmd("\n", False)
+            run += 1
+            self.prev_file = file
+            time.sleep(0.3)
+            return GLib.SOURCE_CONTINUE
+
+        GLib.idle_add(select)
+
+    def thor_flash(self):
+        file_paths = []
+        files = []
+        paths = {}
+        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
+            entry = getattr(self, f"{slot}_entry")
+            if entry.get_text():
+                file_path = entry.get_text()
+                file = os.path.basename(file_path)
+                file_paths.append(file_path)
+                files.append(file)
+                # print(f"Flashing {entry.get_text()} to {slot}")
+                paths[slot] = os.path.dirname(entry.get_text())
+        if len(paths) == 0:
+            print(self.strings["no_files_selected2"])
+            self.error_dialog(self.strings["no_files_selected2"], "flash")
+        elif len(set(paths.values())) > 1:
+            print("The files NEED to be in the same dir...")
+            self.error_dialog(self.strings["invalid_files"], "flash")
+        else:
+            base_dir = list(paths.values())[0]
+            self.thor_select_partitions(files, base_dir)
 
     def dialog(self, title):
         # Create grid
@@ -553,7 +654,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     lambda: self.set_widget_state(self.start_odin_button, state=False),
                     lambda: self.connect_button.set_label("Connect"),
                     lambda: self.change_button_command(
-                        self.connect_button, lambda _: self.send_cmd("connect")
+                        self.connect_button, lambda _: self.send_cmd_entry("connect")
                     ),
                 ],
                 "Successfully began an Odin session!": [
@@ -600,7 +701,8 @@ class MainWindow(Gtk.ApplicationWindow):
             strings_to_commands = {
                 ">>": [lambda: self.set_widget_state(self.connect_button, state=True)]
             }
-        # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
+        # This is a pretty bad way to do this.
+        # 10000 should be replaced with the actual value, But it works.
         term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
         # TODO: Look into why this is needed, obviously it's only for Thor.
         if term_text.strip().rsplit("shell>")[-1].strip() == "":
@@ -624,12 +726,13 @@ class MainWindow(Gtk.ApplicationWindow):
         new_string = "\n".join(filtered_lines)
         return new_string
 
-    def check_output(self, vte, command, result, start, end, timeout):
-        # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
+    def check_output(self, vte, command, result, start, end, wait, add_enter, timeout):
+        # This is a pretty bad way to do this.
+        # 10000 should be replaced with the actual value, But it works.
         old_output = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
         old_output = self.remove_blank_lines(old_output)
         if command:
-            self.send_cmd(command)
+            self.send_cmd(command, add_enter)
 
         cycles = 0
         start_time = time.time()
@@ -641,27 +744,30 @@ class MainWindow(Gtk.ApplicationWindow):
                 start = self.prompt + command
             else:
                 print(
-                    """get_output requires that if the start arg isn't
-                specified, the command arg must be."""
+                    "get_output requires that if the start arg isn't"
+                    "specified, the command arg must be."
                 )
         if end:
             end = end.strip()
 
         def check():
             nonlocal cycles
-            # This is a pretty bad way to do this. 10000 should be replaced with the actual value, But it works.
+            # This is a pretty bad way to do this.
+            # 10000 should be replaced with the actual value, But it works.
             current_output = vte.get_text_range_format(
                 Vte.Format(1), 0, 0, 10000, 10000
             )[0]
             current_output = self.remove_blank_lines(current_output)
-            # If the output has changed.
-            if current_output != old_output:
+            # If the output has changed or wait is False.
+            if current_output != old_output or wait == False:
                 lines = current_output.splitlines()
                 new_lines = []
                 start_index = -1
                 # Find the last occurence of start.
                 for i in range(len(lines) - 1, -1, -1):
-                    if lines[i].startswith(start):
+                    start_match = re.search(start, lines[i])
+                    # if lines[i].startswith(start):
+                    if start_match:
                         start_index = i
                         break
                 # Get all the lines after start and up to end, if it's
@@ -671,7 +777,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 end_index = None
                 if end:
                     for i, line in enumerate(new_lines):
-                        if line.strip() == end:
+                        line = line.strip()
+                        end_match = re.search(end, line)
+                        # if line.strip() == end:
+                        if end_match:
                             end_index = i
                             break
                 # If end was found or was None, return the result,
@@ -682,8 +791,11 @@ class MainWindow(Gtk.ApplicationWindow):
                     cleaned_new_output = "\n".join(new_lines)
                     # Check if cleaned_new_output is empty or contains only whitespace.
                     if cleaned_new_output.strip():
-                        result.append(cleaned_new_output)
-                        # print(f'Output from "{command}":\n{cleaned_new_output}')
+                        new_lines = cleaned_new_output.split("\n")
+                        for line in new_lines:
+                            line = line.strip()
+                            result.append(line)
+                        # print(f'Output: {result}')
                     else:
                         result.append(None)
                         # print("The command finished with no output.")
@@ -697,24 +809,46 @@ class MainWindow(Gtk.ApplicationWindow):
 
         GLib.idle_add(check)
 
-    def get_output(self, command=None, start=None, end=">>", timeout=2):
+    def get_output(
+        self,
+        command=None,
+        start=None,
+        end=">>",
+        wait=True,
+        add_enter=True,
+        timeout=2,
+    ):
         """
         The command and start args are optional, but if the command arg is not
         specified the start arg has to be.
         If the start arg is not specified start is set to the command.
         If a command is given, it runs the command.
+        The optional add_enter arg determines whether a "\n" is appended to
+        the command, if a command was specified. By default it is True.
         It returns the output after start, up to the line matching the optional
         end arg, which by default is ">>".
         If end is specified as None, all of the new output will be returned.
+        By default, it won't check for start anything until the output changes.
+        If you don't want it to wait for the output to change,
+        set the optional wait arg to False.
         It returns None if the command finished with no output.
         It returns "Timeout" if the command doesn't finish within the number of
         seconds specified by the optional timeout arg, which by default is 2.
         """
         result = []
-        self.check_output(self.vte_term, command, result, start, end, timeout)
+        self.check_output(
+            self.vte_term,
+            command,
+            result,
+            start,
+            end,
+            wait,
+            add_enter,
+            timeout,
+        )
         while not result:
             GLib.main_context_default().iteration(True)
-        return result[0]
+        return result
 
     def thor_select_device(self):
         def set_selected_device(btn, device_index):
@@ -737,10 +871,9 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         # TODO: I haven't actually tested this with two devices connected.
         # devices = "/dev/device1\n/dev/device2"
-        if not devices or devices == "Timeout":
+        if not devices[0] or devices[0] == "Timeout":
             print("No devices were found!")
         else:
-            devices = devices.split("\n")
             if len(devices) == 1:
                 self.device_index = 1
                 send_selected_device()
@@ -780,10 +913,9 @@ class MainWindow(Gtk.ApplicationWindow):
         devices = self.get_output("list")
         # TODO: I haven't actually tested this with two devices connected.
         # devices = "/dev/device1\n/dev/device2"
-        if not devices or devices == "Timeout":
+        if not devices[0] or devices[0] == "Timeout":
             return None
         else:
-            devices = devices.split("\n")
             if len(devices) == 1:
                 return devices[0]
             else:
@@ -829,6 +961,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 )
                 window.present()
 
+    # TODO: Display the partitions that are to be flashed, using get_output.
     def verify_flash(self):
         window, grid = self.dialog(self.strings["verify_flash"])
         self.create_label(self.strings["are_you_sure"], 0, 0, grid)
@@ -964,6 +1097,9 @@ class MainWindow(Gtk.ApplicationWindow):
             cmd = cmd + "\n"
         self.vte_term.feed_child(cmd.encode("utf-8"))
 
+    # Like send_cmd, but checks for "special" commands that have a function.
+    # As the name suggests, it is used to send by the command entry,
+    # but it can also be used by buttons, such as the connect button.
     def send_cmd_entry(self, cmd):
         cmd = cmd.strip() + "\n"
         special = False
