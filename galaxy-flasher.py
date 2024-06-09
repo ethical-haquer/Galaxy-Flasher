@@ -24,7 +24,6 @@ import os
 import platform
 import re
 import sys
-import tarfile
 import time
 
 import gi
@@ -47,8 +46,8 @@ app_config_dir = os.path.join(config_dir, app_dir)
 if not os.path.exists(app_config_dir):
     os.makedirs(app_config_dir)
 settings_file = os.path.join(app_config_dir, "settings.json")
-locale_file = f"locales/{lang}.json"
 cwd = os.getcwd()
+locale_file = f"locales/{lang}.json"
 arch = platform.architecture()[0][:2]
 system = platform.system().lower()
 
@@ -205,7 +204,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "flash_button",
                     "text": "Flash!",
-                    "command": lambda _: self.thor_flash(),
+                    "command": lambda _: self.flash(),
                 },
             ]
         elif self.flashtool == "pythor":
@@ -299,45 +298,43 @@ class MainWindow(Gtk.ApplicationWindow):
         hamburger.set_icon_name("open-menu-symbolic")
         header.pack_start(hamburger)
         # Create the Option tab widgets.
+        # TODO: This could be improved to be more like the Settings tab.
         row = 0
         if self.flashtool == "thor":
-            self.options = [
+            options = [
                 {"option": "T Flash"},
-                {"option": "EFS Clear"},
+                {"option": "EFS Clear (currently disabled)"},
                 {"option": "Bootloader Update"},
                 {"option": "Reset Flash Count"},
             ]
-            for item in self.options:
+            for item in options:
                 option = item["option"]
                 check_button = self.create_checkbutton(
                     option, 0, row, self.options_grid, (6, 0, 0, 0)
                 )
                 check_button.connect("toggled", self.option_changed)
+                if option == "EFS Clear (currently disabled)":
+                    self.set_widget_state(check_button, state=False)
                 row += 1
         elif self.flashtool == "odin4":
             row = 0
             self.create_label(
-                'The "-V" option will be added once I know what it does.',
-                0,
-                row,
-                self.options_grid,
-                (10, 0, 0, 0),
+                text='The "-V" option will be added once I know what it does.',
+                grid=self.options_grid,
+                row=row,
+                padding=(10, 0, 0, 0),
             )
         elif self.flashtool == "pythor":
             self.create_label(
-                "Currently, PyThor has no options.",
-                0,
-                0,
-                self.options_grid,
-                (10, 0, 0, 0),
+                text="Currently, PyThor has no options.",
+                grid=self.options_grid,
+                padding=(10, 0, 0, 0),
             )
         # Create place-holder label for Pit tab.
         self.create_label(
-            f"{self.strings['just_a_test']}\n\n{self.strings['pull_requests_welcome']}",
-            0,
-            0,
-            self.pit_grid,
-            (10, 0, 0, 0),
+            text=f"{self.strings['just_a_test']}\n\n{self.strings['pull_requests_welcome']}",
+            grid=self.pit_grid,
+            padding=(10, 0, 0, 0),
         )
         # Create the Settings tab widgets.
         row = 0
@@ -346,7 +343,7 @@ class MainWindow(Gtk.ApplicationWindow):
             {"name": "Odin4", "value": "odin4"},
             {"name": "PyThor (in development)", "value": "pythor"},
         ]
-        self.create_menu_button(
+        self.create_setting_button(
             name="Flash Tool",
             setting="flash_tool",
             default_value="thor",
@@ -363,7 +360,7 @@ class MainWindow(Gtk.ApplicationWindow):
             {"name": "Light", "value": "light"},
             {"name": "Dark", "value": "dark"},
         ]
-        self.create_menu_button(
+        self.create_setting_button(
             name="Theme",
             setting="theme",
             default_value="system",
@@ -375,7 +372,7 @@ class MainWindow(Gtk.ApplicationWindow):
             padding=(40, 40, 0, 10),
         )
         row += 1
-        self.create_menu_button(
+        self.create_setting_button(
             name="Run Thor with sudo",
             setting="sudo",
             default_value=False,
@@ -386,6 +383,43 @@ class MainWindow(Gtk.ApplicationWindow):
             grid=self.settings_grid,
             padding=(40, 40, 0, 10),
         )
+        row += 1
+        self.create_setting_button(
+            name="Automatically select all partitions",
+            setting="auto_partitions",
+            default_value=False,
+            default_value_name="Nothing",
+            options=None,
+            column=0,
+            row=row,
+            grid=self.settings_grid,
+            padding=(40, 40, 0, 10),
+        )
+        # Create the terminal's right-click options.
+        term_popover = Gtk.Popover()
+        # This doesn't show an arrow, I'm not sure if we want one though.
+        # term_popover.set_has_arrow(True)
+        term_option_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        copy_button = Gtk.Button(label="Copy", css_classes=["mybutton"])
+        copy_button.connect(
+            "clicked",
+            lambda button: (
+                self.vte_term.copy_clipboard_format(1),
+                term_popover.set_visible(False),
+            ),
+        )
+        paste_button = Gtk.Button(label="Paste", css_classes=["mybutton"])
+        paste_button.connect(
+            "clicked",
+            lambda button: (
+                self.vte_term.paste_clipboard(),
+                term_popover.set_visible(False),
+            ),
+        )
+        term_option_box.append(copy_button)
+        term_option_box.append(paste_button)
+        term_popover.set_child(term_option_box)
+        self.vte_term.set_context_menu(term_popover)
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
@@ -420,28 +454,16 @@ class MainWindow(Gtk.ApplicationWindow):
             json.dump(self.settings, file)
 
     def flash(self):
-        # This doesn't seem to work as expected.
-        # It makes sure all of the selected files are in the same folder,
-        # but it doesn't take into account that there may also be other files.
         if self.flashtool == "thor":
-
-            def toggled_callback(button):
-                if button.get_active():
-                    self.selected_buttons[btn_array[button] - 1][0] = True
-                else:
-                    self.selected_buttons[btn_array[button] - 1][0] = False
-
-            file_names = []
-            self.selected_buttons = []
-            btn_array = {}
-            window, grid = self.dialog("Select Partitions")
-            self.create_label("Select the partitions to flash", 0, 0, grid)
-            row = 1
+            auto = self.settings.get("auto_partitions", False)
+            files = []
             paths = {}
             for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
                 entry = getattr(self, f"{slot}_entry")
                 if entry.get_text():
-                    print(f"Flashing {entry.get_text()} to {slot}")
+                    file_path = entry.get_text()
+                    file = os.path.basename(file_path)
+                    files.append(file)
                     paths[slot] = os.path.dirname(entry.get_text())
             if len(paths) == 0:
                 print(self.strings["no_files_selected2"])
@@ -451,32 +473,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.error_dialog(self.strings["invalid_files"], "flash")
             else:
                 base_dir = list(paths.values())[0]
-                self.send_cmd(f"flashTar {base_dir}")
-                for file_path in os.listdir(base_dir):
-                    print(f"file_path is: {file_path}")
-                    if file_path.endswith(".md5") or file_path.endswith(".tar"):
-                        file_path = os.path.join(base_dir, file_path)
-                        with tarfile.open(file_path) as tar_file:
-                            for member in tar_file.getmembers():
-                                self.selected_buttons.append([False, file_path])
-                                split = member.name.split(".")
-                                # Skip Pit file
-                                if split[1] != "pit":
-                                    name = split[0].upper()
-                                    file_names.append(name)
-                                    btn = self.create_checkbutton(name, 0, row, grid)
-                                    btn.connect("toggled", toggled_callback)
-                                    btn_array[btn] = row
-                                    row += 1
-                self.create_button("Cancel", 1, row, grid, lambda _: window.destroy())
-                self.create_button(
-                    "OK",
-                    2,
-                    row,
-                    grid,
-                    lambda _: (self.send_selected_partitions(), window.destroy()),
-                )
-                window.present()
+                self.thor_select_partitions(files, base_dir, auto)
 
         elif self.flashtool == "odin4":
             args = []
@@ -509,10 +506,94 @@ class MainWindow(Gtk.ApplicationWindow):
                     print(f"Running: {command}")
                     self.send_cmd(command)
 
-    # TODO: Let the user choose what partitions to flash.
-    def thor_select_partitions(self, files, base_dir):
+    # TODO: This function works, but it can be improved.
+    def thor_select_partitions(self, files, base_dir, auto):
         run = 1
         self.prev_file = None
+
+        def send_selected_partitions(selected_partitions):
+            print(f"selected_partitions: {selected_partitions}")
+            n_partitions = len(selected_partitions)
+            for i, partition in enumerate(selected_partitions):
+                if partition == True:
+                    print('SENDING: "Space"')
+                    self.send_cmd("\x20", False)
+                    time.sleep(0.05)
+                # If it's the last partition displayed,
+                # we don't need to send a down arrow.
+                if not i == n_partitions:
+                    print('SENDING: "Down Arrow"')
+                    self.send_cmd("\x1b[B", False)
+                    time.sleep(0.05)
+
+        def display_partitions(partitions, file):
+            selected_partitions = []
+
+            def partition_toggled(button, row):
+                if button.get_active():
+                    selected_partitions[row] = True
+                else:
+                    selected_partitions[row] = False
+
+            def return_selected_partitions(cancel=False):
+                window.destroy()
+                if not cancel:
+                    send_selected_partitions(selected_partitions)
+                print('SENDING: "Enter"')
+                self.send_cmd("\n", False)
+                time.sleep(0.3)
+                GLib.idle_add(select)
+
+            window, grid = self.create_window("Select Partitions")
+            window.connect(
+                "close_request", lambda _: return_selected_partitions(cancel=True)
+            )
+            row = 0
+            self.create_label(
+                text="Select what partitions to flash from:",
+                grid=grid,
+                row=row,
+                padding=(5, 5, 5, 5),
+                align=Gtk.Align.CENTER,
+                width=2,
+            )
+            row += 1
+            self.create_label(
+                text=file,
+                grid=grid,
+                row=row,
+                padding=(5, 5, 0, 5),
+                align=Gtk.Align.CENTER,
+                width=2,
+            )
+            row += 1
+            for i, partition in enumerate(partitions):
+                btn = self.create_checkbutton(
+                    partition, 0, row, grid, padding=(5, 5, 0, 0), width=2
+                )
+                btn.connect(
+                    "toggled",
+                    lambda _, btn=btn, row=i: partition_toggled(btn, row),
+                )
+                selected_partitions.append(False)
+                row += 1
+            self.create_button(
+                "Cancel",
+                0,
+                row,
+                grid,
+                lambda _: return_selected_partitions(cancel=True),
+                padding=(5, 10, 5, 5),
+            )
+            self.create_button(
+                "OK",
+                1,
+                row,
+                grid,
+                lambda _: return_selected_partitions(),
+                padding=(0, 5, 5, 5),
+            )
+            window.present()
 
         def select():
             nonlocal run
@@ -566,60 +647,41 @@ class MainWindow(Gtk.ApplicationWindow):
                         print(f"No partitions were detected. {partitions[0]}")
                     else:
                         print(f"PARTITIONS: {partitions}")
-                        n_partitions = len(partitions)
-                        partition_run = 1
-                        for partition in partitions:
-                            print('SENDING: "Space"')
-                            self.send_cmd("\x20", False)
-                            time.sleep(0.05)
-                            # If it's the last partition displayed,
-                            # we don't need to send a down arrow.
-                            if not partition_run == n_partitions:
-                                print('SENDING: "Down Arrow"')
-                                self.send_cmd("\x1b[B", False)
-                                time.sleep(0.05)
-                            partition_run += 1
-                        # Send "Enter" once we have selected the partitions
-                        # that we want.
-                        print('SENDING: "Enter"')
-                        self.send_cmd("\n", False)
+                        selected_partitions = []
+                        # If the "Automatically select all partitions"
+                        # setting is True.
+                        if auto:
+                            print("Automatically selecting all partitions.")
+                            for partition in partitions:
+                                selected_partitions.append(True)
+                            send_selected_partitions(selected_partitions)
+                            # Send "Enter" once we have selected the partitions
+                            # that we want.
+                            print('SENDING: "Enter"')
+                            self.send_cmd("\n", False)
+                            run += 1
+                            self.prev_file = file
+                            time.sleep(0.3)
+                            return GLib.SOURCE_CONTINUE
+                        else:
+                            print(f'Select what partitions to flash from: "{file}"')
+                            display_partitions(partitions, joined_file)
+                            run += 1
+                            self.prev_file = file
+
                 # If the file wasn't selected by the user.
                 else:
                     print("File was NOT selected.")
                     print('SENDING: "Enter"')
                     self.send_cmd("\n", False)
-            run += 1
-            self.prev_file = file
-            time.sleep(0.3)
-            return GLib.SOURCE_CONTINUE
+                    run += 1
+                    self.prev_file = file
+                    time.sleep(0.3)
+                    return GLib.SOURCE_CONTINUE
 
         GLib.idle_add(select)
 
-    def thor_flash(self):
-        file_paths = []
-        files = []
-        paths = {}
-        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
-            entry = getattr(self, f"{slot}_entry")
-            if entry.get_text():
-                file_path = entry.get_text()
-                file = os.path.basename(file_path)
-                file_paths.append(file_path)
-                files.append(file)
-                # print(f"Flashing {entry.get_text()} to {slot}")
-                paths[slot] = os.path.dirname(entry.get_text())
-        if len(paths) == 0:
-            print(self.strings["no_files_selected2"])
-            self.error_dialog(self.strings["no_files_selected2"], "flash")
-        elif len(set(paths.values())) > 1:
-            print("The files NEED to be in the same dir...")
-            self.error_dialog(self.strings["invalid_files"], "flash")
-        else:
-            base_dir = list(paths.values())[0]
-            self.thor_select_partitions(files, base_dir)
-
-    def dialog(self, title):
-        # Create grid
+    def create_window(self, title):
         grid = Gtk.Grid()
         window = Gtk.Window()
         window.set_modal(True)
@@ -875,8 +937,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.device_index = 1
                 send_selected_device()
             else:
-                window, grid = self.dialog(self.strings["connect_device"])
-                self.create_label(self.strings["choose_a_device"], 0, 0, grid)
+                window, grid = self.create_window(self.strings["connect_device"])
+                self.create_label(text=self.strings["choose_a_device"], grid=grid)
                 group = None
                 row = 1
                 for index, device in enumerate(devices):
@@ -929,8 +991,8 @@ class MainWindow(Gtk.ApplicationWindow):
                         print(f"Selected device: {self.device}")
                         return self.device
 
-                window, grid = self.dialog(self.strings["connect_device"])
-                self.create_label(self.strings["choose_a_device"], 0, 0, grid)
+                window, grid = self.create_window(self.strings["connect_device"])
+                self.create_label(text=self.strings["choose_a_device"], grid=grid)
                 group = None
                 row = 1
                 for index, device in enumerate(devices):
@@ -960,8 +1022,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
     # TODO: Display the partitions that are to be flashed, using get_output.
     def verify_flash(self):
-        window, grid = self.dialog(self.strings["verify_flash"])
-        self.create_label(self.strings["are_you_sure"], 0, 0, grid)
+        window, grid = self.create_window(self.strings["verify_flash"])
+        self.create_label(text=self.strings["are_you_sure"], grid=grid)
         buttons = [
             {
                 "text": self.strings["yes"],
@@ -1089,7 +1151,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.vte_term.feed_child(cmd.encode("utf-8"))
 
     # Like send_cmd, but checks for "special" commands that have a function.
-    # As the name suggests, it is used to send by the command entry,
+    # As the name suggests, it is used for the command entry,
     # but it can also be used by buttons, such as the connect button.
     def send_cmd_entry(self, cmd):
         cmd = cmd.strip() + "\n"
@@ -1098,6 +1160,9 @@ class MainWindow(Gtk.ApplicationWindow):
             if cmd == "connect\n":
                 special = True
                 self.thor_select_device()
+            if cmd == "flashTar\n":
+                special = True
+                self.flash()
         if not special:
             self.vte_term.feed_child(cmd.encode("utf-8"))
 
@@ -1119,7 +1184,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         file_dialog = Gtk.FileDialog(title=f"Select a {partition} file")
         odin_filter = Gtk.FileFilter()
-        odin_filter.set_name("ODIN files")
+        odin_filter.set_name("Odin files")
         odin_filter.add_mime_type("application/x-tar")
         odin_filter.add_pattern("*.tar.md5")
         odin_filter.add_pattern("*.tar")
@@ -1131,9 +1196,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def create_label(
         self,
         text,
-        column,
-        row,
         grid,
+        column=0,
+        row=0,
         padding=(0, 0, 0, 0),
         font=("monospace", 11),
         align=Gtk.Align.START,
@@ -1156,7 +1221,7 @@ class MainWindow(Gtk.ApplicationWindow):
         grid.attach(button, column, row, width, height)
         return button
 
-    def on_button_clicked(self, name, setting, value, setting_label, popover):
+    def on_option_button_clicked(self, name, setting, value, setting_label, popover):
         setting_label.set_label(name)
         popover.set_visible(False)
         self.set_setting(setting, value)
@@ -1164,7 +1229,7 @@ class MainWindow(Gtk.ApplicationWindow):
     # TODO:
     # Make the button look slightly more rounded?
     # Move the popover to the right?
-    def create_menu_button(
+    def create_setting_button(
         self,
         name,
         setting,
@@ -1182,24 +1247,26 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # If the setting is boolean.
         if is_boolean:
-            height_margin -= 3
+            height_margin -= 3.5
 
             # Create the button
             button = Gtk.Button()
             button.set_hexpand(True)
             button.set_sensitive(True)
 
-            # Create the toggle-switch
-            switch = Gtk.Switch()
-            switch.set_active(self.settings.get(setting, default_value))
-            switch.connect("state-set", self.toggle_changed, setting)
-            switch.set_halign(Gtk.Align.END)
-            switch.set_hexpand(True)
+            # Create the toggle_switch
+            toggle_switch = Gtk.Switch()
+            toggle_switch.set_active(self.settings.get(setting, default_value))
+            toggle_switch.connect("state-set", self.toggle_changed, setting)
+            toggle_switch.set_halign(Gtk.Align.END)
+            toggle_switch.set_hexpand(True)
 
             # Connect the button to button_clicked.
-            button.connect("clicked", lambda _: self.button_clicked(switch, setting))
+            button.connect(
+                "clicked", lambda _: self.button_clicked(toggle_switch, setting)
+            )
 
-            # Create the main box, which holds the label and toggle-switch.
+            # Create the main_box, which holds the label and toggle_switch.
             main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
             main_box.set_margin_start(width_margin)
             main_box.set_margin_end(width_margin)
@@ -1211,7 +1278,7 @@ class MainWindow(Gtk.ApplicationWindow):
             label = Gtk.Label(label=name)
             label.set_halign(Gtk.Align.START)
             main_box.append(label)
-            main_box.append(switch)
+            main_box.append(toggle_switch)
 
             button.set_child(main_box)
 
@@ -1265,7 +1332,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 )
                 option_button.connect(
                     "clicked",
-                    lambda _, opt=option_button_name, set=setting, val=option_button_value, lab=current_value_label, pop=popover: self.on_button_clicked(
+                    lambda _, opt=option_button_name, set=setting, val=option_button_value, lab=current_value_label, pop=popover: self.on_option_button_clicked(
                         opt, set, val, lab, pop
                     ),
                 )
@@ -1298,10 +1365,19 @@ class MainWindow(Gtk.ApplicationWindow):
         return entry
 
     def create_checkbutton(
-        self, label, column, row, grid, padding=(0, 0, 0, 0), width=1, height=1
+        self,
+        label,
+        column,
+        row,
+        grid,
+        padding=(0, 0, 0, 0),
+        align=Gtk.Align.START,
+        width=1,
+        height=1,
     ):
         check_button = Gtk.CheckButton(label=label)
         self.set_padding(check_button, padding)
+        check_button.set_halign(align)
         grid.attach(check_button, column, row, width, height)
         return check_button
 
@@ -1320,7 +1396,7 @@ class MainWindow(Gtk.ApplicationWindow):
     ):
         current_value = self.settings.get(setting, default_value)
         # Create the label
-        self.create_label(name, column, row, grid, padding, font)
+        self.create_label(name, grid, column, row, padding, font)
         # Create the radiobuttons
         radiobutton_group = None
         for i, item in enumerate(radiobuttons):
