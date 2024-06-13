@@ -46,8 +46,8 @@ app_config_dir = os.path.join(config_dir, app_dir)
 if not os.path.exists(app_config_dir):
     os.makedirs(app_config_dir)
 settings_file = os.path.join(app_config_dir, "settings.json")
-cwd = os.getcwd()
-locale_file = f"locales/{lang}.json"
+swd = os.path.dirname(os.path.realpath(__file__))
+locale_file = f"{swd}/locales/{lang}.json"
 arch = platform.architecture()[0][:2]
 system = platform.system().lower()
 
@@ -81,14 +81,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self.flashtool = self.settings.get("flash_tool", "thor")
         if self.flashtool == "thor":
             flashtool_path = (
-                f"{cwd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
+                f"{swd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
             )
             self.prompt = "shell> "
         elif self.flashtool == "odin4":
-            flashtool_path = f"{cwd}/odin4-wrapper.sh"
+            flashtool_path = f"{swd}/odin4-wrapper.sh"
             self.prompt = ">> "
         elif self.flashtool == "pythor":
-            flashtool_path = f"{cwd}/flash-tools/pythor/{system}/pythor_cli"
+            flashtool_path = f"{swd}/flash-tools/pythor/{system}/pythor_cli"
             self.prompt = ">> "
         # Only use the sudo setting for Thor.
         if self.settings.get("sudo", False) and self.flashtool == "thor":
@@ -128,7 +128,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.vte_term = Vte.Terminal()
         self.vte_term.spawn_async(
             Vte.PtyFlags.DEFAULT,  # Pty Flags
-            cwd,  # Working DIR
+            swd,  # Working DIR
             flashtool_exec,  # Command/BIN (argv)
             None,  # Environmental Variables (env)
             GLib.SpawnFlags.DEFAULT,  # Spawn Flags
