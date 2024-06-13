@@ -376,7 +376,7 @@ class MainWindow(Gtk.ApplicationWindow):
             name="Run Thor with sudo",
             setting="sudo",
             default_value=False,
-            default_value_name="Nothing",
+            default_value_name=None,
             options=None,
             column=0,
             row=row,
@@ -385,10 +385,10 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         row += 1
         self.create_setting_button(
-            name="Automatically select all partitions",
+            name="[Thor] Automatically select all partitions",
             setting="auto_partitions",
             default_value=False,
-            default_value_name="Nothing",
+            default_value_name=None,
             options=None,
             column=0,
             row=row,
@@ -506,10 +506,17 @@ class MainWindow(Gtk.ApplicationWindow):
                     print(f"Running: {command}")
                     self.send_cmd(command)
 
-    # TODO: This function works, but it can be improved.
+    def shorten_string(self, string, length):
+        current_length = len(string)
+        if current_length > length:
+            new_string = string[: length - 3] + "..."
+        else:
+            new_string = string
+        return new_string
+
     def thor_select_partitions(self, files, base_dir, auto):
-        run = 1
-        self.prev_file = None
+        self.retry_partition = False
+        run = 0
 
         def send_selected_partitions(selected_partitions):
             print(f"selected_partitions: {selected_partitions}")
@@ -597,87 +604,106 @@ class MainWindow(Gtk.ApplicationWindow):
 
         def select():
             nonlocal run
+            run += 1
             print(f"RUN {run}")
+            end = None
+            command = None
+            wait = True
+            if self.retry_partition:
+                wait = False
+                self.retry_partition = False
             # If this is the first run, run the flashTar command.
             if run == 1:
+                end = "(Press <space> to select, <enter> to accept)"
                 command = f"flashTar {base_dir}"
                 print(f'RUNNING: "{command}"')
                 self.send_cmd(command)
-
-            # Get the filename from the output.
-            file = self.get_output(
+            # Get the output.
+            output = self.get_output(
                 command=None,
-                start="Choose what partitions to flash from",
-                end="> [ ]*",
-                wait=False,
+                start="shell>*",
+                end=end,
+                wait=wait,
             )
-            if not file[0] or file[0] == "Timeout":
-                print("No file was found.")
-                return GLib.SOURCE_REMOVE
-            # In some cases we are too fast and the output will still have
-            # the old file displayed, in that case skip it.
-            elif file == self.prev_file:
-                print("SKIP")
+            # print(f"output: {output}")
+            if not output[0] or output[0] == "Timeout":
+                print("No output was found.")
                 return GLib.SOURCE_CONTINUE
             else:
-                # This joins the file together if it's displayed on multiple
-                # lines.
-                joined_file = None
-                if len(file) > 1:
-                    joined_file = "".join(file)
-                else:
-                    joined_file = file[0]
-                if joined_file.endswith(":"):
-                    joined_file = joined_file[:-1]
-                print(f'FILE: "{joined_file}"')
-                # If the file was selected by the user.
-                if joined_file in files:
-                    print("File was selected.")
-                    start = file[-1]
-                    time.sleep(0.2)
-                    # Something to try: Use only one call to get_output,
-                    # and extract the file and partitions from it.
-                    partitions = self.get_output(
-                        command=None,
-                        start=start,
-                        end="(Press <space> to select, <enter> to accept)",
-                        wait=False,
-                    )
-                    if not partitions[0] or partitions[0] == "Timeout":
-                        print(f"No partitions were detected. {partitions[0]}")
-                    else:
-                        print(f"PARTITIONS: {partitions}")
-                        selected_partitions = []
-                        # If the "Automatically select all partitions"
-                        # setting is True.
-                        if auto:
-                            print("Automatically selecting all partitions.")
-                            for partition in partitions:
-                                selected_partitions.append(True)
-                            send_selected_partitions(selected_partitions)
-                            # Send "Enter" once we have selected the partitions
-                            # that we want.
+                # If the output is for selecting partitions and is complete.
+                if output[0] == "Choose what partitions to flash from":
+                    print("Found start of partitions.")
+                    if output[-1] == "(Press <space> to select, <enter> to accept)":
+                        print("Found end of partitions.")
+                        output = output[1:]
+                        file_lines = []
+                        for line in output:
+                            if line.startswith("> [ ]"):
+                                break
+                            file_lines.append(line)
+
+                        file = ""
+                        if file_lines:
+                            if ":" in file_lines[0]:
+                                file = file_lines[0].split(":")[0].strip()
+                            else:
+                                file = "".join(file_lines)
+                                if file.endswith(":"):
+                                    file = file[:-1]
+
+                        print(f'FILE: "{file}"')
+                        # If the file was selected by the user.
+                        if file in files:
+                            print("File was selected.")
+                            # Extract the partitions
+                            partitions = [
+                                line.lstrip("> [ ] ")
+                                for line in output
+                                if line.startswith("> [ ] ") or line.startswith("[ ] ")
+                            ]
+                            print(f"PARTITIONS: {partitions}")
+                            selected_partitions = []
+                            # If the "Automatically select all partitions"
+                            # setting is True.
+                            if auto:
+                                print("Automatically selecting all partitions.")
+                                for partition in partitions:
+                                    selected_partitions.append(True)
+                                send_selected_partitions(selected_partitions)
+                                # Send "Enter" once we have selected the partitions
+                                # that we want.
+                                print('SENDING: "Enter"')
+                                self.send_cmd("\n", False)
+                                time.sleep(0.3)
+                                return GLib.SOURCE_CONTINUE
+                            else:
+                                print(f'Select what partitions to flash from: "{file}"')
+                                shortened_file = self.shorten_string(file, 46)
+                                display_partitions(partitions, shortened_file)
+                        # If the file wasn't selected by the user.
+                        else:
+                            print("File wasn't selected.")
                             print('SENDING: "Enter"')
                             self.send_cmd("\n", False)
-                            run += 1
-                            self.prev_file = file
                             time.sleep(0.3)
                             return GLib.SOURCE_CONTINUE
-                        else:
-                            print(f'Select what partitions to flash from: "{file}"')
-                            display_partitions(partitions, joined_file)
-                            run += 1
-                            self.prev_file = file
-
-                # If the file wasn't selected by the user.
+                    else:
+                        self.retry_partition = True
+                        return GLib.SOURCE_CONTINUE
+                elif (
+                    output[-1]
+                    == "Are you absolutely sure you want to flash those? [y/n] (n):"
+                ):
+                    print("Verifying flash.")
+                    n_partitions = re.search(r"(\d+) partitions", output[0])
+                    partition_list = []
+                    for line in output[1:-1]:
+                        partition_list.append(line)
+                    self.verify_flash(n_partitions.group(1), partition_list, auto)
+                    return GLib.SOURCE_REMOVE
                 else:
-                    print("File was NOT selected.")
-                    print('SENDING: "Enter"')
-                    self.send_cmd("\n", False)
-                    run += 1
-                    self.prev_file = file
-                    time.sleep(0.3)
-                    return GLib.SOURCE_CONTINUE
+                    print("Unknown output.")
+                    return GLib.SOURCE_REMOVE
 
         GLib.idle_add(select)
 
@@ -741,9 +767,6 @@ class MainWindow(Gtk.ApplicationWindow):
                     # You have to reboot each time."
                     lambda: self.set_widget_state(self.start_odin_button, state=False),
                 ],
-                "Are you absolutely sure you want to flash those?": [
-                    lambda: self.verify_flash()
-                ],
             }
         elif self.flashtool == "odin4":
             strings_to_commands = {
@@ -797,8 +820,8 @@ class MainWindow(Gtk.ApplicationWindow):
         start_time = time.time()
         if start:
             start = start.strip()
+        # If start isn't specified, use the command as start.
         else:
-            # If start isn't specified, use the command as start.
             if command:
                 start = self.prompt + command
             else:
@@ -1020,24 +1043,48 @@ class MainWindow(Gtk.ApplicationWindow):
                 )
                 window.present()
 
-    # TODO: Display the partitions that are to be flashed, using get_output.
-    def verify_flash(self):
+    # TODO: Display the partitions that are to be flashed.
+    def verify_flash(self, n, partitions, auto):
         window, grid = self.create_window(self.strings["verify_flash"])
-        self.create_label(text=self.strings["are_you_sure"], grid=grid)
-        buttons = [
-            {
-                "text": self.strings["yes"],
-                "command": lambda _: (self.send_cmd("y"), window.destroy()),
-            },
-            {
-                "text": self.strings["no"],
-                "command": lambda _: (self.send_cmd("n"), window.destroy()),
-            },
-        ]
-        column = 1
-        for btn in buttons:
-            self.create_button(btn["text"], column, 1, grid, btn["command"])
-            column += 1
+        row = 1
+        if auto:
+            noun = "The computer"
+        else:
+            noun = "You"
+        self.create_label(
+            text=f"{noun} selected {n} partitions to flash.",
+            grid=grid,
+            row=row,
+            padding=(5, 5, 5, 5),
+            align=Gtk.Align.CENTER,
+            width=2,
+        )
+        row += 1
+        self.create_label(
+            text="Are you absolutely sure you want to flash them?",
+            grid=grid,
+            row=row,
+            padding=(5, 5, 0, 0),
+            align=Gtk.Align.CENTER,
+            width=2,
+        )
+        row += 1
+        self.create_button(
+            "Yes",
+            0,
+            row,
+            grid,
+            lambda _: (self.send_cmd("y"), window.destroy()),
+            padding=(5, 10, 5, 5),
+        )
+        self.create_button(
+            "No",
+            1,
+            row,
+            grid,
+            lambda _: (self.send_cmd("n"), window.destroy()),
+            padding=(0, 5, 5, 5),
+        )
         window.present()
 
     def option_changed(self, button):
