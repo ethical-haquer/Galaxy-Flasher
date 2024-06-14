@@ -19,7 +19,7 @@ A GUI for Samsung Flash Tools.
   Options Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d7624e29-6d1a-4626-837d-f21ec9304140">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/621b8ecf-c748-499d-8f4c-a8f612f293a2">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/dad26804-0c18-41e5-86a9-2dacd107f18f">
     <img alt="Options Tab">
   </picture>
@@ -27,7 +27,7 @@ A GUI for Samsung Flash Tools.
   Pit Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/89c3e1ab-4d69-4d39-8da9-c26907675390">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/50cda73e-fa59-41f1-a205-3c49f93289dd">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4f5bdf5e-7ecd-43dc-af92-126d442820d0">
     <img alt="Pit Tab">
   </picture>
@@ -35,41 +35,17 @@ A GUI for Samsung Flash Tools.
   Settings Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/2034dddc-fe24-4819-8c07-11f2bec85c1b">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/d574eb2b-c592-4d74-951b-d3effcd9e345">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/8a1a3712-394f-4d9c-b84e-b2eaa151a5f7">
     <img alt="Settings Tab">
   </picture>
   <br>
-  Help Tab:
+  About Dialog:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/b988cf6f-8f73-4cff-a50c-371dc781aa49">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/0d697247-1c1e-4769-9f15-e6b01c580cc6">
-    <img alt="Help Tab">
-  </picture>
-  <br>
-  About Tab:
-  <br>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/795acfc2-404f-4e74-9acf-3a269b7119dd">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/6b479807-9206-41aa-b15a-874867a51825">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d16c0e4d-65a7-46f8-b976-b34b7c57a116">
     <img alt="About Tab">
-  </picture>
-  <br>
-  Command Entry:
-  <br>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/7d875fc7-bead-47bd-943c-d3622b320546">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/136b84a6-81f8-4ed9-b7e2-1e2ebfc973ff">
-    <img alt="Command Entry">
-  </picture>
-  <br>
-  "Connect Device" Window:
-  <br>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d4574054-5f7f-4c8a-9d4c-4de41c3690fd">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d4574054-5f7f-4c8a-9d4c-4de41c3690fd">
-    <img alt="Connect Device Window">
   </picture>
   <br>
   "Select Partitions" Window:
