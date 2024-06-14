@@ -20,7 +20,7 @@ A GUI for Samsung Flash Tools.
   <br>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/621b8ecf-c748-499d-8f4c-a8f612f293a2">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/dad26804-0c18-41e5-86a9-2dacd107f18f">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/dc08a6bf-2e10-47b0-b7c5-d0ae7a11d695">
     <img alt="Options Tab">
   </picture>
   <br>
@@ -28,7 +28,7 @@ A GUI for Samsung Flash Tools.
   <br>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/50cda73e-fa59-41f1-a205-3c49f93289dd">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/4f5bdf5e-7ecd-43dc-af92-126d442820d0">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/88fee46a-ed65-4c38-87ba-6695b6e5ae34">
     <img alt="Pit Tab">
   </picture>
   <br>
@@ -36,7 +36,7 @@ A GUI for Samsung Flash Tools.
   <br>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/d574eb2b-c592-4d74-951b-d3effcd9e345">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/8a1a3712-394f-4d9c-b84e-b2eaa151a5f7">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/58f92b1a-0390-4620-995b-06104a7eda71">
     <img alt="Settings Tab">
   </picture>
   <br>
@@ -44,14 +44,14 @@ A GUI for Samsung Flash Tools.
   <br>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/6b479807-9206-41aa-b15a-874867a51825">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/d16c0e4d-65a7-46f8-b976-b34b7c57a116">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/3bfe072f-6cfc-4e5e-8512-0e1561b2834a">
     <img alt="About Tab">
   </picture>
   <br>
   "Select Partitions" Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/620d05e8-872e-44d7-946e-fca7bf80e311">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/dc7cea25-1819-4ccd-b119-dd45ca7fab61">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/83a61e3c-09d7-41a5-8178-124abc6fc623">
     <img alt="Select Partitions Window">
   </picture>
@@ -59,7 +59,7 @@ A GUI for Samsung Flash Tools.
   "Verify Flash" Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/7d3d6e6c-af3c-48eb-bd31-263741b3f5b7">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/ead15566-0efa-4e95-a834-01d3ab01c2dd">
     <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Thor_GUI/assets/141518185/48a7da84-1474-4d09-9b9d-ae2a74d02100">
     <img alt="Verify Flash Window">
   </picture>
