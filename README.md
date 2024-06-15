@@ -7,7 +7,7 @@ A GUI for Samsung Flash Tools.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/9402d060-bf1c-4b0b-b901-558006272952">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/f157cbad-d09c-40ae-a68d-91512d52211a">
   <img alt="Screenshot of Thor GUI">
 </picture>
 <details>
