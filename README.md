@@ -62,13 +62,13 @@ A GUI for Samsung Flash Tools.
   </picture>
 </details>
 
-## Intro
+## Background
 
-After witnessing a new Linux user, who had just switched over from Windows, struggle with using Odin4's CLI, I decided to try and make a GUI for the Thor Flash Utility. If you aren't comfortable with the command line, or just prefer a GUI, then this could be helpful for you. On the other hand, if you are comfortable using the command line, then you may just want to use Thor in the terminal. And yes, this is my first GitHub project, so please let me know if you have any suggestions. :slightly_smiling_face:
+After witnessing a new Linux user, who had just switched over from Windows, struggle with using Odin4's CLI, I decided to make a GUI for Thor: Thor GUI. With the release of v0.5.0, Thor GUI was renamed Galaxy Flasher, and it supports Thor and Odin4.
 
 ## Disclaimer
 
-Currently, Galaxy Flasher is in an Alpha stage. Not all of Thor's features have been implemented in the GUI, and there are known (and possibly unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. There are known (and possibly unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
@@ -77,7 +77,8 @@ In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues),
 
 ## Supported platforms
 
-- [x] Linux (x64 and arm64)
+- [x] Linux x64
+- [x] Linux arm64 (WIP, only Thor can be used)
 - [ ] Windows
 - [ ] macOS
 
@@ -134,9 +135,7 @@ pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal zenipy
 
 ## Usage
 
-**NOTE:** This screen-recording is not up-to-date. I really need to automate creating it...
-
-https://github.com/ethical-haquer/Thor_GUI/assets/141518185/5df866bb-74d1-40ba-b5b0-571ed88d68a3
+[Galaxy-Flasher-Thor-Screencast-Dark.webm](https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/bc8c07d5-17ea-447a-b4b2-98aa295cc3e6)
 
 <details>
   <summary><b>Guide</b></summary>
