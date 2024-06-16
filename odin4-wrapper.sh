@@ -21,7 +21,7 @@
 
 BASEDIR=$(dirname $0)
 
-odin4_exec="$BASEDIR/flash-tools/odin4/linux/x64/odin4"
+odin4_exec="$BASEDIR/flash-tools/odin4/linux/x86_64/odin4"
 
 end="\033[0m"
 green="\033[38;2;38;162;105m"

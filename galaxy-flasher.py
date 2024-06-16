@@ -48,7 +48,7 @@ if not os.path.exists(app_config_dir):
 settings_file = os.path.join(app_config_dir, "settings.json")
 swd = os.path.dirname(os.path.realpath(__file__))
 locale_file = f"{swd}/locales/{lang}.json"
-arch = platform.architecture()[0][:2]
+machine = platform.machine()
 system = platform.system().lower()
 
 
@@ -75,26 +75,53 @@ class MainWindow(Gtk.ApplicationWindow):
             self.strings = json.load(json_string)
         # Load settings
         self.load_settings()
-        # Set the flash-tool path
-        # TODO: Handle cases where the OS isn't linux or
-        # the architecture isn't x64.
         self.flashtool = self.settings.get("flash_tool", "thor")
-        if self.flashtool == "thor":
-            flashtool_path = (
-                f"{swd}/flash-tools/thor/{system}/x{arch}/TheAirBlow.Thor.Shell"
+        # If the system isn't linux.
+        if system != "linux":
+            print("Currently, Galaxy Flasher only supports Linux.")
+            self.connect(
+                "show",
+                lambda _: self.error_dialog(
+                    "Unsupported OS", "Currently, Galaxy Flasher only supports Linux."
+                ),
             )
-            self.prompt = "shell> "
-        elif self.flashtool == "odin4":
-            flashtool_path = f"{swd}/odin4-wrapper.sh"
-            self.prompt = ">> "
-        elif self.flashtool == "pythor":
-            flashtool_path = f"{swd}/flash-tools/pythor/{system}/pythor_cli"
-            self.prompt = ">> "
-        # Only use the sudo setting for Thor.
-        if self.settings.get("sudo", False) and self.flashtool == "thor":
-            flashtool_exec = ["sudo", flashtool_path]
+            flashtool_exec = [
+                "echo",
+                f"{system} is currently not supported by Galaxy Flasher.\nIf you think this is incorrect, please open an issue on GitHub, or let me know on XDA.",
+            ]
+        # If the system is linux.
         else:
-            flashtool_exec = [flashtool_path]
+            # Set the flash-tool path
+            if self.flashtool == "thor":
+                flashtool_path = (
+                    f"{swd}/flash-tools/thor/{system}/{machine}/TheAirBlow.Thor.Shell"
+                )
+                self.prompt = "shell> "
+            elif self.flashtool == "odin4":
+                flashtool_path = f"{swd}/odin4-wrapper.sh"
+                self.prompt = ">> "
+            elif self.flashtool == "pythor":
+                flashtool_path = f"{swd}/flash-tools/pythor/{system}/pythor_cli"
+                self.prompt = ">> "
+            # Only use the sudo setting for Thor.
+            if self.settings.get("sudo", False) and self.flashtool == "thor":
+                flashtool_exec = ["sudo", flashtool_path]
+            else:
+                flashtool_exec = [flashtool_path]
+            # Check if flashtool_path exists.
+            if not os.path.isfile(flashtool_path):
+                print(f"Error: File {flashtool_path} not found")
+                flashtool_exec = [
+                    "echo",
+                    f'The file: "{flashtool_path}" was not found.',
+                ]
+                self.connect(
+                    "show",
+                    lambda _: self.error_dialog(
+                        "File not found",
+                        f'The file: "{flashtool_path}" was not found.',
+                    ),
+                )
         # Define main grid
         self.grid = Gtk.Grid()
         self.grid.set_column_spacing(10)
@@ -118,12 +145,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self.grid.attach_next_to(
             self.stack, self.stack_switcher, Gtk.PositionType.BOTTOM, 1, 6
         )
-        # Check if flash-tool executable exists
-        if not os.path.isfile(flashtool_path):
-            print(f"Error: File {flashtool_path} not found")
-            self.realize_id = self.connect(
-                "show", lambda _: self.flashtool_not_found_dialog(flashtool_path)
-            )
         # Create flash-tool output box
         self.vte_term = Vte.Terminal()
         self.vte_term.spawn_async(
@@ -437,12 +458,6 @@ class MainWindow(Gtk.ApplicationWindow):
         """
         )
 
-    def flashtool_not_found_dialog(self, flashtool_path):
-        self.disconnect(self.realize_id)
-        self.error_dialog(
-            self.strings["file_not_found2"].format(file=flashtool_path), "__init__"
-        )
-
     def load_settings(self):
         self.settings = {}
         if os.path.exists(settings_file):
@@ -467,10 +482,10 @@ class MainWindow(Gtk.ApplicationWindow):
                     paths[slot] = os.path.dirname(entry.get_text())
             if len(paths) == 0:
                 print(self.strings["no_files_selected2"])
-                self.error_dialog(self.strings["no_files_selected2"], "flash")
+                self.error_dialog("Invalid files", self.strings["no_files_selected2"])
             elif len(set(paths.values())) > 1:
                 print("The files NEED to be in the same dir...")
-                self.error_dialog(self.strings["invalid_files"], "flash")
+                self.error_dialog("Invalid files", self.strings["invalid_files"])
             else:
                 base_dir = list(paths.values())[0]
                 self.thor_select_partitions(files, base_dir, auto)
@@ -493,13 +508,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     args.append(file_arg)
             if len(args) == 0:
                 print(self.strings["no_files_selected2"])
-                self.error_dialog(self.strings["no_files_selected2"], "flash")
+                self.error_dialog("Invalid files", self.strings["no_files_selected2"])
             else:
                 device = self.odin4_select_device()
                 if not device:
                     message = "No devices were found - First connect a device that's in Download Mode"
                     print(message)
-                    self.error_dialog(message, "flash")
+                    self.error_dialog(
+                        "No devices were found",
+                        "First connect a device that's in Download Mode",
+                    )
                 else:
                     args.insert(0, f"-d {device}")
                     command = " ".join(["flash"] + args)
@@ -637,11 +655,14 @@ class MainWindow(Gtk.ApplicationWindow):
                         print("Found end of partitions.")
                         output = output[1:]
                         file_lines = []
+                        print(output)
                         for line in output:
                             if line.startswith("> [ ]"):
                                 break
+                            # This is displayed if Thor can't match any partitions.
+                            elif line == "…":
+                                break
                             file_lines.append(line)
-
                         file = ""
                         if file_lines:
                             if ":" in file_lines[0]:
@@ -650,7 +671,6 @@ class MainWindow(Gtk.ApplicationWindow):
                                 file = "".join(file_lines)
                                 if file.endswith(":"):
                                     file = file[:-1]
-
                         print(f'FILE: "{file}"')
                         # If the file was selected by the user.
                         if file in files:
@@ -1145,10 +1165,10 @@ class MainWindow(Gtk.ApplicationWindow):
         background.parse(terminal_background)
         self.vte_term.set_colors(foreground, background, None)
 
-    def error_dialog(self, message, function):
+    def error_dialog(self, title, message):
         dialog = Gtk.AlertDialog()
         dialog.set_modal(True)
-        dialog.set_message(f"Error in {function} function")
+        dialog.set_message(title)
         dialog.set_detail(message)
         dialog.set_buttons(["OK"])
         dialog.show(self)
