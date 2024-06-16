@@ -68,70 +68,71 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Galaxy Flasher is in an Alpha stage. There are known (and possibly unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. There are known (and possibly unknown) bugs. Also, it was just completely re-written, so the readme is still in the process of getting updated. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
-
-In addition to [Thor's own issues](https://github.com/Samsung-Loki/Thor/issues), here are Galaxy Flasher's:
-
 
 ## Supported platforms
 
 - [x] Linux x64
-- [x] Linux arm64 (WIP, only Thor can be used)
+- [ ] Linux arm64 (WIP, only Thor can be used, untested)
 - [ ] Windows
 - [ ] macOS
 
-## Prerequisites
+## Installing
 
-### Python
+There are currently two ways to install/use Galaxy FLasher:
 
-If you're on Linux, you probably already have Python installed. Look [here](https://wiki.python.org/moin/BeginnersGuide/Download) if you don't.
+- As a Flatpak.
+- As a .py file.
 
-### Tkinter
-
-You probably already have Tkinter installed, but if you get "ModuleNotFoundError: No module named 'tkinter'", do this:
-
-Debian-based distros:
-
-```
-sudo apt-get install python3-tk
-```
-
-Fedora:
-
-```
-sudo dnf install python3-tkinter
-```
-
-### These Python packages:
-
-- pexpect
-- sv-ttk
-- tkinter-tooltip
-- tkinterdnd2-universal
-- zenipy
-
-#### To install all of them:
-
-```
-pip install pexpect sv-ttk tkinter-tooltip tkinterdnd2-universal zenipy
-```
-
-## Installation
-
-+ First, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Thor_GUI?tab=readme-ov-file#prerequisites).
-+ Download the latest "thor-gui_os_version.zip" file from [here](https://github.com/ethical-haquer/Thor_GUI/releases).
-+ Once it's downloaded, extract it.
-+ Then run:
-
-  ```
-  python3 PATH/TO/thor-gui.py
-  ```
-+ If a sweet-looking GUI shows up, then you've finished installing Thor GUI!
+The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#as-a-flatpak) is recomended because it supports a wider range of distros. The [second way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#as-a-py-file-currently-not-complete) is really only better if you plan on contributing to the code. Below are the steps for each method.
 
 > [!NOTE]
-> If you encounter any issues, or have any questions, just let me know and I'll be glad to help. 🙂
+> If you encounter _any_ issues, or have _any_ questions, just let me know and I'll be glad to help. 🙂
+
+> [!NOTE]
+> These guides are still not fully tested. If you find any issues, __please let me know__! Thanks.
+
+### As a Flatpak
+
+#### Flatpak Prerequisites
+
+- flatpak - Go [here](https://www.flatpak.org/setup/), select your distro, and follow the directions to install flatpak.
+- flatpak-builder - "...[flatpak-builder] is usually available from the same repository as the flatpak package (e.g. use apt or dnf). You can also install it as a flatpak with `flatpak install flathub org.flatpak.Builder`". (quote from [here](https://docs.flatpak.org/en/latest/first-build.html))
+
+#### Flatpak Installation
+
+1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#flatpak-prerequisites).
+2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
+3. Once the file is downloaded, extract it.
+4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
+5. Move into the "flatpak" directory.
+6. Run the command `./build.sh` in the terminal. You must be located in the same "flatpak" directory in the terminal when you run it. If you don't know how to change directories in the terminal, look at [this guide](https://itsfoss.com/change-directories/).
+7. If the command finishes with a lot of output, and you get no errors, then go to step 13. If you instead get "Failed to init: Unable to find sdk org.gnome.Sdk version 46", then continue following the steps below.
+8. Run "flatpak install org.gnome.Sdk" in the terminal. You should get a list of different versions to choose from.
+9. Select version 46.
+10. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
+11. Run the `./build.sh` command again, from the "flatpak" directory.
+12. Once again, if the command finishes with a lot of output, and you get no errors, then go to step 13. If you instead get errors, __please let me know__ so I can update this guide. Thanks!
+13. You've finished installing Galaxy Flasher, congratulations!
+
+### As a .py file (currently not complete)
+
+#### Prerequisites (currently not complete)
+
+- python3-gi
+- libvte-2.91-gtk4-0 >= 0.72
+- gir1.2-vte-3.91 >= 0.72
+
+#### Installation
+
+1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites-currently-not-complete). You may notice, they are incomplete,
+2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
+3. Once the file is downloaded, extract it.
+4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
+5. Run `python3 galaxy-flasher.py`.
+6. If Galaxy Flasher starts up, then you're done. Congratulations! If you instead get errors, __please let me know__ so I can update the guide. Thanks!
 
 ## Usage
 
