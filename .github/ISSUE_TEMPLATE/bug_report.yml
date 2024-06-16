@@ -16,9 +16,10 @@ body:
       required: true
   - type: dropdown
     attributes:
-      label: Thor GUI version
-      description: What version of Thor GUI are you using? (check in the "About" tab)
+      label: Galaxy Flasher version
+      description: What version of Thor GUI are you using? (check by clicking the upper-left hamburger button, and then click "About")
       options:
+        - Alpha v0.5.0
         - Alpha v0.4.6
         - Alpha v0.4.5.1
         - Alpha v0.4.5
@@ -36,25 +37,13 @@ body:
         - Alpha v0.0
     validations:
       required: true
-  - type: dropdown
-    attributes:
-      label: Thor Flash Utility version
-      description: What version of the Thor Flash Utility are you using? (check in the "About" tab)
-      options:
-        - 1.0.4
-        - 1.0.3
-        - 1.0.2
-        - 1.0.1
-        - 1.0.0
-    validations:
-      required: true
   - type: textarea
     attributes:
-      label: Thor GUI's log output 
-      description: Please copy and paste Thor GUI's log output from the terminal. This will be automatically formatted into code, so no need for backticks.
+      label: Galaxy Flasher's log output 
+      description: Please copy and paste Galaxy Flasher's log output from the terminal. This will be automatically formatted into code, so no need for backticks.
       render: shell
   - type: textarea
     attributes:
-      label: Thor Flash Utility's log output 
-      description: Please copy and paste Thor Flash Utility's log output from the "Log" tab. This will be automatically formatted into code, so no need for backticks.
+      label: Flash tool's log output 
+      description: Please copy and paste the Flash tool's log output from the "Log" tab. This will be automatically formatted into code, so no need for backticks.
       render: shell
