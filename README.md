@@ -64,7 +64,7 @@ A GUI for Samsung Flash Tools.
 
 ## Background
 
-After witnessing a new Linux user, who had just switched over from Windows, struggle with using Odin4's CLI, I decided to make a GUI for Thor: Thor GUI. With the release of v0.5.0, Thor GUI was renamed Galaxy Flasher, and it supports Thor and Odin4.
+After witnessing a new Linux user, who had just switched over from Windows, struggle with using Odin4's CLI, I decided to make a GUI for Thor: Thor GUI. With the release of v0.5.0, Thor GUI was renamed Galaxy Flasher, and it now supports Thor and Odin4.
 
 ## Disclaimer
 
@@ -78,6 +78,12 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and possibly un
 - [ ] Linux arm64 (WIP, only Thor can be used, untested)
 - [ ] Windows
 - [ ] macOS
+
+## Supported flash-tools
+
+- Thor
+- Odin4
+- PyThor (in development)
 
 ## Installing
 
@@ -134,31 +140,68 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 5. Run `python3 galaxy-flasher.py`.
 6. If Galaxy Flasher starts up, then you're done. Congratulations! If you instead get errors, __please let me know__ so I can update the guide. Thanks!
 
-## Usage (text coming soon)
+## Usage
 
-Galaxy Flasher's layout is similiar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what tab you are viewing. The Log Tab displays the output from the flash tool. The Options Tab lets you set flash tool specific options. The Pit Tab is currently a place-holder, there is nothing there. The Settings Tab is where you can change Galaxy Flasher's settings. In the bottom-right area, you will see five nearly identical rows consisting of a button and an entry. That is where you select files to flash.
+Galaxy Flasher's layout is similiar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what "tab" you are viewing. All four tabs are descibed [here](https://github.com/ethical_haquer/Galaxy-Flasher?tab=readme-ov_file#tabs). On right side you will see
 
 ### Tabs
 
-<details>
+  <p>
+  <details>
   <summary><b>Log Tab</b></summary>
-  The Log Tab displays the output from the Flash Tool.
+  The Log Tab displays the output from the flash-tool.
   <br>
-  You are also able to enter commands into the Log Tab, just as you would in the terminal.
-</details>
+  You are also able to enter flash-tool commands into the Log Tab, just as you would in the terminal.
+  </details>
+  </p>
+  
+  <p>
+  <details>
+  <summary><b>Options Tab</b></summary>
+  The Options Tab is where you can set flash-tool specific options.
 
-<details>
-  <summary><b>Options Tab<b></summary>
-    The Options Tab is where you can set Flash Tool specific options.
-    <br>
-    For Thor, the options are:
-    <ul>
-      <li>T Flash - </li>
-      <li>EFS Clear</li>
-      <li>Bootloader Update</li>
-      <li>Reset Flash Count</li>
-    </ul>
-</details>
+  For Thor, the options are:
+  
+  - T Flash - Writes the bootloader of a working device to the SD card.
+  - EFS Clear - Wipes phone/network-related stuff from your device. It should NOT be used by normal users. (currently disabled until a safety is implemented)
+  - Bootloader Update - I honestly have no idea what this does. Let me know if you do!
+  - Reset Flash Count - I beleive this does what it sounds like it does, but I don't know when you'd ever use it. Please correct me if I'm wrong!
+
+  For Odin4, there are currently no options.
+  The "-V", "Validate home binary with pit file" option might be added if someone can tell me what it does.
+  
+  </details>
+  </p>
+  
+  <p>
+  <details>
+  <summary><b>Pit Tab</b></summary>
+  The Pit Tab is just a place-holder currently.
+  </details>
+  </p>
+  
+  <p>
+  <details>
+  <summary><b>Settings Tab</b></summary>
+  The Settings Tab is where you can change Galaxy Flasher's settings.
+  Here is a list of them:
+
+  - Flash Tool - The flash-tool you would like Galaxy Flasher to use. The options are:
+    - Thor - An open-source flash-tool. The last update was almost a year ago, sadly.
+    - Odin4 - A propreitary, official Samsung flash-tool that was leaked.
+    - PyThor - An open-source flash-tool that is still in development. The only real reason to use it is if you plan on contributing to it.
+
+  - Theme - The theme you would like Galaxy Flasher to use. The options are:
+    - System - Galaxy Flasher will attempt to use the system theme.
+    - Light - Light theme.
+    - Dark - Dark theme.
+
+  - Run Thor with sudo - This allows you to choose whether or not you want to run Thor with sudo. By default it is turned off; Turning it on may fix errors in some cases. This only applies to Thor.
+    
+  - [Thor] Automatically select all partitions - This automatically selects all of the partitions from the files you select, instead of asking you what ones you would like to select. This only applies to Thor.
+
+  </details>
+  </p>
 
 [Galaxy-Flasher-Thor-Screencast-Dark.webm](https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/bc8c07d5-17ea-447a-b4b2-98aa295cc3e6)
 
@@ -167,9 +210,9 @@ Galaxy Flasher's layout is similiar to Odin. In the upper-right there are four b
 Here are some ways you can help me improve/finish Thor GUI:
 + Galaxy Flasher needs a logo! If you would be interested in making one, please open a new issue.
 + Find and report bugs. If you find an issue that isn't listed above in "Known Bugs" or [here](https://github.com/ethical-haquer/Galaxy-Flasher/issues), please let me know!
-+ ~Help translate Thor GUI into your language. Refer to [this readme](https://github.com/ethical-haquer/Thor_GUI/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
++ ~Help translate Thor GUI into your language. Refer to [this readme](https://github.com/ethical-haquer/Galaxy-Flasher/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
-+ Suggest an improvement by opening up a [feature request](https://github.com/ethical-haquer/Thor_GUI/issues/new/choose)!
++ Suggest an improvement by opening up a [feature request](https://github.com/ethical-haquer/Galaxy-Flasher/issues/new/choose)!
 
 ## Credits
 
@@ -179,7 +222,7 @@ Here are some ways you can help me improve/finish Thor GUI:
 
 [Not_Rich@XDA](https://xdaforums.com/m/not_rich.8463826/) for continuing to test out new versions and suggest improvements.
 
-Myself, [ethical_haquer](https://github.com/ethical-haquer), for Galaxy Flasher.
+[ethical_haquer](https://github.com/ethical-haquer) for Galaxy Flasher.
 
 ## License
 
