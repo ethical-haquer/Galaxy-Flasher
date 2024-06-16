@@ -119,7 +119,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 ### As a .py file (currently not complete)
 
-#### Prerequisites (currently not complete)
+#### Prerequisites
 
 - python3-gi
 - libvte-2.91-gtk4-0 >= 0.72
@@ -127,84 +127,34 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 #### Installation
 
-1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites-currently-not-complete). You may notice, they are incomplete,
+1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). You may notice, they __are incomplete__, so expect to have to install other stuff. __Please let me know__ what else you had to install, if you had to install other stuff. Thanks!
 2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
 3. Once the file is downloaded, extract it.
 4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
 5. Run `python3 galaxy-flasher.py`.
 6. If Galaxy Flasher starts up, then you're done. Congratulations! If you instead get errors, __please let me know__ so I can update the guide. Thanks!
 
-## Usage
+## Usage (text coming soon)
 
 [Galaxy-Flasher-Thor-Screencast-Dark.webm](https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/bc8c07d5-17ea-447a-b4b2-98aa295cc3e6)
-
-<details>
-  <summary><b>Guide</b></summary>
-  <br>
-  <b>Starting Thor (0:00):</b>
-  <br>
-  To start Thor, click the "Start Thor" button. This is usually the first thing you'd do after running Thor GUI.
-  <br>
-  <br>
-  <b>Connecting to a device (0:09):</b> 
-  <br>
-  To connect to a device, click the "Connect" button. A pop-up window will appear, asking you what device you'd like to connect to. Choose a device, and then click "Select".
-  <br>
-  <br>
-  <b>Starting an Odin protocol (0:17):</b>
-  <br>
-  To start an Odin protocol, which is needed to flash a device, click the "Start Odin protocol" button. 
-  <br>
-  <b>Fun fact:</b> The top three buttons in Thor GUI are placed in the order they should be used, from left to right.
-  <br>
-  <br>
-  <b>Flashing Odin archives (0:19)</b> 
-  <br>
-  To flash Odin archives, first select what files to flash. You may either select the files with a file picker, by clicking one of the file buttons (For example, to select a BL file, click the "BL" button), or type the file path into the corresponding entry. Only files which are selected with the check-boxes will be flashed. 
-  <br>
-  <br>
-  To flash the selected files, hit the "Start" button. There are a few requirements that must be met for it to start the flash: 
-  <br>
-  At least one file must be selected (with the check-boxes), 
-  <br>
-  All selected files must exist, 
-  <br>
-  All selected files must be a .tar, .md5, or .zip, 
-  <br>
-  All selected files must be in the same directory. 
-  <br>
-  <br>
-  If any of these above conditions is not met, Thor GUI will simply let you know, so don't worry.
-  <br>
-  <br>
-  After a flash has been started, you will be presented with a "Select Partitions" Window. You may click "Select All" to select all of the listed partitions, or choose certain partitions to flash. Once you have finished selecting the partitions you want to flash, hit the "Select" button. There will be a "Select Partitions" Window for <b>every file</b> you selected with the check-boxes.
-  <br>
-  <br>
-  After you have finished selecting partitions to flash you will see a "Verify Flash" window. This is your chance to cancel the flash if needed, by clicking the "No" button. Otherwise, click the "Yes" button and the flash will start.
-  <br>
-  <br>
-  <b>Running a <a href="https://github.com/Samsung-Loki/Thor#current-list-of-commands">Thor command</a> (1:12):</b> 
-  <br>
-  To send Thor a command, enter it into the Command Entry (upper-right corner of Thor GUI, under the "Start Thor" button) and hit Enter. (the key on the keyboard, not the button on Thor GUI)
-</details>
 
 ## How you can help
 
 Here are some ways you can help me improve/finish Thor GUI:
-+ Find and report bugs. If you find an issue that isn't listed above in "Known Bugs", please let me know!
-+ Help translate Thor GUI into your language. Refer to [this readme](https://github.com/ethical-haquer/Thor_GUI/blob/main/locales/README.md) for more info.
++ Find and report bugs. If you find an issue that isn't listed above in "Known Bugs" or [here](https://github.com/ethical-haquer/Galaxy-Flasher/issues), please let me know!
++ ~Help translate Thor GUI into your language. Refer to [this readme](https://github.com/ethical-haquer/Thor_GUI/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
 + Suggest an improvement by opening up a [feature request](https://github.com/ethical-haquer/Thor_GUI/issues/new/choose)!
 
 ## Credits
 
-[TheAirBlow](https://github.com/theairblow) for the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor)
+[TheAirBlow](https://github.com/theairblow) for posting [Odin4](https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux.4453423/) to XDA, and for creating the [Thor Flash Utility](https://github.com/Samsung-Loki/Thor).
 
-[rdbende](https://github.com/rdbende) for the [Sun Valley tkk theme](https://github.com/rdbende/Sun-Valley-ttk-theme)
+[justaCasualCoder](https://github.com/justaCasualCoder) for his contributions, and for starting the port to GTK4 on his own.
 
 [Not_Rich@XDA](https://xdaforums.com/m/not_rich.8463826/) for continuing to test out new versions and suggest improvements.
 
-Myself, [ethical_haquer](https://github.com/ethical-haquer), for Thor GUI
+Myself, [ethical_haquer](https://github.com/ethical-haquer), for Galaxy Flasher.
 
 ## License
 
