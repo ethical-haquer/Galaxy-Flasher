@@ -136,11 +136,36 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 ## Usage (text coming soon)
 
+Galaxy Flasher's layout is similiar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what tab you are viewing. The Log Tab displays the output from the flash tool. The Options Tab lets you set flash tool specific options. The Pit Tab is currently a place-holder, there is nothing there. The Settings Tab is where you can change Galaxy Flasher's settings. In the bottom-right area, you will see five nearly identical rows consisting of a button and an entry. That is where you select files to flash.
+
+### Tabs
+
+<details>
+  <summary><b>Log Tab</b></summary>
+  The Log Tab displays the output from the Flash Tool.
+  <br>
+  You are also able to enter commands into the Log Tab, just as you would in the terminal.
+</details>
+
+<details>
+  <summary><b>Options Tab<b></summary>
+    The Options Tab is where you can set Flash Tool specific options.
+    <br>
+    For Thor, the options are:
+    <ul>
+      <li>T Flash - </li>
+      <li>EFS Clear</li>
+      <li>Bootloader Update</li>
+      <li>Reset Flash Count</li>
+    </ul>
+</details>
+
 [Galaxy-Flasher-Thor-Screencast-Dark.webm](https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/bc8c07d5-17ea-447a-b4b2-98aa295cc3e6)
 
 ## How you can help
 
 Here are some ways you can help me improve/finish Thor GUI:
++ Galaxy Flasher needs a logo! If you would be interested in making one, please open a new issue.
 + Find and report bugs. If you find an issue that isn't listed above in "Known Bugs" or [here](https://github.com/ethical-haquer/Galaxy-Flasher/issues), please let me know!
 + ~Help translate Thor GUI into your language. Refer to [this readme](https://github.com/ethical-haquer/Thor_GUI/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
