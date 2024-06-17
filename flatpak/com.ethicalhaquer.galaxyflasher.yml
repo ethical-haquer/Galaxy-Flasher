@@ -1,0 +1,43 @@
+app-id: com.ethicalhaquer.galaxyflasher
+runtime: org.gnome.Platform
+runtime-version: '46'
+sdk: org.gnome.Sdk
+command: entry
+finish-args:
+  - --share=network
+  - --socket=fallback-x11
+  - --share=ipc
+  - --filesystem=xdg-config
+  - --device=all # Needed for accessing Samsung devices.
+  - --socket=wayland
+modules:
+  - python3-requirements.json
+  - name: Galaxy-Flasher
+    buildsystem: simple
+    build-commands:
+      - pip install -r requirements.txt
+      - cp -r locales /app/locales/
+      - cp -r flash-tools /app/flash-tools
+      - cp -r odin4-wrapper.sh /app/odin4-wrapper.sh
+      - install -D galaxy-flasher.py /app/galaxy-flasher
+      - install -D entry.sh /app/bin/entry
+      - install -D galaxy-flasher.desktop /app/share/applications/com.ethicalhaquer.galaxyflasher.desktop
+    sources:
+      - type: file
+        path: ../galaxy-flasher.py
+      - type: file
+        path: galaxy-flasher.desktop
+      - type: file
+        path: entry.sh
+      - type: file
+        path: requirements.txt
+      - type: dir
+        path: include
+  - name: vte
+    sources:
+      - type: git
+        url: https://gitlab.gnome.org/GNOME/vte.git/
+    buildsystem: meson
+    config-opts:
+      - -Dgtk3=false
+      - -Dgtk4=true
