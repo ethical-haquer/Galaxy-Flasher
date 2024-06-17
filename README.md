@@ -87,12 +87,12 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and possibly un
 
 ## Installing
 
-There are currently two ways to install/use Galaxy FLasher:
+There are currently two ways to install/use Galaxy Flasher:
 
 - As a Flatpak.
 - As a .py file.
 
-The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#as-a-flatpak) is recomended because it supports a wider range of distros. The [second way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#as-a-py-file-currently-not-complete) is really only better if you plan on contributing to the code. Below are the steps for each method.
+The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#as-a-flatpak) is recommended because it supports a wider range of distros. The [second way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#as-a-py-file-currently-not-complete) is really only better if you plan on contributing to the code. Below are the steps for each method.
 
 > [!NOTE]
 > If you encounter _any_ issues, or have _any_ questions, just let me know and I'll be glad to help. 🙂
@@ -142,7 +142,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 ## Usage
 
-Galaxy Flasher's layout is similiar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what "tab" you are viewing. All four tabs are descibed [here](https://github.com/ethical_haquer/Galaxy-Flasher?tab=readme-ov_file#tabs). On right side you will see
+Galaxy Flasher's layout is similar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what "tab" you are viewing. All four tabs are described [here](https://github.com/ethical_haquer/Galaxy-Flasher?tab=readme-ov_file#tabs). On right side you will see five rows that each have a button and an entry. That is where you can [select files](https://github.com/ethical_haquer/Galaxy-Flasher?tab=readme-ov_file#selecting-files). For how to flash files, [look here](https://github.com/ethical_haquer/Galaxy-Flasher?tab=readme-ov_file#flashing-files)
 
 ### Tabs
 
@@ -176,7 +176,7 @@ Galaxy Flasher's layout is similiar to Odin. In the upper-right there are four b
   <p>
   <details>
   <summary><b>Pit Tab</b></summary>
-  The Pit Tab is just a place-holder currently.
+  The Pit Tab is just a placeholder currently.
   </details>
   </p>
   
@@ -188,7 +188,7 @@ Galaxy Flasher's layout is similiar to Odin. In the upper-right there are four b
 
   - Flash Tool - The flash-tool you would like Galaxy Flasher to use. The options are:
     - Thor - An open-source flash-tool. The last update was almost a year ago, sadly.
-    - Odin4 - A propreitary, official Samsung flash-tool that was leaked.
+    - Odin4 - A proprietary, official Samsung flash-tool that was leaked.
     - PyThor - An open-source flash-tool that is still in development. The only real reason to use it is if you plan on contributing to it.
 
   - Theme - The theme you would like Galaxy Flasher to use. The options are:
@@ -205,12 +205,44 @@ Galaxy Flasher's layout is similiar to Odin. In the upper-right there are four b
 
 [Galaxy-Flasher-Thor-Screencast-Dark.webm](https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/bc8c07d5-17ea-447a-b4b2-98aa295cc3e6)
 
+### Selecting Files
+
+To select files to flash, you can:
+
+- Click the corresponding file button, which will open a file picker.
+- Drag and drop a file into it's corresponding file entry.
+- Copy/Paste (or type!) a file-path into the correct file entry.
+
+Corresponding or correct as in if you want to select a CP file, click the CP file button, if you have a BL file-path copied, paste it into the BL file entry, etc.
+
+### Flashing Files
+
+Flashing files with Galaxy Flasher is easy. Here's how to do it:
+
+#### Thor
+- Click the "Connect" button. If there is more than one device connected, you will be prompted to select a device. You will know you have connected when the "Connect" button changes to "Disconnect".
+- Once you're connected to a device, click the "Start Odin Protocol" button. If the button changes to "End Odin Protocol", you're good.
+- Click the "Flash!" button. (after you've selected at least one file to flash)
+- If the "[Thor] Automatically select all partitions" setting is off, you will be asked to select what partitions to flash from each file you selected. If that setting is on, Galaxy Flasher will automatically select all of the partitions for each file you selected.
+- Once you (or the computer) have selected the partitions to flash from each file you selected, a "Verify Flash" window will appear. This is when you can abort if you didn't mean to flash what you selected. Click "No" to cancel, or "OK" to begin flashing the device.
+
+#### Odin4
+
+Please note that unlike Thor, Odin4 does not have a "Verify Flash" window. If you accidentally started flashing your device, you can disconnect it from your computer when Odin4 is verifying the files. (verifying the files is the first thing it does when you click the "Flash!" button) If Odin4 has already started flashing the files to your device, disconnecting your device may cause even more issues.
+
+- Click the "Flash!" button. (after you've selected at least one file to flash)
+- If there is more than one device connected, you will be prompted to select a device.
+- That's it! 
+
+
+
+
 ## How you can help
 
 Here are some ways you can help me improve/finish Thor GUI:
 + Galaxy Flasher needs a logo! If you would be interested in making one, please open a new issue.
 + Find and report bugs. If you find an issue that isn't listed above in "Known Bugs" or [here](https://github.com/ethical-haquer/Galaxy-Flasher/issues), please let me know!
-+ ~Help translate Thor GUI into your language. Refer to [this readme](https://github.com/ethical-haquer/Galaxy-Flasher/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
++ ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://github.com/ethical-haquer/Galaxy-Flasher/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
 + Suggest an improvement by opening up a [feature request](https://github.com/ethical-haquer/Galaxy-Flasher/issues/new/choose)!
 
@@ -226,4 +258,4 @@ Here are some ways you can help me improve/finish Thor GUI:
 
 ## License
 
-Thor GUI is licensed under GPLv3. Please see [`LICENSE`](./LICENSE) for the full license text.
+Galaxy Flasher is licensed under GPLv3. Please see [`LICENSE`](./LICENSE) for the full license text.

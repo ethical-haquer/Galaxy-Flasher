@@ -444,14 +444,13 @@ class MainWindow(Gtk.ApplicationWindow):
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
-        # The triple back-slash "\\\" is needed to escape the double back-slash "\\".
         print(
-            f"""
+            fr"""
   ____       _                    _____ _           _
  / ___| __ _| | __ ___  ___   _  |  ___| | __ _ ___| |__   ___ _ __ 
 | |  _ / _` | |/ _` \ \/ / | | | | |_  | |/ _` / __| '_ \ / _ \ '__|
 | |_| | (_| | | (_| |>  <| |_| | |  _| | | (_| \__ \ | | |  __/ |
- \____|\__,_|_|\__,_/_/\_\\\__, | |_|   |_|\__,_|___/_| |_|\___|_|
+ \____|\__,_|_|\__,_/_/\_\\__, | |_|   |_|\__,_|___/_| |_|\___|_|
                           |___/
 
                           {version}
