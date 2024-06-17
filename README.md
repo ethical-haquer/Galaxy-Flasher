@@ -203,8 +203,6 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
   </details>
   </p>
 
-[Galaxy-Flasher-Thor-Screencast-Dark.webm](https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/bc8c07d5-17ea-447a-b4b2-98aa295cc3e6)
-
 ### Selecting Files
 
 To select files to flash, you can:
