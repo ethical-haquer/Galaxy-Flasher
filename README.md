@@ -144,7 +144,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 ## Usage
 
-Galaxy Flasher's layout is similar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what "tab" you are viewing. All four tabs are described [here](https://github.com/ethical-haquer/Galaxy-Flasher#tabs). On the right side you will see five rows that each have a button and an entry. That is where you can [select files](https://github.com/ethical-haquer/Galaxy-Flasher#selecting-files). For how to flash files, [look here](https://github.com/ethical-haquer/Galaxy-Flasher#flashing-files).
+Galaxy Flasher's layout is similar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what "tab" you are viewing. All four tabs are described [here](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#tabs). On the right side you will see five rows that each have a button and an entry. That is where you can [select files](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#selecting-files). For how to flash files, [look here](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#flashing-files).
 
 ### Tabs
 
