@@ -192,13 +192,15 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
     - Thor - An open-source flash-tool. The last update was almost a year ago, sadly.
     - Odin4 - A proprietary, official Samsung flash-tool that was leaked.
     - PyThor - An open-source flash-tool that is still in development. The only real reason to use it is if you plan on contributing to it.
+   
+    You will have to restart Galaxy Flasher after changing this setting for it to apply.
 
   - Theme - The theme you would like Galaxy Flasher to use. The options are:
     - System - Galaxy Flasher will attempt to use the system theme.
     - Light - Light theme.
     - Dark - Dark theme.
 
-  - Run Thor with sudo - This allows you to choose whether or not you want to run Thor with sudo. By default it is turned off; Turning it on may fix errors in some cases. This only applies to Thor.
+  - Run Thor with sudo - This allows you to choose whether or not you want to run Thor with sudo. By default it is turned off; Turning it on may fix errors in some cases. This only applies to Thor. You will have to restart Galaxy Flasher after changing this setting for it to apply.
     
   - [Thor] Automatically select all partitions - This automatically selects all of the partitions from the files you select, instead of asking you what ones you would like to select. This only applies to Thor.
 
@@ -228,6 +230,7 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
   - Click the "Flash!" button. (after you've selected at least one file to flash)
   - If the "[Thor] Automatically select all partitions" setting is off, you will be asked to select what partitions to flash from each file you selected. If that setting is on, Galaxy Flasher will automatically select all of the partitions for each file you selected.
   - Once you (or the computer) have selected the partitions to flash from each file you selected, a "Verify Flash" window will appear. This is when you can abort if you didn't mean to flash what you selected. Click "No" to cancel, or "OK" to begin flashing the device.
+  - That's it!
   </details>
   </p>
 
@@ -235,23 +238,19 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
   <details>
   <summary><b>Odin4</b></summary>
 
-  Please note that unlike Thor, Odin4 does not have a "Verify Flash" window. If you accidentally started flashing your device, you can disconnect it from your computer when Odin4 is verifying the files. (verifying the files is the first thing it does, followed by flashing them) If Odin4 has already started flashing the files to your device, disconnecting your device may cause even more issues.
+  Please note that unlike Thor, Odin4 does not have a "Verify Flash" window. If you accidentally started flashing your device, you can disconnect it from your computer when Odin4 is verifying the files. (verifying the files is the first thing it does, followed by flashing them) However, if Odin4 has already started flashing the files to your device, disconnecting your device may cause even more issues.
 
   - Click the "Flash!" button. (after you've selected at least one file to flash)
   - If there is more than one device connected, you will be prompted to select a device.
   - That's it!
-
   </details>
   </p>
-
-
-
 
 ## How you can help
 
 Here are some ways you can help me improve/finish Thor GUI:
 + Galaxy Flasher needs a logo! If you would be interested in making one, please open a new issue.
-+ Find and report bugs. If you find an issue that isn't listed above in "Known Bugs" or [here](https://github.com/ethical-haquer/Galaxy-Flasher/issues), please let me know!
++ Find and report bugs. If you find an issue that isn't listed as a [known bug](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#tabs), and isn't listed [here](https://github.com/ethical-haquer/Galaxy-Flasher/issues), please let me know!
 + ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://github.com/ethical-haquer/Galaxy-Flasher/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
 + Suggest an improvement by opening up a [feature request](https://github.com/ethical-haquer/Galaxy-Flasher/issues/new/choose)!
