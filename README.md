@@ -117,13 +117,17 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
 5. Move into the "flatpak" directory.
 6. Run the command `./build.sh` in the terminal. You must be located in the same "flatpak" directory in the terminal when you run it. If you don't know how to change directories in the terminal, look at [this guide](https://itsfoss.com/change-directories/).
-7. If the command finishes with a lot of output, and you get no errors, then go to step 13. If you instead get "Failed to init: Unable to find sdk org.gnome.Sdk version 46", then continue following the steps below.
+7. If the command finishes with a lot of output, and you get no errors, then go to step 17. If you instead get "Failed to init: Unable to find sdk org.gnome.Sdk version 46", continue following the steps below.
 8. Run "flatpak install org.gnome.Sdk" in the terminal. You should get a list of different versions to choose from.
 9. Select version 46.
 10. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
 11. Run the `./build.sh` command again, from the "flatpak" directory.
-12. Once again, if the command finishes with a lot of output, and you get no errors, then go to step 13. If you instead get errors, __please let me know__ so I can update this guide. Thanks!
-13. You've finished installing Galaxy Flasher, congratulations!
+12. Once again, if the command finishes with a lot of output, and you get no errors, then go to step 17. If you instead get "Failed to init: Unable to find runtime org.gnome.Platform version 46", continue following the steps below. (you're almost done!)
+13. Run "flatpak install org.gnome.Platform" in the terminal. You should get a list of different versions to choose from.
+14. Select version 46.
+15. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
+16. Run the `./build.sh` command again, from the "flatpak" directory.
+17. You've finished installing Galaxy Flasher, congratulations!
 
 ### As a .py file (currently not complete)
 
@@ -144,7 +148,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 ## Usage
 
-Galaxy Flasher's layout is similar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what "tab" you are viewing. All four tabs are described [here](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#tabs). On the right side you will see five rows that each have a button and an entry. That is where you can [select files](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#selecting-files). For how to flash files, [look here](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#flashing-files).
+Galaxy Flasher's layout is similar to Odin. In the upper-right there are four buttons: "Log", "Options", "Pit", and "Settings". Clicking these buttons will change what "tab" you are viewing. All four tabs are described [here](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#tabs). On the right side you will see five rows that each have a button and an entry. That is where you can [select files](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#selecting-files). For how to flash files, [look here](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#flashing-files). The entry above the file selection buttons/entries is the [Command Entry](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#command-entry).
 
 ### Tabs
 
@@ -245,6 +249,13 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
   - That's it!
   </details>
   </p>
+
+### Command Entry
+
+The Command Entry is somewhere you can enter flash-tool commands. If you read about [Galaxy Flasher's Tabs](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#tabs), you might be wondering why it is needed if you can just type commands directly into the Log Tab. The reason is, commands entered into the Log Tab will not be "made graphical". That means if you type "connect" into the Log Tab, you will have to select a device in the terminal. If you type "connect" into the Command Entry, Galaxy Flasher will eitheir display a window asking you what device you want to connect to, or, if their is only one device, it will automatically select it. In other words, typing "connect" in the Command Entry does the same thing as clicking the Connect Button. Currently, only the "connect" and "flashTar" commands behave differently when sent through the Command Entry:
+
+- connect - Behaves the same as hitting the Connect Button.
+- flashTar - Behaves the same as hitting the Flash Button. The command entered must be just "flashTar" though. For example, running "flashTar /home/name/folder" will not do this.
 
 ## How you can help
 
