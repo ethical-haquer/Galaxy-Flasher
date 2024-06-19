@@ -106,45 +106,69 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 #### Flatpak Prerequisites
 
-- flatpak - Go [here](https://www.flatpak.org/setup/), select your distro, and follow the directions to install flatpak.
-- flatpak-builder - "...[flatpak-builder] is usually available from the same repository as the flatpak package (e.g. use apt or dnf). You can also install it as a flatpak with `flatpak install flathub org.flatpak.Builder`". (quote from [here](https://docs.flatpak.org/en/latest/first-build.html))
+  <p>
+  <details>
+  <summary>Expand</summary>
+
+  - flatpak - Go [here](https://www.flatpak.org/setup/), select your distro, and follow the directions to install flatpak.
+  - flatpak-builder - "...[flatpak-builder] is usually available from the same repository as the flatpak package (e.g. use apt or dnf). You can also install it as a flatpak with `flatpak install flathub org.flatpak.Builder`". (quote from [here](https://docs.flatpak.org/en/latest/first-build.html))
+  </details>
+  </p>
 
 #### Flatpak Installation
 
-1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#flatpak-prerequisites).
-2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
-3. Once the file is downloaded, extract it.
-4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
-5. Move into the "flatpak" directory.
-6. Run the command `./build.sh` in the terminal. You must be located in the same "flatpak" directory in the terminal when you run it. If you don't know how to change directories in the terminal, look at [this guide](https://itsfoss.com/change-directories/).
-7. If the command finishes with a lot of output, and you get no errors, then go to step 17. If you instead get "Failed to init: Unable to find sdk org.gnome.Sdk version 46", continue following the steps below.
-8. Run "flatpak install org.gnome.Sdk" in the terminal. You should get a list of different versions to choose from.
-9. Select version 46.
-10. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
-11. Run the `./build.sh` command again, from the "flatpak" directory.
-12. Once again, if the command finishes with a lot of output, and you get no errors, then go to step 17. If you instead get "Failed to init: Unable to find runtime org.gnome.Platform version 46", continue following the steps below. (you're almost done!)
-13. Run "flatpak install org.gnome.Platform" in the terminal. You should get a list of different versions to choose from.
-14. Select version 46.
-15. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
-16. Run the `./build.sh` command again, from the "flatpak" directory.
-17. You've finished installing Galaxy Flasher, congratulations!
+  <p>
+  <details>
+  <summary>Expand</summary>
+
+  1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#flatpak-prerequisites).
+  2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
+  3. Once the file is downloaded, extract it.
+  4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
+  5. Move into the "flatpak" directory.
+  6. Run the command `./build.sh` in the terminal. You must be located in the same "flatpak" directory in the terminal when you run it. If you don't know how to change directories in the terminal, look at [this guide](https://itsfoss.com/change-directories/).
+  7. If the command finishes with a lot of output, and you get no errors, then go to step 17. If you instead get "Failed to init: Unable to find sdk org.gnome.Sdk version 46", continue following the steps below.
+  8. Run "flatpak install org.gnome.Sdk" in the terminal. You should get a list of different versions to choose from.
+  9. Select version 46.
+  10. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
+  11. Run the `./build.sh` command again, from the "flatpak" directory.
+  12. Once again, if the command finishes with a lot of output, and you get no errors, then go to step 17. If you instead get "Failed to init: Unable to find runtime org.gnome.Platform version 46", continue following the steps below. (you're almost done!)
+  13. Run "flatpak install org.gnome.Platform" in the terminal. You should get a list of different versions to choose from.
+  14. Select version 46.
+  15. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
+  16. Run the `./build.sh` command again, from the "flatpak" directory.
+  17. You've finished installing Galaxy Flasher, congratulations!
+  </details>
+  </p>
 
 ### As a .py file (currently not complete)
 
 #### Prerequisites
 
-- python3-gi
-- libvte-2.91-gtk4-0 >= 0.72
-- gir1.2-vte-3.91 >= 0.72
+  <p>
+  <details>
+  <summary>Expand</summary>
+
+  - python3-gi
+  - libvte-2.91-gtk4-0 >= 0.72
+  - gir1.2-vte-3.91 >= 0.72
+  </details>
+  </p>
 
 #### Installation
 
-1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). You may notice, they __are incomplete__, so expect to have to install other stuff. __Please let me know__ what else you had to install, if you had to install other stuff. Thanks!
-2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
-3. Once the file is downloaded, extract it.
-4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
-5. Run `python3 galaxy-flasher.py`.
-6. If Galaxy Flasher starts up, then you're done. Congratulations! If you instead get errors, __please let me know__ so I can update the guide. Thanks!
+  <p>
+  <details>
+  <summary>Expand</summary>
+
+  1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). You may notice, they __are incomplete__, so expect to have to install other stuff. __Please let me know__ what else you had to install, if you had to install other stuff. Thanks!
+  2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
+  3. Once the file is downloaded, extract it.
+  4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
+  5. Run `python3 galaxy-flasher.py`.
+  6. If Galaxy Flasher starts up, then you're done. Congratulations! If you instead get errors, __please let me know__ so I can update the guide. Thanks!
+  </details>
+  <p>
 
 ## Usage
 
