@@ -142,9 +142,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 ### As a .py file (currently not complete)
 
-[Just a test](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#test)
-
-  <a id="test"></a>
+  <a id="prerequisites"></a>
   <p>
   <details>
   <summary>Prerequisites</summary>
