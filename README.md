@@ -143,8 +143,8 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 ### As a .py file (currently not complete)
 
   <p>
-  <details>
-  <summary id="prerequisites">Prerequisites</summary>
+  <details id="prerequisites">
+  <summary>Prerequisites</summary>
 
   - python3-gi
   - libvte-2.91-gtk4-0 >= 0.72
