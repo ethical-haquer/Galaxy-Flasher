@@ -153,8 +153,8 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   </p>
 
   <p>
-  <details>
-  <summary><h4>Installation</h4></summary>
+  <details id="installation">
+  <summary>Installation</summary>
 
   1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). You may notice, they __are incomplete__, so expect to have to install other stuff. __Please let me know__ what else you had to install, if you had to install other stuff. Thanks!
   2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
