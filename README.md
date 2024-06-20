@@ -1,4 +1,3 @@
-
 # Galaxy Flasher
 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Github Releases](https://img.shields.io/github/downloads/ethical-haquer/Galaxy-Flasher/total.svg?style=flat)](https://github.com/ethical-haquer/Galaxy-Flasher/releases)
@@ -145,7 +144,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
   <p>
   <details>
-  <summary><h4>Prerequisites</h4></summary>
+  <summary><h4 style="margin-top: 0; margin-bottom: 0;">Prerequisites</h4></summary>
 
   - python3-gi
   - libvte-2.91-gtk4-0 >= 0.72
