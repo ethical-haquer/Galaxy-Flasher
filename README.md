@@ -168,7 +168,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
 ### Tabs
 
   <p>
-  <details>
+  <details id="-tab">
   <summary>Log Tab</summary>
   The Log Tab displays the output from the flash-tool.
   <br>
@@ -177,7 +177,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
   </p>
   
   <p>
-  <details>
+  <details id="options-tab">
   <summary>Options Tab</summary>
   The Options Tab is where you can set flash-tool specific options.
 
@@ -195,14 +195,14 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
   </p>
   
   <p>
-  <details>
+  <details id="pit-tab">
   <summary>Pit Tab</summary>
   The Pit Tab is just a placeholder currently.
   </details>
   </p>
   
   <p>
-  <details>
+  <details id="settings-tab">
   <summary>Settings Tab</summary>
   The Settings Tab is where you can change Galaxy Flasher's settings.
   Here is a list of them:
@@ -267,7 +267,7 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
 ### Command Entry
 
-The Command Entry is somewhere you can enter flash-tool commands. If you read about [Galaxy Flasher's Tabs](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#tabs), you might be wondering why it is needed if you can just type commands directly into the Log Tab. The reason is, commands entered into the Log Tab will not be "made graphical". That means if you type "connect" into the Log Tab, you will have to select a device in the terminal. If you type "connect" into the Command Entry, Galaxy Flasher will eitheir display a window asking you what device you want to connect to, or, if their is only one device, it will automatically select it. In other words, typing "connect" in the Command Entry does the same thing as clicking the Connect Button. Currently, only the "connect" and "flashTar" commands behave differently when sent through the Command Entry:
+The Command Entry is somewhere you can enter flash-tool commands. If you read about [the Log Tab](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#log-tab), you might be wondering why it is needed if you can just type commands directly into the Log Tab. The reason is, commands entered into the Log Tab will not be "made graphical". That means if you type "connect" into the Log Tab, you will have to select a device in the terminal. If you type "connect" into the Command Entry, Galaxy Flasher will eitheir display a window asking you what device you want to connect to, or, if their is only one device, it will automatically select it. In other words, typing "connect" in the Command Entry does the same thing as clicking the Connect Button. Currently, only the "connect" and "flashTar" commands behave differently when sent through the Command Entry:
 
 - connect - Behaves the same as hitting the Connect Button.
 - flashTar - Behaves the same as hitting the Flash Button. The command entered must be just "flashTar" though. For example, running "flashTar /home/name/folder" will not do this.
