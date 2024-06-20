@@ -132,7 +132,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   14. Select version 46.
   15. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
   16. Run the `./build.sh` command again, from the "flatpak" directory.
-  17. You've finished installing Galaxy Flasher, congratulations!
+  17. You've finished installing Galaxy Flasher, congratulations! Galaxy Flasher should now show up as an app.
   </details>
   </p>
 
@@ -169,7 +169,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
 
   <p>
   <details>
-  <summary><b>Log Tab</b></summary>
+  <summary>Log Tab</summary>
   The Log Tab displays the output from the flash-tool.
   <br>
   You are also able to enter flash-tool commands into the Log Tab, just as you would in the terminal.
@@ -178,7 +178,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
   
   <p>
   <details>
-  <summary><b>Options Tab</b></summary>
+  <summary>Options Tab</summary>
   The Options Tab is where you can set flash-tool specific options.
 
   For Thor, the options are:
@@ -196,14 +196,14 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
   
   <p>
   <details>
-  <summary><b>Pit Tab</b></summary>
+  <summary>Pit Tab</summary>
   The Pit Tab is just a placeholder currently.
   </details>
   </p>
   
   <p>
   <details>
-  <summary><b>Settings Tab</b></summary>
+  <summary>Settings Tab</summary>
   The Settings Tab is where you can change Galaxy Flasher's settings.
   Here is a list of them:
 
@@ -242,7 +242,7 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
   <p>
   <details>
-  <summary><b>Thor</b></summary>
+  <summary>Thor</summary>
 
   - Click the "Connect" button. If there is more than one device connected, you will be prompted to select a device. You will know you have connected when the "Connect" button changes to "Disconnect".
   - Once you're connected to a device, click the "Start Odin Protocol" button. If the button changes to "End Odin Protocol", you're good.
@@ -255,7 +255,7 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
   <p>
   <details>
-  <summary><b>Odin4</b></summary>
+  <summary>Odin4</summary>
 
   Please note that unlike Thor, Odin4 does not have a "Verify Flash" window. If you accidentally started flashing your device, you can disconnect it from your computer when Odin4 is verifying the files. (verifying the files is the first thing it does, followed by flashing them) However, if Odin4 has already started flashing the files to your device, disconnecting your device may cause even more issues.
 
