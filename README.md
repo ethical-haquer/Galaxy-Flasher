@@ -144,9 +144,10 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 [Just a test](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#test)
 
+  <a id="test"></a>
   <p>
   <details>
-  <summary><a href="#test">Prerequisites</a></summary>
+  <summary>Prerequisites</summary>
 
   - python3-gi
   - libvte-2.91-gtk4-0 >= 0.72
