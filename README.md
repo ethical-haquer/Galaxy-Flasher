@@ -103,22 +103,18 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
 
 ### As a Flatpak
 
-#### Flatpak Prerequisites
-
   <p>
-  <details>
-  <summary>Expand</summary>
+  <details id="flatpak-prerequisites">
+  <summary>Prerequisites</summary>
 
   - flatpak - Go [here](https://www.flatpak.org/setup/), select your distro, and follow the directions to install flatpak.
   - flatpak-builder - "...[flatpak-builder] is usually available from the same repository as the flatpak package (e.g. use apt or dnf). You can also install it as a flatpak with `flatpak install flathub org.flatpak.Builder`". (quote from [here](https://docs.flatpak.org/en/latest/first-build.html))
   </details>
   </p>
 
-#### Flatpak Installation
-
   <p>
-  <details>
-  <summary>Expand</summary>
+  <details id="flatpak-installation">
+  <summary>Installation</summary>
 
   1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#flatpak-prerequisites).
   2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
