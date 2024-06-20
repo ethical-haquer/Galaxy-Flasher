@@ -168,7 +168,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
 ### Tabs
 
   <p>
-  <details id="-tab">
+  <details id="log-tab">
   <summary>Log Tab</summary>
   The Log Tab displays the output from the flash-tool.
   <br>
