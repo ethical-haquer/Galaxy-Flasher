@@ -142,9 +142,11 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   <details id="prerequisites">
   <summary>Prerequisites</summary>
 
-  - python3-gi
-  - libvte-2.91-gtk4-0 >= 0.72
-  - gir1.2-vte-3.91 >= 0.72
+  - Debian testing
+    - gir1.2-vte-3.91 >= 0.72
+   
+  - Other
+    - Please let me know what packages you had to install for other distros. Thanks!
   </details>
   </p>
 
@@ -152,12 +154,12 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   <details id="installation">
   <summary>Installation</summary>
 
-  1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). You may notice, they __are incomplete__, so expect to have to install other stuff. __Please let me know__ what else you had to install, if you had to install other stuff. Thanks!
+  1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). Currently only the Debian testing prerequisites are listed. __Please let me know__ what you had to install for other distros. Thanks!
   2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
   3. Once the file is downloaded, extract it.
   4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
   5. Run `python3 galaxy-flasher.py`.
-  6. If Galaxy Flasher starts up, then you're done. Congratulations! If you instead get errors, __please let me know__ so I can update the guide. Thanks!
+  6. If Galaxy Flasher starts up, then you're done. Congratulations! If you instead get errors, __please let me know__. Thanks!
   </details>
   <p>
 
