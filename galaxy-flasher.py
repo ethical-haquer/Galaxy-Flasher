@@ -39,7 +39,7 @@ locale = locale.getlocale(locale.LC_MESSAGES)[0]
 seperator = "_"
 lang = locale.split(seperator, 1)[0]
 
-version = "Alpha v0.5.0"
+version = "Alpha v0.5.1"
 config_dir = GLib.get_user_config_dir()
 app_dir = "galaxy-flasher"
 app_config_dir = os.path.join(config_dir, app_dir)
@@ -62,6 +62,11 @@ class MainWindow(Gtk.ApplicationWindow):
             .mybutton:not(:hover) {
                 background-color: @popover-background-color;
             }
+            .myswitchrow {
+                background-color: transparent;
+                box-shadow: none;
+            }
+
         """
         style_provider.load_from_data(css.encode())
         Gtk.StyleContext.add_provider_for_display(
@@ -358,6 +363,45 @@ class MainWindow(Gtk.ApplicationWindow):
             padding=(10, 0, 0, 0),
         )
         # Create the Settings tab widgets.
+        settings_list = [
+            {
+                "name": "General",
+                "settings": [
+                    [
+                        "Flash Tool",
+                        None,
+                        "flash_tool",
+                        "Thor",
+                        "thor",
+                        "Odin4",
+                        "odin4",
+                        "PyThor (in development)",
+                        "pythor",
+                    ],
+                    [
+                        "Theme",
+                        None,
+                        "theme",
+                        "System",
+                        "system",
+                        "Light",
+                        "light",
+                        "Dark",
+                        "dark",
+                    ],
+                ],
+            },
+            {
+                "name": "Thor",
+                "settings": [
+                    ["Run with sudo", None, "sudo", False],
+                    ["Automatically select all partitions", "Instead of asking you what partitions to flash, automatically select them all.", "auto_partitions", False],
+                ],
+            },
+        ]
+        self.create_settings(settings_list, self.settings_grid)
+
+        """
         row = 0
         options = [
             {"name": "Thor", "value": "thor"},
@@ -416,6 +460,7 @@ class MainWindow(Gtk.ApplicationWindow):
             grid=self.settings_grid,
             padding=(40, 40, 0, 10),
         )
+        """
         # Create the terminal's right-click options.
         term_popover = Gtk.Popover()
         # This doesn't show an arrow, I'm not sure if we want one though.
@@ -445,7 +490,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.vte_term.connect("contents-changed", self.scan_output)
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
         print(
-            fr"""
+            rf"""
   ____       _                    _____ _           _
  / ___| __ _| | __ ___  ___   _  |  ___| | __ _ ___| |__   ___ _ __ 
 | |  _ / _` | |/ _` \ \/ / | | | | |_  | |/ _` / __| '_ \ / _ \ '__|
@@ -1124,7 +1169,7 @@ class MainWindow(Gtk.ApplicationWindow):
             option = convert[option]
             self.send_cmd(f"options {option} {value}")
 
-    def toggle_changed(self, switch, state, setting):
+    def switch_row_changed(self, switch, state, setting):
         active = switch.get_active()
         self.set_setting(setting, active)
 
@@ -1292,8 +1337,129 @@ class MainWindow(Gtk.ApplicationWindow):
         popover.set_visible(False)
         self.set_setting(setting, value)
 
+    def create_settings(self, main_settings_list, grid):
+        settings_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        settings_box.set_hexpand(True)
+        for section in main_settings_list:
+            clamp = Adw.Clamp.new()
+            clamp.set_maximum_size(450)
+            settings_box.append(clamp)
+
+            name = section["name"]
+            settings = section["settings"]
+
+            section_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+            clamp.set_child(section_box)
+            list_box = Gtk.ListBox.new()
+            list_box.set_css_classes(["boxed-list"])
+
+            label = Gtk.Label(label=name)
+            label.set_halign(Gtk.Align.START)
+            section_box.append(label)
+            section_box.append(list_box)
+
+            for setting_list in settings:
+                if len(setting_list) == 4:
+                    title = setting_list[0]
+                    subtitle = setting_list[1]
+                    setting = setting_list[2]
+                    default_value = setting_list[3]
+                    action_row = Adw.SwitchRow.new()
+                    action_row.add_css_class("myswitchrow")
+                    list_box.append(action_row)
+
+                    if Adw.get_major_version() == 1 and Adw.get_minor_version() > 2:
+                        action_row.set_title_lines(1)
+                        action_row.set_subtitle_lines(4)
+
+                    # action_row.add_prefix(Gtk.Image.new_from_icon_name("audio-volume-overamplified-symbolic"))
+                    action_row.set_title(title)
+                    # TODO: Wait until the Settings Tab is scrollable to do this.
+                    if subtitle:
+                        # action_row.set_subtitle(subtitle)
+                        pass
+                    action_row.set_active(self.settings.get(setting, default_value))
+                    action_row.connect(
+                        "notify::active", self.switch_row_changed, setting
+                    )
+
+                else:
+                    width_margin = 6
+                    height_margin = 13
+                    name = setting_list[0]
+                    subname = setting_list[1]
+                    setting = setting_list[2]
+                    default_value_name = setting_list[3]
+                    default_value = setting_list[4]
+                    # Create the current setting
+                    current_setting = (
+                        self.settings.get(setting, default_value_name).replace("_", " ").title()
+                    )
+
+                    # Create the menu button
+                    menu_button = Gtk.MenuButton()
+                    menu_button.set_hexpand(True)
+                    menu_button.set_sensitive(True)
+
+                    # Create the label
+                    label = Gtk.Label(label=name)
+                    label.set_halign(Gtk.Align.START)
+
+                    # Create the box to hold the current value label and the icon
+                    setting_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+                    setting_box.set_margin_top(height_margin)
+                    setting_box.set_margin_bottom(height_margin)
+                    setting_box.set_halign(Gtk.Align.END)
+                    setting_box.set_hexpand(True)
+
+                    current_value_label = Gtk.Label(label=current_setting)
+                    icon = Gtk.Image.new_from_icon_name("pan-down-symbolic")
+                    setting_box.append(current_value_label)
+                    setting_box.append(icon)
+
+                    # Create the main box that holds the label box and the setting box
+                    main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+                    main_box.set_margin_start(width_margin)
+                    main_box.set_margin_end(width_margin)
+                    main_box.set_halign(Gtk.Align.FILL)
+                    main_box.set_hexpand(True)
+
+                    main_box.append(label)
+                    main_box.append(setting_box)
+
+                    # Create the popover and its options
+                    popover = Gtk.Popover()
+                    option_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+                    options = setting_list[2:]
+                    name = True
+                    i = 0
+                    for option in enumerate(options):
+                        if name:
+                            option_button_name = options[i]
+                            name = False
+                        else:
+                            option_button_value = options[i]
+                            option_button = Gtk.Button(
+                                label=option_button_name, css_classes=["mybutton"]
+                            )
+                            option_button.connect(
+                                "clicked",
+                                lambda _, opt=option_button_name, set=setting, val=option_button_value, lab=current_value_label, pop=popover: self.on_option_button_clicked(
+                                    opt, set, val, lab, pop
+                                ),
+                            )
+                            option_box.append(option_button)
+                            name = True
+                        i += 1
+                    popover.set_child(option_box)
+
+                    menu_button.set_child(main_box)
+                    menu_button.set_popover(popover)
+
+                    list_box.append(menu_button)
+            grid.attach(settings_box, 0, 0, 1, 1)
+
     # TODO:
-    # Make the button look slightly more rounded?
     # Move the popover to the right?
     def create_setting_button(
         self,
@@ -1313,44 +1479,35 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # If the setting is boolean.
         if is_boolean:
+            # Create the box
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+
+            # Create the clamp
+            clamp = Adw.Clamp.new()
+            box.append(clamp)
+            clamp.set_maximum_size(450)
+
+            listbox = Gtk.ListBox.new()
+            listbox.set_css_classes(["boxed-list"])
+            clamp.set_child(listbox)
+
+            action_row = Adw.SwitchRow.new()
+            listbox.append(action_row)
+
+            if Adw.get_major_version() == 1 and Adw.get_minor_version() > 2:
+                action_row.set_title_lines(1)
+                action_row.set_subtitle_lines(4)
+
+            # action_row.add_prefix(Gtk.Image.new_from_icon_name("audio-volume-overamplified-symbolic"))
+            action_row.set_title(name)
+            # action_row.set_subtitle("Allow Volume Above 100 Percent")
+            action_row.set_active(self.settings.get(setting, default_value))
+            action_row.connect("notify::active", self.switch_row_changed, setting)
             height_margin -= 3.5
 
-            # Create the button
-            button = Gtk.Button()
-            button.set_hexpand(True)
-            button.set_sensitive(True)
-
-            # Create the toggle_switch
-            toggle_switch = Gtk.Switch()
-            toggle_switch.set_active(self.settings.get(setting, default_value))
-            toggle_switch.connect("state-set", self.toggle_changed, setting)
-            toggle_switch.set_halign(Gtk.Align.END)
-            toggle_switch.set_hexpand(True)
-
-            # Connect the button to button_clicked.
-            button.connect(
-                "clicked", lambda _: self.button_clicked(toggle_switch, setting)
-            )
-
-            # Create the main_box, which holds the label and toggle_switch.
-            main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-            main_box.set_margin_start(width_margin)
-            main_box.set_margin_end(width_margin)
-            main_box.set_margin_top(height_margin)
-            main_box.set_margin_bottom(height_margin)
-            main_box.set_halign(Gtk.Align.FILL)
-            main_box.set_hexpand(True)
-
-            label = Gtk.Label(label=name)
-            label.set_halign(Gtk.Align.START)
-            main_box.append(label)
-            main_box.append(toggle_switch)
-
-            button.set_child(main_box)
-
-            self.set_padding(button, padding)
-            grid.attach(button, column, row, 1, 1)
+            grid.attach(box, column, row, 1, 1)
         else:
+
             # Create the current setting
             current_setting = (
                 self.settings.get(setting, default_value_name).replace("_", " ").title()
