@@ -71,7 +71,7 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably un
 
 ## Known Bugs
 
-Thinking of any...
+- The "Run Thor with sudo" setting doesn't work when Galaxy Flasher is a flatpak. #15
 
 ## TODO
 
