@@ -48,6 +48,7 @@ if not os.path.exists(app_config_dir):
 settings_file = os.path.join(app_config_dir, "settings.json")
 swd = os.path.dirname(os.path.realpath(__file__))
 locale_file = f"{swd}/locales/{lang}.json"
+is_flatpak = "FLATPAK_ID" in os.environ or "FLATPAK_APP_ID" in os.environ
 machine = platform.machine()
 system = platform.system().lower()
 
@@ -106,7 +107,29 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.prompt = ">> "
             # Only use the sudo setting for Thor.
             if self.settings.get("sudo", False) and self.flashtool == "thor":
-                flashtool_exec = ["sudo", flashtool_path]
+                if is_flatpak:
+                    flashtool_exec = [
+                        "flatpak-spawn",
+                        "--host",
+                        "--env=TERM=xterm-256color",
+                        "--directory=/home/ethical_haquer",
+                        "sudo",
+                        "-S",
+                        "./TheAirBlow.Thor.Shell",
+                    ]
+                else:
+                    flashtool_exec = ["sudo", flashtool_path]
+                # pkexec could be used in place of sudo.
+                """
+                flashtool_exec = [
+                    "flatpak-spawn",
+                    "--host",
+                    "--env=TERM=xterm-256color",
+                    "--directory=/home/ethical_haquer",
+                    "pkexec",
+                    "./TheAirBlow.Thor.Shell",
+                ]
+                """
             else:
                 flashtool_exec = [flashtool_path]
             # Check if flashtool_path exists.
@@ -323,21 +346,42 @@ class MainWindow(Gtk.ApplicationWindow):
         # TODO: This could be improved to be more like the Settings tab.
         row = 0
         if self.flashtool == "thor":
-            options = [
-                {"option": "T Flash"},
-                {"option": "EFS Clear (currently disabled)"},
-                {"option": "Bootloader Update"},
-                {"option": "Reset Flash Count"},
+            options_list = [
+                {
+                    "title": None,
+                    "settings": [
+                        [
+                            "switch",
+                            "T Flash",
+                            None,
+                            "t_flash",
+                            False,
+                        ],
+                        [
+                            "switch",
+                            "EFS Clear (currently disabled)",
+                            None,
+                            "efs_clear",
+                            False,
+                        ],
+                        [
+                            "switch",
+                            "Bootloader Update",
+                            None,
+                            "bootloader_update",
+                            False,
+                        ],
+                        [
+                            "switch",
+                            "Reset Flash Count",
+                            None,
+                            "reset_flash_count",
+                            False,
+                        ],
+                    ],
+                },
             ]
-            for item in options:
-                option = item["option"]
-                check_button = self.create_checkbutton(
-                    option, 0, row, self.options_grid, (6, 0, 0, 0)
-                )
-                check_button.connect("toggled", self.option_changed)
-                if option == "EFS Clear (currently disabled)":
-                    self.set_widget_state(check_button, state=False)
-                row += 1
+            self.create_preferences(options_list, self.options_grid, "options")
         elif self.flashtool == "odin4":
             row = 0
             self.create_label(
@@ -359,11 +403,8 @@ class MainWindow(Gtk.ApplicationWindow):
             padding=(10, 0, 0, 0),
         )
         # Create the Settings tab widgets.
-        settings_list = [
-            {
-                "title": "General",
-                "settings": [
-                    [
+        """
+        [
                         "combo",
                         "Flash Tool",
                         None,
@@ -375,6 +416,11 @@ class MainWindow(Gtk.ApplicationWindow):
                         "PyThor (in development)",
                         "pythor",
                     ],
+        """
+        settings_list = [
+            {
+                "title": "General",
+                "settings": [
                     [
                         "combo",
                         "Theme",
@@ -386,6 +432,18 @@ class MainWindow(Gtk.ApplicationWindow):
                         "light",
                         "Dark",
                         "dark",
+                    ],
+                    [
+                        "expander",
+                        "Flash Tool",
+                        "The flash-tool Galaxy Flasher should use.",
+                        "flash_tool",
+                        "Thor",
+                        "thor",
+                        "Odin4",
+                        "odin4",
+                        "PyThor (in development)",
+                        "pythor",
                     ],
                 ],
             },
@@ -431,6 +489,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.vte_term.set_context_menu(term_popover)
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
+        self.print_widget_tree(self)
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
         print(
             rf"""
@@ -1094,28 +1153,6 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         window.present()
 
-    def option_changed(self, button):
-        if self.flashtool == "thor":
-            convert = {
-                "t_flash": "tflash",
-                "efs_clear": "efsclear",
-                "reset_flash_count": "resetfc",
-                "bootloader_update": "blupdate",
-            }
-
-            option = button.get_label().lower().replace(" ", "_")
-            value = button.get_active()
-
-            print(f"{option}: {value}")
-            setattr(self, option, value)
-
-            option = convert[option]
-            self.send_cmd(f"options {option} {value}")
-
-    def switch_row_changed(self, switch, state, setting):
-        active = switch.get_active()
-        self.set_setting(setting, active)
-
     def set_setting(self, setting, value):
         if setting == "theme":
             self.set_theme(value)
@@ -1275,8 +1312,33 @@ class MainWindow(Gtk.ApplicationWindow):
         grid.attach(button, column, row, width, height)
         return button
 
-    def create_preferences(self, main_preferences_list, grid):
+    # Given a widget, prints it's widget tree.
+    def print_widget_tree(
+        self, widget, indent_str: str = "", top_level: bool = True
+    ) -> None:
+        if top_level:
+            print(f"{indent_str}{widget.__class__.__name__}")
+
+        child_widgets = []
+        child = widget.get_first_child()
+        while child:
+            child_widgets.append(child)
+            child = child.get_next_sibling()
+
+        for i, child in enumerate(child_widgets):
+            if i == len(child_widgets) - 1:
+                connector = "└─"
+                sub_indent = "    "
+            else:
+                connector = "├─"
+                sub_indent = "│  "
+            print(f"{indent_str}{connector} {child.__class__.__name__}")
+            if child.get_first_child():
+                self.print_widget_tree(child, indent_str + sub_indent, False)
+
+    def create_preferences(self, main_preferences_list, grid, special=None):
         preferences_page = Adw.PreferencesPage.new()
+        preferences_page.set_hexpand(True)
         for section in main_preferences_list:
             preferences_group = Adw.PreferencesGroup.new()
             preferences_page.add(preferences_group)
@@ -1290,20 +1352,22 @@ class MainWindow(Gtk.ApplicationWindow):
                 subtitle = setting_list[2]
                 setting = setting_list[3]
                 if setting_type == "switch":
-                    default_value = setting_list[3]
+                    default_value = setting_list[4]
                     switch_row = Adw.SwitchRow.new()
                     switch_row.set_title(title)
                     if subtitle:
                         switch_row.set_subtitle(subtitle)
                     switch_row.set_active(self.settings.get(setting, default_value))
-                    switch_row.connect(
-                        "notify::active", self.switch_row_changed, setting
-                    )
+                    if special == "options":
+                        function = self.on_option_changed
+                    else:
+                        function = self.on_switch_row_changed
+                    switch_row.connect("notify::active", function, setting)
                     preferences_group.add(switch_row)
 
                 elif setting_type == "combo":
                     default_value = setting_list[5]
-                    # Gets the current_value of setting.
+                    # Get the current_value of setting.
                     current_value = self.settings.get(setting, default_value)
                     # Create the combo row.
                     combo_row = Adw.ComboRow(title=title)
@@ -1333,12 +1397,135 @@ class MainWindow(Gtk.ApplicationWindow):
                         ),
                     )
                     preferences_group.add(combo_row)
+                elif setting_type == "expander":
+
+                    def add_custom_label(
+                        text: str,
+                        expander_row: Adw.ExpanderRow,
+                    ) -> None:
+                        expander_row.added_label = Gtk.Label(label=text)
+
+                        label_box = Gtk.Box(
+                            orientation=Gtk.Orientation.HORIZONTAL, spacing=0
+                        )
+                        label_box.append(expander_row.added_label)
+                        action_row_box = (
+                            expander_row.get_first_child()  # box
+                            .get_first_child()  # list_box
+                            .get_first_child()  # action_row
+                            .get_first_child()  # action_row_box
+                        )
+                        last_box = action_row_box.get_last_child()
+                        label_box.insert_before(action_row_box, last_box)
+
+                    default_value = setting_list[5]
+                    # Get the current_value of setting.
+                    current_value = self.settings.get(setting, default_value)
+                    print(f"current_value: {current_value}")
+                    expander_row = Adw.ExpanderRow(title=title)
+                    if subtitle:
+                        expander_row.set_subtitle(subtitle)
+                    # Split the value_names and values into seperate lists.
+                    value_name_list = []
+                    value_list = []
+                    value_name = True
+                    for item in setting_list[4:]:
+                        if value_name:
+                            value_name_list.append(item)
+                            value_name = False
+                        else:
+                            value_list.append(item)
+                            value_name = True
+                    print(f"value_name_list: {value_name_list}")
+                    print(f"value_list: {value_list}")
+                    # Get the index of the current value.
+                    current_value_index = value_list.index(current_value)
+                    print(f"current_value_index: {current_value_index}")
+                    current_value_name = value_name_list[current_value_index]
+                    # Show the widget tree before adding the custom label.
+                    self.print_widget_tree(expander_row)
+                    # Add the custom label
+                    add_custom_label(current_value_name, expander_row)
+                    # Show the widget tree after adding the custom label.
+                    self.print_widget_tree(expander_row)
+                    # Create a radio group
+                    radio_group = None
+                    for i, name in enumerate(value_name_list):
+                        value = value_list[i]
+                        action_row = Adw.ActionRow(title=name)
+                        check_button = Gtk.CheckButton()
+                        check_button.set_group(radio_group)
+                        radio_group = check_button
+                        action_row.add_prefix(check_button)
+                        if name == current_value_name:
+                            check_button.set_active(True)
+
+                        file_chooser_button = Gtk.Button()
+                        self.set_padding(file_chooser_button, [0, 0, 10, 10])
+                        button_content = Adw.ButtonContent(
+                            label="", icon_name="document-open-symbolic"
+                        )
+                        file_chooser_button.set_child(button_content)
+                        action_row.add_suffix(file_chooser_button)
+
+                        info_button = Gtk.Button()
+                        self.set_padding(info_button, [0, 0, 10, 10])
+                        button_content = Adw.ButtonContent(
+                            label="", icon_name="help-about-symbolic"
+                        )
+                        info_button.set_child(button_content)
+                        action_row.add_suffix(info_button)
+
+                        action_row.set_activatable_widget(check_button)
+                        action_row.connect(
+                            "activated",
+                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting, value=value: self.on_row_activated(
+                                expander_row, action_row, setting, value
+                            ),
+                        )
+                        expander_row.add_row(action_row)
+                    preferences_group.add(expander_row)
+                else:
+                    print(
+                        f'Error in create_preferences. "{setting_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
+                    )
         grid.attach(preferences_page, 0, 0, 1, 1)
+
+    def on_row_activated(self, expander_row, action_row, setting, value):
+        expander_row.added_label.set_label(action_row.get_title())
+        self.set_setting(setting, value)
+
+    def on_switch_row_changed(self, switch, state, setting):
+        print(state)
+        value = switch.get_active()
+        self.set_setting(setting, value)
 
     def on_combo_row_changed(self, combo_row, value_list, setting):
         new_value_index = combo_row.get_selected()
         new_value = value_list[new_value_index]
         self.set_setting(setting, new_value)
+
+    # TODO, keep track of the user setting options through the
+    # terminal and/or the Command Entry.
+    def on_option_changed(self, switch, state, option):
+        if self.flashtool == "thor":
+            if option == "efs_clear":
+                # Show alert dialog, if the user decides to continue, run send_cmd.
+                pass
+
+            convert = {
+                "t_flash": "tflash",
+                "efs_clear": "efsclear",
+                "reset_flash_count": "resetfc",
+                "bootloader_update": "blupdate",
+            }
+            value = str(switch.get_active()).lower()
+
+            print(f"{option}: {value}")
+            setattr(self, option, value)
+
+            option = convert[option]
+            self.send_cmd(f"options {option} {value}")
 
     def change_button_command(self, button, new_command):
         button.disconnect(button.signal_id)
