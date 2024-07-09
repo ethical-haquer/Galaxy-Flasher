@@ -79,6 +79,7 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably un
 - Improve the flash-tool setting
 - Display the partitions to be flashed in the Verify Flash Window
 - Hide Thor-specific settings if the current flash-tool is not Thor
+- Publish Galaxy Flasher on FlatHub
 
 ## Supported platforms
 
