@@ -19,9 +19,12 @@
 # Aside from the prompt (">> ") and entered commands,
 # anything not colored is output coming from Odin4.
 
-BASEDIR=$(dirname $0)
+odin4_exec=$1
 
-odin4_exec="$BASEDIR/flash-tools/odin4/linux/x86_64/odin4"
+if [ -z "$odin4_exec" ]; then
+    echo "Error: The path to the Odin4 executable is required as an argument"
+    exit 1
+fi
 
 end="\033[0m"
 green="\033[38;2;38;162;105m"

@@ -55,7 +55,7 @@ system = platform.system().lower()
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
-        self.last_text = ""
+        self.last_output = ""
         super().__init__(*args, **kwargs)
         # Add the CSS provider to the screen
         style_provider = Gtk.CssProvider()
@@ -95,44 +95,51 @@ class MainWindow(Gtk.ApplicationWindow):
         else:
             # Set the flash-tool path
             if self.flashtool == "thor":
-                flashtool_path = (
-                    f"{swd}/flash-tools/thor/{system}/{machine}/TheAirBlow.Thor.Shell"
-                )
-                self.prompt = "shell> "
-            elif self.flashtool == "odin4":
-                flashtool_path = f"{swd}/odin4-wrapper.sh"
-                self.prompt = ">> "
-            elif self.flashtool == "pythor":
-                flashtool_path = f"{swd}/flash-tools/pythor/{system}/pythor_cli"
-                self.prompt = ">> "
-            # Only use the sudo setting for Thor.
-            if self.settings.get("sudo", False) and self.flashtool == "thor":
                 if is_flatpak:
                     flashtool_exec = [
                         "flatpak-spawn",
                         "--host",
                         "--env=TERM=xterm-256color",
                         "--directory=/home/ethical_haquer",
-                        "sudo",
-                        "-S",
                         "./TheAirBlow.Thor.Shell",
                     ]
                 else:
-                    flashtool_exec = ["sudo", flashtool_path]
-                # pkexec could be used in place of sudo.
-                """
-                flashtool_exec = [
-                    "flatpak-spawn",
-                    "--host",
-                    "--env=TERM=xterm-256color",
-                    "--directory=/home/ethical_haquer",
-                    "pkexec",
-                    "./TheAirBlow.Thor.Shell",
-                ]
-                """
-            else:
-                flashtool_exec = [flashtool_path]
+                    flashtool_exec = [
+                        "/home/ethical_haquer/TheAirBlow.Thor.Shell",
+                    ]
+                self.prompt = "shell> "
+            elif self.flashtool == "odin4":
+                if is_flatpak:
+                    flashtool_exec = [
+                        "flatpak-spawn",
+                        "--host",
+                        "--env=TERM=xterm-256color",
+                        "--directory=/home/ethical_haquer",
+                        "./odin4-wrapper.sh",
+                        "/home/ethical_haquer/odin4",
+                    ]
+                else:
+                    flashtool_exec = [
+                        "/home/ethical_haquer/odin4-wrapper.sh",
+                        "/home/ethical_haquer/odin4",
+                    ]
+                self.prompt = ">> "
+            elif self.flashtool == "pythor":
+                if is_flatpak:
+                    flashtool_exec = [
+                        "flatpak-spawn",
+                        "--host",
+                        "--env=TERM=xterm-256color",
+                        "--directory=/home/ethical_haquer",
+                        "./pythor_cli",
+                    ]
+                else:
+                    flashtool_exec = [
+                        "/home/ethical_haquer/pythor_cli",
+                    ]
+                self.prompt = ">> "
             # Check if flashtool_path exists.
+            """
             if not os.path.isfile(flashtool_path):
                 print(f"Error: File {flashtool_path} not found")
                 flashtool_exec = [
@@ -146,6 +153,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         f'The file: "{flashtool_path}" was not found.',
                     ),
                 )
+                """
         # Define main grid
         self.grid = Gtk.Grid()
         self.grid.set_column_spacing(10)
@@ -350,36 +358,36 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "title": None,
                     "settings": [
-                        [
-                            "switch",
-                            "T Flash",
-                            None,
-                            "t_flash",
-                            False,
-                        ],
-                        [
-                            "switch",
-                            "EFS Clear (currently disabled)",
-                            None,
-                            "efs_clear",
-                            False,
-                        ],
-                        [
-                            "switch",
-                            "Bootloader Update",
-                            None,
-                            "bootloader_update",
-                            False,
-                        ],
-                        [
-                            "switch",
-                            "Reset Flash Count",
-                            None,
-                            "reset_flash_count",
-                            False,
-                        ],
+                        {
+                            "type": "switch",
+                            "title": "T Flash",
+                            "subtitle": None,
+                            "setting": "t_flash",
+                            "default_value": False,
+                        },
+                        {
+                            "type": "switch",
+                            "title": "EFS Clear (currently disabled)",
+                            "subtitle": None,
+                            "setting": "efs_clear",
+                            "default_value": False,
+                        },
+                        {
+                            "type": "switch",
+                            "title": "Bootloader Update",
+                            "subtitle": None,
+                            "setting": "bootloader_update",
+                            "default_value": False,
+                        },
+                        {
+                            "type": "switch",
+                            "title": "Reset Flash Count",
+                            "subtitle": None,
+                            "setting": "reset_flash_count",
+                            "default_value": False,
+                        },
                     ],
-                },
+                }
             ]
             self.create_preferences(options_list, self.options_grid, "options")
         elif self.flashtool == "odin4":
@@ -403,61 +411,44 @@ class MainWindow(Gtk.ApplicationWindow):
             padding=(10, 0, 0, 0),
         )
         # Create the Settings tab widgets.
-        """
-        [
-                        "combo",
-                        "Flash Tool",
-                        None,
-                        "flash_tool",
-                        "Thor",
-                        "thor",
-                        "Odin4",
-                        "odin4",
-                        "PyThor (in development)",
-                        "pythor",
-                    ],
-        """
         settings_list = [
             {
                 "title": "General",
                 "settings": [
-                    [
-                        "combo",
-                        "Theme",
-                        None,
-                        "theme",
-                        "System",
-                        "system",
-                        "Light",
-                        "light",
-                        "Dark",
-                        "dark",
-                    ],
-                    [
-                        "expander",
-                        "Flash Tool",
-                        "The flash-tool Galaxy Flasher should use.",
-                        "flash_tool",
-                        "Thor",
-                        "thor",
-                        "Odin4",
-                        "odin4",
-                        "PyThor (in development)",
-                        "pythor",
-                    ],
+                    {
+                        "type": "combo",
+                        "title": "Theme",
+                        "subtitle": None,
+                        "setting": "theme",
+                        "options": [
+                            {"name": "System", "value": "system"},
+                            {"name": "Light", "value": "light"},
+                            {"name": "Dark", "value": "dark"},
+                        ],
+                    },
+                    {
+                        "type": "expander",
+                        "title": "Flash Tool",
+                        "subtitle": "The flash-tool Galaxy Flasher should use.",
+                        "setting": "flash_tool",
+                        "options": [
+                            {"name": "Thor", "value": "thor"},
+                            {"name": "Odin4", "value": "odin4"},
+                            {"name": "PyThor (in development)", "value": "pythor"},
+                        ],
+                    },
                 ],
             },
             {
                 "title": "Thor",
                 "settings": [
-                    ["switch", "Run with sudo", None, "sudo", False],
-                    [
-                        "switch",
-                        "Automatically select all partitions",
-                        "Instead of asking you what partitions to flash, automatically select them all.",
-                        "auto_partitions",
-                        False,
-                    ],
+                    {
+                        "type": "switch",
+                        "title": "Automatically select all partitions",
+                        "subtitle": "Instead of asking you what partitions to flash, automatically select them all.",
+                        "setting": "auto_partitions",
+                        "default_value": False,
+                    },
                 ],
             },
         ]
@@ -489,12 +480,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self.vte_term.set_context_menu(term_popover)
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", self.scan_output)
-        self.print_widget_tree(self)
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
         print(
             rf"""
   ____       _                    _____ _           _
- / ___| __ _| | __ ___  ___   _  |  ___| | __ _ ___| |__   ___ _ __ 
+ / ___| __ _| | __ ___  ___   _  |  ___| | __ _ ___| |__   ___ _ __
 | |  _ / _` | |/ _` \ \/ / | | | | |_  | |/ _` / __| '_ \ / _ \ '__|
 | |_| | (_| | | (_| |>  <| |_| | |  _| | | (_| \__ \ | | |  __/ |
  \____|\__,_|_|\__,_/_/\_\\__, | |_|   |_|\__,_|___/_| |_|\___|_|
@@ -833,6 +823,12 @@ class MainWindow(Gtk.ApplicationWindow):
                     # You have to reboot each time."
                     lambda: self.set_widget_state(self.start_odin_button, state=False),
                 ],
+                'Successfully set "Reset Flash Count" to "true"!': [
+                    lambda: self.option_changed("reset_flash_count", True)
+                ],
+                'Successfully set "Reset Flash Count" to "false"!': [
+                    lambda: self.option_changed("reset_flash_count", False)
+                ],
             }
         elif self.flashtool == "odin4":
             strings_to_commands = {
@@ -851,22 +847,20 @@ class MainWindow(Gtk.ApplicationWindow):
             }
         # This is a pretty bad way to do this.
         # 10000 should be replaced with the actual value, But it works.
-        term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
-        # TODO: Look into why this is needed, obviously it's only for Thor.
-        if term_text.strip().rsplit("shell>")[-1].strip() == "":
-            try:
-                term_text = term_text.strip().rsplit("shell>")[-2].strip()
-            except:
-                term_text = term_text.strip().rsplit("shell>")[-1].strip()
-        else:
-            term_text = term_text.strip().rsplit("shell>")[-1].strip()
-        if term_text != self.last_text:
+        current_output = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[
+            0
+        ].strip()
+        lines = current_output.split("\n")
+        lines = [line for line in lines if not line.startswith(self.prompt.strip())]
+        current_output = "\n".join(lines)
+        if current_output != self.last_output:
+            new_output = current_output.replace(self.last_output, "")
             for string, commands in strings_to_commands.items():
-                if string in term_text and string not in self.last_text:
+                if string in new_output:
                     for command in commands:
                         command()
 
-            self.last_text = term_text
+            self.last_output = current_output
 
     def remove_blank_lines(self, string):
         lines = string.splitlines()
@@ -1328,7 +1322,7 @@ class MainWindow(Gtk.ApplicationWindow):
         for i, child in enumerate(child_widgets):
             if i == len(child_widgets) - 1:
                 connector = "└─"
-                sub_indent = "    "
+                sub_indent = "   "
             else:
                 connector = "├─"
                 sub_indent = "│  "
@@ -1346,57 +1340,57 @@ class MainWindow(Gtk.ApplicationWindow):
             settings = section["settings"]
             if group_title:
                 preferences_group.set_title(group_title)
-            for setting_list in settings:
-                setting_type = setting_list[0]
-                title = setting_list[1]
-                subtitle = setting_list[2]
-                setting = setting_list[3]
+            for setting in settings:
+                setting_type = setting["type"]
+                title = setting["title"]
+                subtitle = setting.get("subtitle")
+                setting_name = setting["setting"]
                 if setting_type == "switch":
-                    default_value = setting_list[4]
+                    default_value = setting.get("default_value", False)
                     switch_row = Adw.SwitchRow.new()
+                    print(f"{setting_name}_switch_row")
+                    setattr(self, f"{setting_name}_switch_row", switch_row)
                     switch_row.set_title(title)
                     if subtitle:
                         switch_row.set_subtitle(subtitle)
-                    switch_row.set_active(self.settings.get(setting, default_value))
+                    switch_row.set_active(
+                        self.settings.get(setting_name, default_value)
+                    )
                     if special == "options":
-                        function = self.on_option_changed
+                        function = self.set_option
                     else:
                         function = self.on_switch_row_changed
-                    switch_row.connect("notify::active", function, setting)
+                    switch_row.connect("notify::active", function, setting_name)
                     preferences_group.add(switch_row)
 
                 elif setting_type == "combo":
-                    default_value = setting_list[5]
-                    # Get the current_value of setting.
-                    current_value = self.settings.get(setting, default_value)
-                    # Create the combo row.
+                    options = setting["options"]
+                    default_value = next(
+                        (
+                            option["value"]
+                            for option in options
+                            if option["value"] == self.settings.get(setting_name)
+                        ),
+                        options[0]["value"],
+                    )
                     combo_row = Adw.ComboRow(title=title)
                     if subtitle:
                         combo_row.set_subtitle(subtitle)
-                    # Split the value_names and values into seperate lists.
                     value_name_list = Gtk.StringList.new()
-                    value_list = []
-                    value_name = True
-                    for item in setting_list[4:]:
-                        if value_name:
-                            value_name_list.append(item)
-                            value_name = False
-                        else:
-                            value_list.append(item)
-                            value_name = True
+                    value_list = [option["value"] for option in options]
+                    for option in options:
+                        value_name_list.append(option["name"])
                     combo_row.set_model(value_name_list)
-                    # Get the index of the current value.
-                    current_value_index = value_list.index(current_value)
-                    # Set the currently selected item.
+                    current_value_index = value_list.index(default_value)
                     combo_row.set_selected(current_value_index)
-                    # Connect the notify::selected signal.
                     combo_row.connect(
                         "notify::selected",
-                        lambda row, _, ls=value_list, sett=setting: self.on_combo_row_changed(
+                        lambda row, _, ls=value_list, sett=setting_name: self.on_combo_row_changed(
                             row, ls, sett
                         ),
                     )
                     preferences_group.add(combo_row)
+
                 elif setting_type == "expander":
 
                     def add_custom_label(
@@ -1418,55 +1412,45 @@ class MainWindow(Gtk.ApplicationWindow):
                         last_box = action_row_box.get_last_child()
                         label_box.insert_before(action_row_box, last_box)
 
-                    default_value = setting_list[5]
-                    # Get the current_value of setting.
-                    current_value = self.settings.get(setting, default_value)
-                    print(f"current_value: {current_value}")
+                    options = setting["options"]
+                    default_value = next(
+                        (
+                            option["value"]
+                            for option in options
+                            if option["value"] == self.settings.get(setting_name)
+                        ),
+                        options[0]["value"],
+                    )
                     expander_row = Adw.ExpanderRow(title=title)
                     if subtitle:
                         expander_row.set_subtitle(subtitle)
-                    # Split the value_names and values into seperate lists.
-                    value_name_list = []
-                    value_list = []
-                    value_name = True
-                    for item in setting_list[4:]:
-                        if value_name:
-                            value_name_list.append(item)
-                            value_name = False
-                        else:
-                            value_list.append(item)
-                            value_name = True
-                    print(f"value_name_list: {value_name_list}")
-                    print(f"value_list: {value_list}")
-                    # Get the index of the current value.
-                    current_value_index = value_list.index(current_value)
-                    print(f"current_value_index: {current_value_index}")
-                    current_value_name = value_name_list[current_value_index]
-                    # Show the widget tree before adding the custom label.
-                    self.print_widget_tree(expander_row)
-                    # Add the custom label
+                    value_name_list = [option["name"] for option in options]
+                    value_list = [option["value"] for option in options]
+                    current_value_name = next(
+                        option["name"]
+                        for option in options
+                        if option["value"] == default_value
+                    )
                     add_custom_label(current_value_name, expander_row)
-                    # Show the widget tree after adding the custom label.
-                    self.print_widget_tree(expander_row)
-                    # Create a radio group
                     radio_group = None
-                    for i, name in enumerate(value_name_list):
-                        value = value_list[i]
-                        action_row = Adw.ActionRow(title=name)
+                    for i, option in enumerate(options):
+                        action_row = Adw.ActionRow(title=option["name"])
                         check_button = Gtk.CheckButton()
                         check_button.set_group(radio_group)
                         radio_group = check_button
                         action_row.add_prefix(check_button)
-                        if name == current_value_name:
+                        if option["name"] == current_value_name:
                             check_button.set_active(True)
 
+                        button_box = Gtk.Box(spacing=0)
                         file_chooser_button = Gtk.Button()
                         self.set_padding(file_chooser_button, [0, 0, 10, 10])
                         button_content = Adw.ButtonContent(
                             label="", icon_name="document-open-symbolic"
                         )
                         file_chooser_button.set_child(button_content)
-                        action_row.add_suffix(file_chooser_button)
+                        file_chooser_button.set_has_frame(False)
+                        button_box.append(file_chooser_button)
 
                         info_button = Gtk.Button()
                         self.set_padding(info_button, [0, 0, 10, 10])
@@ -1474,12 +1458,16 @@ class MainWindow(Gtk.ApplicationWindow):
                             label="", icon_name="help-about-symbolic"
                         )
                         info_button.set_child(button_content)
-                        action_row.add_suffix(info_button)
+                        info_button.set_has_frame(False)
+                        button_box.append(info_button)
+                        action_row.add_suffix(button_box)
 
                         action_row.set_activatable_widget(check_button)
                         action_row.connect(
                             "activated",
-                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting, value=value: self.on_row_activated(
+                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting_name, value=option[
+                                "value"
+                            ]: self.on_expander_row_changed(
                                 expander_row, action_row, setting, value
                             ),
                         )
@@ -1491,12 +1479,11 @@ class MainWindow(Gtk.ApplicationWindow):
                     )
         grid.attach(preferences_page, 0, 0, 1, 1)
 
-    def on_row_activated(self, expander_row, action_row, setting, value):
+    def on_expander_row_changed(self, expander_row, action_row, setting, value):
         expander_row.added_label.set_label(action_row.get_title())
         self.set_setting(setting, value)
 
     def on_switch_row_changed(self, switch, state, setting):
-        print(state)
         value = switch.get_active()
         self.set_setting(setting, value)
 
@@ -1507,7 +1494,14 @@ class MainWindow(Gtk.ApplicationWindow):
 
     # TODO, keep track of the user setting options through the
     # terminal and/or the Command Entry.
-    def on_option_changed(self, switch, state, option):
+    """
+    def option_changed(self, option, new_value):
+        if self.flashtool == "thor":
+            switch_row_name = option + "_switch_row"
+            switch_row = getattr(self, switch_row_name)
+            switch_row.set_active(new_value)
+
+    def set_option(self, switch, state, option):
         if self.flashtool == "thor":
             if option == "efs_clear":
                 # Show alert dialog, if the user decides to continue, run send_cmd.
@@ -1526,6 +1520,48 @@ class MainWindow(Gtk.ApplicationWindow):
 
             option = convert[option]
             self.send_cmd(f"options {option} {value}")
+        """
+
+    def option_changed(self, option, new_value):
+        if self.flashtool == "thor":
+            switch_row_name = option + "_switch_row"
+            switch_row = getattr(self, switch_row_name)
+            self.toggling_switch_row = True
+            switch_row.set_active(new_value)
+            self.toggling_switch_row = False
+
+    def set_option(self, switch_row, state, option):
+        if not hasattr(self, 'toggling_switch_row') or not self.toggling_switch_row:
+            if self.flashtool == "thor":
+                if option == "efs_clear":
+                    def on_response(dialog, response_id):
+                        if response_id == "continue":
+                            print(f'Would have ran "options efsclear {str(switch_row.get_active()).lower()}"')
+                            #self.send_cmd(f"options efsclear {str(switch_row.get_active()).lower()}")
+
+                    dialog = Adw.AlertDialog.new("EFS Clear", "Are you sure you want to clear the EFS?")
+                    dialog.add_response("cancel", "Cancel")
+                    dialog.add_response("continue", "Continue")
+                    dialog.set_default_response("cancel")
+                    dialog.set_close_response("cancel")
+                    dialog.connect("response", on_response)
+                    dialog.present()
+                    return  # Stop running the rest of the function
+
+                convert = {
+                    "t_flash": "tflash",
+                    "efs_clear": "efsclear",
+                    "reset_flash_count": "resetfc",
+                    "bootloader_update": "blupdate",
+                }
+                value = str(switch_row.get_active()).lower()
+
+                print(f"{option}: {value}")
+                setattr(self, option, value)
+
+                option = convert[option]
+                print(f'Would have ran "options {option} {value}"')
+                #self.send_cmd(f"options {option} {value}")
 
     def change_button_command(self, button, new_command):
         button.disconnect(button.signal_id)
