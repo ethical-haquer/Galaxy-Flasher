@@ -140,7 +140,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   14. Select version 46.
   15. If what you see looks correct, type "y" and hit enter. Once it says "Changes complete.", continue.
   16. Run the `./build.sh` command again, from the "flatpak" directory.
-  17. You've finished installing Galaxy Flasher, congratulations! Galaxy Flasher should now show up as an app.
+  17. You've finished installing Galaxy Flasher, congratulations! Galaxy Flasher should now show up as an app. You can also run it from the terminal: `flatpak run com.ethicalhaquer.galaxyflasher`
   </details>
   </p>
 
@@ -193,10 +193,10 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
 
   For Thor, the options are:
   
-  - T Flash - Writes the bootloader of a working device to the SD card.
-  - EFS Clear - Wipes phone/network-related stuff from your device. It should NOT be used by normal users. (currently disabled until a safety is implemented)
+  - T Flash - Writes the boot-loader of a working device to the SD card.
+  - EFS Clear - Wipes phone/network-related stuff from your device. It should NOT be used by normal users.
   - Bootloader Update - I honestly have no idea what this does. Let me know if you do!
-  - Reset Flash Count - I beleive this does what it sounds like it does, but I don't know when you'd ever use it. Please correct me if I'm wrong!
+  - Reset Flash Count - I believe this does what it sounds like it does, but I don't know when you'd ever use it. Please correct me if I'm wrong!
 
   Keep in mind that these options will only be applied if an Odin session has been started. Otherwise the Log Tab will display "This command does not exist".
 

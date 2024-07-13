@@ -83,7 +83,7 @@ class MainWindow(Gtk.ApplicationWindow):
             print("Currently, Galaxy Flasher only supports Linux.")
             self.connect(
                 "show",
-                lambda _: self.error_dialog(
+                lambda _: self.create_alert_dialog(
                     "Unsupported OS", "Currently, Galaxy Flasher only supports Linux."
                 ),
             )
@@ -91,69 +91,80 @@ class MainWindow(Gtk.ApplicationWindow):
                 "echo",
                 f"{system} is currently not supported by Galaxy Flasher.\nIf you think this is incorrect, please open an issue on GitHub, or let me know on XDA.",
             ]
-        # If the system is linux.
+        # If the system is Linux.
         else:
             # Set the flash-tool path
+            self.odin4_wrapper_file = f"{swd}/odin4-wrapper.sh"
+            self.flashtool_file = self.settings.get(f"{self.flashtool}_file", None)
             if self.flashtool == "thor":
-                if is_flatpak:
-                    flashtool_exec = [
-                        "flatpak-spawn",
-                        "--host",
-                        "--env=TERM=xterm-256color",
-                        "--directory=/home/ethical_haquer",
-                        "./TheAirBlow.Thor.Shell",
-                    ]
-                else:
-                    flashtool_exec = [
-                        "/home/ethical_haquer/TheAirBlow.Thor.Shell",
-                    ]
                 self.prompt = "shell> "
             elif self.flashtool == "odin4":
-                if is_flatpak:
-                    flashtool_exec = [
-                        "flatpak-spawn",
-                        "--host",
-                        "--env=TERM=xterm-256color",
-                        "--directory=/home/ethical_haquer",
-                        "./odin4-wrapper.sh",
-                        "/home/ethical_haquer/odin4",
-                    ]
-                else:
-                    flashtool_exec = [
-                        "/home/ethical_haquer/odin4-wrapper.sh",
-                        "/home/ethical_haquer/odin4",
-                    ]
                 self.prompt = ">> "
             elif self.flashtool == "pythor":
+                self.prompt = ">> "
+            if self.flashtool_file:
+                if os.path.isfile(self.flashtool_file):
+                    flashtool_path = os.path.dirname(self.flashtool_file)
+                    print(f"flashtool_path: {flashtool_path}")
+                    if self.flashtool == "odin4":
+                        if os.path.isfile(self.odin4_wrapper_file):
+                            if is_flatpak:
+                                flashtool_exec = [
+                                    "flatpak-spawn",
+                                    "--host",
+                                    "--env=TERM=xterm-256color",
+                                    f"--directory={flashtool_path}",
+                                    self.odin4_wrapper_file,
+                                    self.flashtool_file,
+                                ]
+                            else:
+                                flashtool_exec = [
+                                    self.odin4_wrapper_file,
+                                    self.flashtool_file,
+                                ]
+                    else:
+                        if is_flatpak:
+                            flashtool_exec = [
+                                "flatpak-spawn",
+                                "--host",
+                                "--env=TERM=xterm-256color",
+                                f"--directory={flashtool_path}",
+                                self.flashtool_file,
+                            ]
+                        else:
+                            flashtool_exec = [
+                                self.flashtool_file,
+                            ]
+                else:
+                    if is_flatpak:
+                        flashtool_exec = [
+                            "flatpak-spawn",
+                            "--host",
+                            "--env=TERM=xterm-256color",
+                            "--directory=/",
+                            "echo",
+                            f'The {self.flashtool} executable you chose: "{self.flashtool_file}", was not found.',
+                        ]
+                    else:
+                        flashtool_exec = [
+                            "echo",
+                            f'The {self.flashtool} executable you chose: "{self.flashtool_file}", was not found.',
+                        ]
+            else:
                 if is_flatpak:
                     flashtool_exec = [
                         "flatpak-spawn",
                         "--host",
                         "--env=TERM=xterm-256color",
-                        "--directory=/home/ethical_haquer",
-                        "./pythor_cli",
+                        "--directory=/",
+                        "echo",
+                        "Please select a flash-tool in settings.",
                     ]
                 else:
                     flashtool_exec = [
-                        "/home/ethical_haquer/pythor_cli",
+                        "echo",
+                        "Please select a flash-tool in settings.",
                     ]
-                self.prompt = ">> "
-            # Check if flashtool_path exists.
-            """
-            if not os.path.isfile(flashtool_path):
-                print(f"Error: File {flashtool_path} not found")
-                flashtool_exec = [
-                    "echo",
-                    f'The file: "{flashtool_path}" was not found.',
-                ]
-                self.connect(
-                    "show",
-                    lambda _: self.error_dialog(
-                        "File not found",
-                        f'The file: "{flashtool_path}" was not found.',
-                    ),
-                )
-                """
         # Define main grid
         self.grid = Gtk.Grid()
         self.grid.set_column_spacing(10)
@@ -351,7 +362,6 @@ class MainWindow(Gtk.ApplicationWindow):
         hamburger.set_icon_name("open-menu-symbolic")
         header.pack_start(hamburger)
         # Create the Option tab widgets.
-        # TODO: This could be improved to be more like the Settings tab.
         row = 0
         if self.flashtool == "thor":
             options_list = [
@@ -361,14 +371,14 @@ class MainWindow(Gtk.ApplicationWindow):
                         {
                             "type": "switch",
                             "title": "T Flash",
-                            "subtitle": None,
+                            "subtitle": "Writes the boot-loader of the device to the SD card.",
                             "setting": "t_flash",
                             "default_value": False,
                         },
                         {
                             "type": "switch",
-                            "title": "EFS Clear (currently disabled)",
-                            "subtitle": None,
+                            "title": "EFS Clear",
+                            "subtitle": "Wipes phone/network-related stuff from the device.",
                             "setting": "efs_clear",
                             "default_value": False,
                         },
@@ -518,10 +528,12 @@ class MainWindow(Gtk.ApplicationWindow):
                     paths[slot] = os.path.dirname(entry.get_text())
             if len(paths) == 0:
                 print(self.strings["no_files_selected2"])
-                self.error_dialog("Invalid files", self.strings["no_files_selected2"])
+                self.create_alert_dialog(
+                    "Invalid files", self.strings["no_files_selected2"]
+                )
             elif len(set(paths.values())) > 1:
                 print("The files NEED to be in the same dir...")
-                self.error_dialog("Invalid files", self.strings["invalid_files"])
+                self.create_alert_dialog("Invalid files", self.strings["invalid_files"])
             else:
                 base_dir = list(paths.values())[0]
                 self.thor_select_partitions(files, base_dir, auto)
@@ -544,13 +556,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     args.append(file_arg)
             if len(args) == 0:
                 print(self.strings["no_files_selected2"])
-                self.error_dialog("Invalid files", self.strings["no_files_selected2"])
+                self.create_alert_dialog(
+                    "Invalid files", self.strings["no_files_selected2"]
+                )
             else:
+                # This doesn't wait for the user to select a device.
                 device = self.odin4_select_device()
                 if not device:
                     message = "No devices were found - First connect a device that's in Download Mode"
                     print(message)
-                    self.error_dialog(
+                    self.create_alert_dialog(
                         "No devices were found",
                         "First connect a device that's in Download Mode",
                     )
@@ -854,6 +869,7 @@ class MainWindow(Gtk.ApplicationWindow):
         lines = [line for line in lines if not line.startswith(self.prompt.strip())]
         current_output = "\n".join(lines)
         if current_output != self.last_output:
+            # TODO: This doesn't always work.
             new_output = current_output.replace(self.last_output, "")
             for string, commands in strings_to_commands.items():
                 if string in new_output:
@@ -992,6 +1008,16 @@ class MainWindow(Gtk.ApplicationWindow):
             GLib.main_context_default().iteration(True)
         return result
 
+    # TODO: Finish this.
+    def select_device(self, flashtool):
+        if flashtool == "thor":
+            devices = self.get_output(
+                "connect", "Choose a device to connect to:", "Cancel operation"
+            )
+        elif flashtool == "odin4":
+            devices = self.get_output("list")
+
+    # TODO: Merge thor_select_device and odin4_select_device.
     def thor_select_device(self):
         def set_selected_device(btn, device_index):
             if btn.get_active:
@@ -1012,7 +1038,7 @@ class MainWindow(Gtk.ApplicationWindow):
             "connect", "Choose a device to connect to:", "Cancel operation"
         )
         # TODO: I haven't actually tested this with two devices connected.
-        # devices = "/dev/device1\n/dev/device2"
+        # devices = ["/dev/device1", "/dev/device2"]
         if not devices[0] or devices[0] == "Timeout":
             print("No devices were found!")
         else:
@@ -1020,42 +1046,41 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.device_index = 1
                 send_selected_device()
             else:
-                window, grid = self.create_window(self.strings["connect_device"])
-                self.create_label(text=self.strings["choose_a_device"], grid=grid)
+
+                def callback(dialog, result):
+                    response_id = dialog.choose_finish(result)
+                    if response_id == "ok":
+                        send_selected_device()
+                    elif response_id == "cancel":
+                        send_selected_device(cancel=True)
+
+                box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 5)
+                grid = Gtk.Grid()
+                box.append(grid)
                 group = None
                 row = 1
-                for index, device in enumerate(devices):
+                for i, device in enumerate(devices):
                     checkbutton = self.create_checkbutton(device.strip(), 0, row, grid)
-                    if index == 0:
+                    if i == 0:
                         group = checkbutton
                     else:
                         checkbutton.set_group(group)
                     checkbutton.connect("toggled", set_selected_device, row)
                     row = row + 1
-                self.create_button(
-                    "Cancel",
-                    1,
-                    row,
-                    grid,
-                    lambda _: (
-                        send_selected_device(cancel=True),
-                        window.destroy(),
-                    ),
+                responses = [
+                    {"id": "cancel", "label": "Cancel", "appearance": "0"},
+                    {"id": "ok", "label": "OK", "appearance": "0"},
+                ]
+                self.create_alert_dialog(
+                    self.strings["choose_a_device"], "", responses, callback, "ok", box
                 )
-                self.create_button(
-                    "OK",
-                    2,
-                    row,
-                    grid,
-                    lambda _: (send_selected_device(), window.destroy()),
-                )
-                window.present()
 
     def odin4_select_device(self):
-        devices = self.get_output("list")
+        # devices = self.get_output("list")
         # TODO: I haven't actually tested this with two devices connected.
-        # devices = "/dev/device1\n/dev/device2"
+        devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
         if not devices[0] or devices[0] == "Timeout":
+            print("returning None")
             return None
         else:
             if len(devices) == 1:
@@ -1074,6 +1099,37 @@ class MainWindow(Gtk.ApplicationWindow):
                         print(f"Selected device: {self.device}")
                         return self.device
 
+                def callback(dialog, result):
+                    response_id = dialog.choose_finish(result)
+                    if response_id == "ok":
+                        return_selected_device()
+                    elif response_id == "cancel":
+                        return_selected_device(cancel=True)
+
+                box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 5)
+                grid = Gtk.Grid()
+                box.append(grid)
+                group = None
+                row = 1
+                for i, device in enumerate(devices):
+                    checkbutton = self.create_checkbutton(device, 0, row, grid)
+                    if i == 0:
+                        group = checkbutton
+                        checkbutton.set_active(True)
+                    else:
+                        checkbutton.set_group(group)
+                    checkbutton.connect("toggled", set_selected_device, device)
+                    row = row + 1
+
+                responses = [
+                    {"id": "cancel", "label": "Cancel", "appearance": "0"},
+                    {"id": "ok", "label": "OK", "appearance": "0"},
+                ]
+                self.create_alert_dialog(
+                    self.strings["choose_a_device"], "", responses, callback, "ok", box
+                )
+
+                """
                 window, grid = self.create_window(self.strings["connect_device"])
                 self.create_label(text=self.strings["choose_a_device"], grid=grid)
                 group = None
@@ -1102,50 +1158,29 @@ class MainWindow(Gtk.ApplicationWindow):
                     lambda _: (return_selected_device(), window.destroy()),
                 )
                 window.present()
+                """
 
     # TODO: Display the partitions that are to be flashed.
     def verify_flash(self, n, partitions, auto):
-        window, grid = self.create_window(self.strings["verify_flash"])
-        row = 1
-        if auto:
-            noun = "The computer"
-        else:
-            noun = "You"
-        self.create_label(
-            text=f"{noun} selected {n} partitions to flash.",
-            grid=grid,
-            row=row,
-            padding=(5, 5, 5, 5),
-            align=Gtk.Align.CENTER,
-            width=2,
+        def callback(dialog, result):
+            response_id = dialog.choose_finish(result)
+            if response_id == "no":
+                self.send_cmd("n")
+            elif response_id == "yes":
+                self.send_cmd("y")
+
+        noun = "The computer" if auto else "You"
+        responses = [
+            {"id": "yes", "label": "Yes", "appearance": "0"},
+            {"id": "no", "label": "No", "appearance": "0"},
+        ]
+        self.create_alert_dialog(
+            "Verify flash",
+            f"{noun} selected {n} partitions to flash.\nAre you absolutely sure you want to flash them?",
+            responses,
+            callback,
+            "no",
         )
-        row += 1
-        self.create_label(
-            text="Are you absolutely sure you want to flash them?",
-            grid=grid,
-            row=row,
-            padding=(5, 5, 0, 0),
-            align=Gtk.Align.CENTER,
-            width=2,
-        )
-        row += 1
-        self.create_button(
-            "Yes",
-            0,
-            row,
-            grid,
-            lambda _: (self.send_cmd("y"), window.destroy()),
-            padding=(5, 10, 5, 5),
-        )
-        self.create_button(
-            "No",
-            1,
-            row,
-            grid,
-            lambda _: (self.send_cmd("n"), window.destroy()),
-            padding=(0, 5, 5, 5),
-        )
-        window.present()
 
     def set_setting(self, setting, value):
         if setting == "theme":
@@ -1182,14 +1217,6 @@ class MainWindow(Gtk.ApplicationWindow):
         background = Gdk.RGBA()
         background.parse(terminal_background)
         self.vte_term.set_colors(foreground, background, None)
-
-    def error_dialog(self, title, message):
-        dialog = Gtk.AlertDialog()
-        dialog.set_modal(True)
-        dialog.set_message(title)
-        dialog.set_detail(message)
-        dialog.set_buttons(["OK"])
-        dialog.show(self)
 
     def connect_device(self):
         self.send_cmd("connect")
@@ -1330,6 +1357,7 @@ class MainWindow(Gtk.ApplicationWindow):
             if child.get_first_child():
                 self.print_widget_tree(child, indent_str + sub_indent, False)
 
+    # TODO: Make it so the custom setting-specific mods are specified by a "custom" dict key.
     def create_preferences(self, main_preferences_list, grid, special=None):
         preferences_page = Adw.PreferencesPage.new()
         preferences_page.set_hexpand(True)
@@ -1348,7 +1376,6 @@ class MainWindow(Gtk.ApplicationWindow):
                 if setting_type == "switch":
                     default_value = setting.get("default_value", False)
                     switch_row = Adw.SwitchRow.new()
-                    print(f"{setting_name}_switch_row")
                     setattr(self, f"{setting_name}_switch_row", switch_row)
                     switch_row.set_title(title)
                     if subtitle:
@@ -1422,56 +1449,71 @@ class MainWindow(Gtk.ApplicationWindow):
                         options[0]["value"],
                     )
                     expander_row = Adw.ExpanderRow(title=title)
+                    setattr(self, f"{title}_expander_row", expander_row)
                     if subtitle:
                         expander_row.set_subtitle(subtitle)
                     value_name_list = [option["name"] for option in options]
                     value_list = [option["value"] for option in options]
-                    current_value_name = next(
-                        option["name"]
-                        for option in options
-                        if option["value"] == default_value
-                    )
+                    current_value_name = "Not set"
                     add_custom_label(current_value_name, expander_row)
                     radio_group = None
                     for i, option in enumerate(options):
-                        action_row = Adw.ActionRow(title=option["name"])
+                        name = option["name"]
+                        value = option["value"]
+                        action_row = Adw.ActionRow(title=name)
+                        setattr(self, f"{value}_action_row", action_row)
                         check_button = Gtk.CheckButton()
+                        setattr(action_row, "check_button", check_button)
                         check_button.set_group(radio_group)
-                        radio_group = check_button
-                        action_row.add_prefix(check_button)
-                        if option["name"] == current_value_name:
-                            check_button.set_active(True)
-
-                        button_box = Gtk.Box(spacing=0)
-                        file_chooser_button = Gtk.Button()
-                        self.set_padding(file_chooser_button, [0, 0, 10, 10])
-                        button_content = Adw.ButtonContent(
-                            label="", icon_name="document-open-symbolic"
-                        )
-                        file_chooser_button.set_child(button_content)
-                        file_chooser_button.set_has_frame(False)
-                        button_box.append(file_chooser_button)
-
-                        info_button = Gtk.Button()
-                        self.set_padding(info_button, [0, 0, 10, 10])
-                        button_content = Adw.ButtonContent(
-                            label="", icon_name="help-about-symbolic"
-                        )
-                        info_button.set_child(button_content)
-                        info_button.set_has_frame(False)
-                        button_box.append(info_button)
-                        action_row.add_suffix(button_box)
-
-                        action_row.set_activatable_widget(check_button)
-                        action_row.connect(
-                            "activated",
-                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting_name, value=option[
-                                "value"
-                            ]: self.on_expander_row_changed(
-                                expander_row, action_row, setting, value
+                        check_button.connect(
+                            "toggled",
+                            lambda _, expander_row=expander_row, action_row=action_row, check_button=check_button, setting=setting_name, value=value: self.on_action_row_checkbutton_clicked(
+                                expander_row, action_row, check_button, setting, value
                             ),
                         )
+                        radio_group = check_button
+                        action_row.add_prefix(check_button)
+                        if value == default_value and self.settings.get(
+                            f"{value}_file", None
+                        ):
+                            check_button.set_active(True)
+                            current_value_name = name
+                        button_box = Gtk.Box(spacing=0)
+                        file_chooser_button = Gtk.Button()
+                        info_button = Gtk.Button()
+                        self.set_padding(file_chooser_button, [0, 0, 10, 10])
+                        self.set_padding(info_button, [0, 0, 10, 10])
+                        file_chooser_button_content = Adw.ButtonContent(
+                            label="", icon_name="document-open-symbolic"
+                        )
+                        info_button_content = Adw.ButtonContent(
+                            label="", icon_name="help-about-symbolic"
+                        )
+                        file_chooser_button.set_child(file_chooser_button_content)
+                        info_button.set_child(info_button_content)
+                        file_chooser_button.set_has_frame(False)
+                        info_button.set_has_frame(False)
+                        file_chooser_button.connect(
+                            "clicked",
+                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting_name, name=name, value=value: self.on_action_row_file_button_clicked(
+                                expander_row, action_row, setting, name, value
+                            ),
+                        )
+                        info_button.connect(
+                            "clicked",
+                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting_name: self.on_info_button_clicked(
+                                expander_row, action_row, setting
+                            ),
+                        )
+                        button_box.append(file_chooser_button)
+                        button_box.append(info_button)
+                        action_row.add_suffix(button_box)
+                        if self.settings.get(f"{value}_file", None):
+                            action_row.set_activatable_widget(check_button)
+                        else:
+                            action_row.set_activatable_widget(file_chooser_button)
                         expander_row.add_row(action_row)
+                    expander_row.added_label.set_label(current_value_name)
                     preferences_group.add(expander_row)
                 else:
                     print(
@@ -1479,9 +1521,57 @@ class MainWindow(Gtk.ApplicationWindow):
                     )
         grid.attach(preferences_page, 0, 0, 1, 1)
 
-    def on_expander_row_changed(self, expander_row, action_row, setting, value):
-        expander_row.added_label.set_label(action_row.get_title())
-        self.set_setting(setting, value)
+    def on_action_row_checkbutton_clicked(
+        self, expander_row, action_row, check_button, setting, value
+    ):
+        if check_button.get_active():
+            expander_row.added_label.set_label(action_row.get_title())
+            self.set_setting(setting, value)
+
+    def on_action_row_file_button_clicked(
+        self, expander_row, action_row, setting, name, value
+    ):
+        if setting == "flash_tool":
+            name = "Pythor" if value == "pythor" else name
+
+            def file_dialog_callback(obj, result):
+                try:
+                    file = obj.open_finish(result)
+                    if file:
+                        file_path = file.get_path()
+                        print(f"Selected {name} executable: {file_path}")
+                        self.set_setting(f"{value}_file", file_path)
+                        action_row.set_activatable_widget(action_row.check_button)
+                        action_row.do_activate(action_row)
+
+                except GLib.Error as e:
+                    # If the user cancelled, pass.
+                    if e.code == 2:
+                        pass
+                    else:
+                        print(f"Error: {e}")
+
+            file_dialog = Gtk.FileDialog(
+                title=f'Select {"an" if value == "odin4" else "a"} {name} executable'
+            )
+            file_filter = Gtk.FileFilter()
+            if value == "thor":
+                file_filter.set_name("Thor executable")
+                file_filter.add_pattern("TheAirBlow.Thor.Shell")
+            if value == "odin4":
+                file_filter.set_name("Odin4 executable")
+                file_filter.add_pattern("odin4")
+            if value == "pythor":
+                file_filter.set_name("PyThor executable")
+                file_filter.add_pattern("*pythor*")
+            filter_list = Gio.ListStore.new(Gtk.FileFilter)
+            filter_list.append(file_filter)
+            file_dialog.set_filters(filter_list)
+            file_dialog.open(self, None, file_dialog_callback)
+
+    def on_info_button_clicked(self, expander_row, action_row, setting):
+        # TODO
+        pass
 
     def on_switch_row_changed(self, switch, state, setting):
         value = switch.get_active()
@@ -1492,36 +1582,6 @@ class MainWindow(Gtk.ApplicationWindow):
         new_value = value_list[new_value_index]
         self.set_setting(setting, new_value)
 
-    # TODO, keep track of the user setting options through the
-    # terminal and/or the Command Entry.
-    """
-    def option_changed(self, option, new_value):
-        if self.flashtool == "thor":
-            switch_row_name = option + "_switch_row"
-            switch_row = getattr(self, switch_row_name)
-            switch_row.set_active(new_value)
-
-    def set_option(self, switch, state, option):
-        if self.flashtool == "thor":
-            if option == "efs_clear":
-                # Show alert dialog, if the user decides to continue, run send_cmd.
-                pass
-
-            convert = {
-                "t_flash": "tflash",
-                "efs_clear": "efsclear",
-                "reset_flash_count": "resetfc",
-                "bootloader_update": "blupdate",
-            }
-            value = str(switch.get_active()).lower()
-
-            print(f"{option}: {value}")
-            setattr(self, option, value)
-
-            option = convert[option]
-            self.send_cmd(f"options {option} {value}")
-        """
-
     def option_changed(self, option, new_value):
         if self.flashtool == "thor":
             switch_row_name = option + "_switch_row"
@@ -1531,37 +1591,79 @@ class MainWindow(Gtk.ApplicationWindow):
             self.toggling_switch_row = False
 
     def set_option(self, switch_row, state, option):
-        if not hasattr(self, 'toggling_switch_row') or not self.toggling_switch_row:
+        if not hasattr(self, "toggling_switch_row") or not self.toggling_switch_row:
             if self.flashtool == "thor":
-                if option == "efs_clear":
-                    def on_response(dialog, response_id):
+                active = switch_row.get_active()
+                if active and option == "efs_clear":
+
+                    def callback(dialog, result):
+                        response_id = dialog.choose_finish(result)
                         if response_id == "continue":
-                            print(f'Would have ran "options efsclear {str(switch_row.get_active()).lower()}"')
-                            #self.send_cmd(f"options efsclear {str(switch_row.get_active()).lower()}")
+                            print(
+                                f'Would have ran "options efsclear {str(switch_row.get_active()).lower()}"'
+                            )
+                            # self.send_cmd(f"options efsclear {str(switch_row.get_active()).lower()}")
+                        else:
+                            self.toggling_switch_row = True
+                            switch_row.set_active(False)
+                            self.toggling_switch_row = False
 
-                    dialog = Adw.AlertDialog.new("EFS Clear", "Are you sure you want to clear the EFS?")
-                    dialog.add_response("cancel", "Cancel")
-                    dialog.add_response("continue", "Continue")
-                    dialog.set_default_response("cancel")
-                    dialog.set_close_response("cancel")
-                    dialog.connect("response", on_response)
-                    dialog.present()
-                    return  # Stop running the rest of the function
+                    print(
+                        "You are attemting to turn on the EFS Clear option, which wipes important stuff from your phone. Are you sure you want to continue?"
+                    )
+                    responses = [
+                        {"id": "cancel", "label": "Cancel", "appearance": "0"},
+                        {"id": "continue", "label": "Continue", "appearance": "2"},
+                    ]
+                    self.create_alert_dialog(
+                        "Warning - EFS Clear",
+                        "You are attempting to turn on the EFS Clear option, which wipes important stuff from your phone. Are you absolutely sure you want to continue?",
+                        responses,
+                        callback,
+                        "cancel",
+                    )
+                else:
+                    convert = {
+                        "t_flash": "tflash",
+                        "efs_clear": "efsclear",
+                        "reset_flash_count": "resetfc",
+                        "bootloader_update": "blupdate",
+                    }
+                    value = str(switch_row.get_active()).lower()
 
-                convert = {
-                    "t_flash": "tflash",
-                    "efs_clear": "efsclear",
-                    "reset_flash_count": "resetfc",
-                    "bootloader_update": "blupdate",
-                }
-                value = str(switch_row.get_active()).lower()
+                    print(f"{option}: {value}")
+                    setattr(self, option, value)
 
-                print(f"{option}: {value}")
-                setattr(self, option, value)
+                    option = convert[option]
+                    print(f'Would have ran "options {option} {value}"')
+                    # self.send_cmd(f"options {option} {value}")
 
-                option = convert[option]
-                print(f'Would have ran "options {option} {value}"')
-                #self.send_cmd(f"options {option} {value}")
+    # TODO: Whenever the dialog closes I get:
+    # "...Gtk-CRITICAL...Widget of type “AdwAlertDialog” already has an accessible role of type “GTK_ACCESSIBLE_ROLE_GENERIC”"
+    # I haven't figured out what causes it.
+    def create_alert_dialog(
+        self,
+        title,
+        text,
+        responses=None,
+        callback=None,
+        default_response="NULL",
+        extra_child=None,
+    ):
+        alert_dialog = Adw.AlertDialog.new(title, text)
+        if responses:
+            for response in responses:
+                id = response["id"]
+                label = response["label"]
+                appearance = response["appearance"]
+                alert_dialog.add_response(id, label)
+                alert_dialog.set_response_appearance(id, appearance)
+            alert_dialog.set_default_response(default_response)
+        else:
+            alert_dialog.add_response("ok", "OK")
+        if extra_child:
+            alert_dialog.set_extra_child(extra_child)
+        alert_dialog.choose(self, None, callback)
 
     def change_button_command(self, button, new_command):
         button.disconnect(button.signal_id)
