@@ -105,15 +105,31 @@ class MainWindow(Gtk.ApplicationWindow):
             if self.flashtool_file:
                 if os.path.isfile(self.flashtool_file):
                     flashtool_path = os.path.dirname(self.flashtool_file)
-                    print(f"flashtool_path: {flashtool_path}")
                     if self.flashtool == "odin4":
                         if os.path.isfile(self.odin4_wrapper_file):
                             if is_flatpak:
+                                # Works when the file-system isn't host.
+                                """
                                 flashtool_exec = [
                                     "flatpak-spawn",
                                     "--host",
                                     "--env=TERM=xterm-256color",
-                                    f"--directory={flashtool_path}",
+                                    #f"--directory={swd}/app",
+                                    self.odin4_wrapper_file,
+                                    self.flashtool_file,
+                                ]
+                                """
+                                # Works when the filesystem is host.
+                                """
+                                flashtool_exec = [
+                                    "flatpak-spawn",
+                                    "--env=TERM=xterm-256color",
+                                    self.odin4_wrapper_file,
+                                    self.flashtool_file,
+                                ]
+                                """
+                                # Also works when the filesystem is host.
+                                flashtool_exec = [
                                     self.odin4_wrapper_file,
                                     self.flashtool_file,
                                 ]
@@ -123,48 +139,19 @@ class MainWindow(Gtk.ApplicationWindow):
                                     self.flashtool_file,
                                 ]
                     else:
-                        if is_flatpak:
-                            flashtool_exec = [
-                                "flatpak-spawn",
-                                "--host",
-                                "--env=TERM=xterm-256color",
-                                f"--directory={flashtool_path}",
-                                self.flashtool_file,
-                            ]
-                        else:
-                            flashtool_exec = [
-                                self.flashtool_file,
-                            ]
+                        flashtool_exec = [
+                            self.flashtool_file,
+                        ]
                 else:
-                    if is_flatpak:
-                        flashtool_exec = [
-                            "flatpak-spawn",
-                            "--host",
-                            "--env=TERM=xterm-256color",
-                            "--directory=/",
-                            "echo",
-                            f'The {self.flashtool} executable you chose: "{self.flashtool_file}", was not found.',
-                        ]
-                    else:
-                        flashtool_exec = [
-                            "echo",
-                            f'The {self.flashtool} executable you chose: "{self.flashtool_file}", was not found.',
-                        ]
+                    flashtool_exec = [
+                        "echo",
+                        f'The {self.flashtool} executable you chose: "{self.flashtool_file}", was not found.',
+                    ]
             else:
-                if is_flatpak:
-                    flashtool_exec = [
-                        "flatpak-spawn",
-                        "--host",
-                        "--env=TERM=xterm-256color",
-                        "--directory=/",
-                        "echo",
-                        "Please select a flash-tool in settings.",
-                    ]
-                else:
-                    flashtool_exec = [
-                        "echo",
-                        "Please select a flash-tool in settings.",
-                    ]
+                flashtool_exec = [
+                    "echo",
+                    "Please select a flash-tool in settings.",
+                ]
         # Define main grid
         self.grid = Gtk.Grid()
         self.grid.set_column_spacing(10)
@@ -1076,16 +1063,18 @@ class MainWindow(Gtk.ApplicationWindow):
                 )
 
     def odin4_select_device(self):
-        # devices = self.get_output("list")
+        devices = self.get_output("list")
         # TODO: I haven't actually tested this with two devices connected.
-        devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
+        #devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
         if not devices[0] or devices[0] == "Timeout":
-            print("returning None")
             return None
         else:
             if len(devices) == 1:
                 return devices[0]
             else:
+                return devices[0]
+                # TODO: flash needs to be re-written for this to work.
+                """
                 self.device = devices[0]
 
                 def set_selected_device(btn, device):
@@ -1128,36 +1117,6 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.create_alert_dialog(
                     self.strings["choose_a_device"], "", responses, callback, "ok", box
                 )
-
-                """
-                window, grid = self.create_window(self.strings["connect_device"])
-                self.create_label(text=self.strings["choose_a_device"], grid=grid)
-                group = None
-                row = 1
-                for index, device in enumerate(devices):
-                    checkbutton = self.create_checkbutton(device, 0, row, grid)
-                    if index == 0:
-                        group = checkbutton
-                        checkbutton.set_active(True)
-                    else:
-                        checkbutton.set_group(group)
-                    checkbutton.connect("toggled", set_selected_device, device)
-                    row = row + 1
-                self.create_button(
-                    "Cancel",
-                    1,
-                    row,
-                    grid,
-                    lambda _: (return_selected_device(cancel=True), window.destroy()),
-                )
-                self.create_button(
-                    "OK",
-                    2,
-                    row,
-                    grid,
-                    lambda _: (return_selected_device(), window.destroy()),
-                )
-                window.present()
                 """
 
     # TODO: Display the partitions that are to be flashed.

@@ -7,8 +7,7 @@ finish-args:
   - --share=network
   - --socket=fallback-x11
   - --share=ipc
-  - --filesystem=xdg-config
-  - --talk-name=org.freedesktop.Flatpak
+  - --filesystem=host
   - --device=all # Needed for accessing Samsung devices.
   - --socket=wayland
 modules:
@@ -18,8 +17,8 @@ modules:
     build-commands:
       - pip install -r requirements.txt
       - cp -r locales /app/locales/
-      - cp -r flash-tools /app/flash-tools
       - cp -r odin4-wrapper.sh /app/odin4-wrapper.sh
+      - cp -r usb.ids /app/usb.ids
       - install -D galaxy-flasher.py /app/galaxy-flasher
       - install -D entry.sh /app/bin/entry
       - install -D galaxy-flasher.desktop /app/share/applications/com.ethicalhaquer.galaxyflasher.desktop
