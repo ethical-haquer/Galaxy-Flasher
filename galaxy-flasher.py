@@ -201,6 +201,9 @@ class MainWindow(Gtk.ApplicationWindow):
         # Set the theme
         theme = self.settings.get("theme") or "system"
         self.set_theme(theme)
+        # Detect whenever the default theme changes.
+        settings = Gtk.Settings.get_default()
+        settings.connect('notify::gtk-application-prefer-dark-theme', self.default_theme_changed)
         # Create other tabs
         for tab in ["Options", "Pit", "Settings"]:
             grid = Gtk.Grid()
@@ -354,6 +357,7 @@ class MainWindow(Gtk.ApplicationWindow):
             options_list = [
                 {
                     "title": None,
+                    "command": self.set_option,
                     "settings": [
                         {
                             "type": "switch",
@@ -386,7 +390,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     ],
                 }
             ]
-            self.create_preferences(options_list, self.options_grid, "options")
+            self.create_preferences(options_list, self.options_grid)
         elif self.flashtool == "odin4":
             row = 0
             self.create_label(
@@ -422,6 +426,14 @@ class MainWindow(Gtk.ApplicationWindow):
                             {"name": "Light", "value": "light"},
                             {"name": "Dark", "value": "dark"},
                         ],
+                    },
+                    {
+                        "type": "switch",
+                        "title": "Keep Log Dark",
+                        "subtitle": "Keep the Log Tab dark, regardless of the theme.",
+                        "command": self.on_dark_log_switch_changed,
+                        "setting": "keep_log_dark",
+                        "default_value": False,
                     },
                     {
                         "type": "expander",
@@ -490,6 +502,10 @@ class MainWindow(Gtk.ApplicationWindow):
                           {version}
         """
         )
+
+    def default_theme_changed(self, style_manager, gparam):
+        prefers_dark_theme = style_manager.props.gtk_application_prefer_dark_theme
+        self.set_theme(self.settings.get("theme", "light"))
 
     def load_settings(self):
         self.settings = {}
@@ -849,21 +865,25 @@ class MainWindow(Gtk.ApplicationWindow):
             }
         # This is a pretty bad way to do this.
         # 10000 should be replaced with the actual value, But it works.
-        current_output = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[
-            0
-        ].strip()
-        lines = current_output.split("\n")
-        lines = [line for line in lines if not line.startswith(self.prompt.strip())]
-        current_output = "\n".join(lines)
-        if current_output != self.last_output:
-            # TODO: This doesn't always work.
-            new_output = current_output.replace(self.last_output, "")
+        term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
+        prompt = self.prompt.strip()
+        if term_text.strip().rsplit(prompt)[-1].strip() == "":
+            print('last = ""')
+            try:
+                term_text = term_text.strip().rsplit(prompt)[-2].strip()
+                print("second to last")
+            except:
+                term_text = term_text.strip().rsplit(prompt)[-1].strip()
+                print("except last")
+        else:
+            term_text = term_text.strip().rsplit(prompt)[-1].strip()
+            print("else last")
+        if term_text != self.last_output:
             for string, commands in strings_to_commands.items():
-                if string in new_output:
+                if string in term_text and string not in self.last_output:
                     for command in commands:
                         command()
-
-            self.last_output = current_output
+            self.last_output = term_text
 
     def remove_blank_lines(self, string):
         lines = string.splitlines()
@@ -1164,7 +1184,7 @@ class MainWindow(Gtk.ApplicationWindow):
             return
         style_manager = Adw.StyleManager.get_default()
         style_manager.set_color_scheme(color_scheme)
-        if Adw.StyleManager.get_dark(style_manager):
+        if Adw.StyleManager.get_dark(style_manager) or self.settings.get("keep_log_dark", False):
             terminal_foreground = "#ffffff"
             terminal_background = "#242424"
         else:
@@ -1317,13 +1337,14 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.print_widget_tree(child, indent_str + sub_indent, False)
 
     # TODO: Make it so the custom setting-specific mods are specified by a "custom" dict key.
-    def create_preferences(self, main_preferences_list, grid, special=None):
+    def create_preferences(self, main_preferences_list, grid):
         preferences_page = Adw.PreferencesPage.new()
         preferences_page.set_hexpand(True)
         for section in main_preferences_list:
             preferences_group = Adw.PreferencesGroup.new()
             preferences_page.add(preferences_group)
             group_title = section["title"]
+            section_wide_command = section.get("command")
             settings = section["settings"]
             if group_title:
                 preferences_group.set_title(group_title)
@@ -1331,6 +1352,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 setting_type = setting["type"]
                 title = setting["title"]
                 subtitle = setting.get("subtitle")
+                command = setting.get("command")
                 setting_name = setting["setting"]
                 if setting_type == "switch":
                     default_value = setting.get("default_value", False)
@@ -1342,11 +1364,13 @@ class MainWindow(Gtk.ApplicationWindow):
                     switch_row.set_active(
                         self.settings.get(setting_name, default_value)
                     )
-                    if special == "options":
-                        function = self.set_option
+                    if section_wide_command:
+                        switch_row.connect("notify::active", section_wide_command, setting_name)
                     else:
-                        function = self.on_switch_row_changed
-                    switch_row.connect("notify::active", function, setting_name)
+                        if command:
+                            switch_row.connect("notify::active", command, setting_name)
+                        else:
+                            switch_row.connect("notify::active", self.on_switch_row_changed, setting_name)
                     preferences_group.add(switch_row)
 
                 elif setting_type == "combo":
@@ -1540,6 +1564,11 @@ class MainWindow(Gtk.ApplicationWindow):
         new_value_index = combo_row.get_selected()
         new_value = value_list[new_value_index]
         self.set_setting(setting, new_value)
+        
+    def on_dark_log_switch_changed(self, switch, state, setting):
+        value = switch.get_active()
+        self.set_setting(setting, value)
+        self.set_theme(self.settings.get("theme", "light"))
 
     def option_changed(self, option, new_value):
         if self.flashtool == "thor":
