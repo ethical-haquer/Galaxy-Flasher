@@ -80,11 +80,13 @@ class MainWindow(Gtk.ApplicationWindow):
         self.flashtool = self.settings.get("flash_tool", "thor")
         # If the system isn't linux.
         if system != "linux":
+            self.prompt = "never going to happen :)"
             print("Currently, Galaxy Flasher only supports Linux.")
             self.connect(
                 "show",
                 lambda _: self.create_alert_dialog(
-                    "Unsupported OS", "Currently, Galaxy Flasher only supports Linux."
+                    "Unsupported OS",
+                    "Currently, Galaxy Flasher only supports Linux.\nIf you think this is incorrect, please open an issue on GitHub, or let me know on XDA.",
                 ),
             )
             flashtool_exec = [
@@ -145,13 +147,27 @@ class MainWindow(Gtk.ApplicationWindow):
                 else:
                     flashtool_exec = [
                         "echo",
-                        f'The {self.flashtool} executable you chose: "{self.flashtool_file}", was not found.',
+                        f'The {self.flashtool} executable you chose:\n"{self.flashtool_file}"\n, was not found. Please select a new executable by going to:\n"Settings - General - Flash Tool".',
                     ]
+                    self.connect(
+                        "show",
+                        lambda _: self.create_alert_dialog(
+                            "File not found",
+                            f'The {self.flashtool} executable you chose:\n"{self.flashtool_file}",\nwas not found. Please select a new executable by going to: "Settings - General - Flash Tool".',
+                        ),
+                    )
             else:
                 flashtool_exec = [
                     "echo",
-                    "Please select a flash-tool in settings.",
+                    'Welcome to Galaxy Flasher!\nPlease select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
                 ]
+                self.connect(
+                    "show",
+                    lambda _: self.create_alert_dialog(
+                        "Welcome to Galaxy Flasher!",
+                        f'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
+                    ),
+                )
         # Define main grid
         self.grid = Gtk.Grid()
         self.grid.set_column_spacing(10)
@@ -203,7 +219,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.set_theme(theme)
         # Detect whenever the default theme changes.
         settings = Gtk.Settings.get_default()
-        settings.connect('notify::gtk-application-prefer-dark-theme', self.default_theme_changed)
+        settings.connect(
+            "notify::gtk-application-prefer-dark-theme", self.default_theme_changed
+        )
         # Create other tabs
         for tab in ["Options", "Pit", "Settings"]:
             grid = Gtk.Grid()
@@ -417,6 +435,22 @@ class MainWindow(Gtk.ApplicationWindow):
                 "title": "General",
                 "settings": [
                     {
+                        "type": "expander",
+                        "title": "Flash Tool",
+                        "subtitle": "The flash-tool Galaxy Flasher should use.",
+                        "setting": "flash_tool",
+                        "options": [
+                            {"name": "Thor", "value": "thor"},
+                            {"name": "Odin4", "value": "odin4"},
+                            {"name": "PyThor (in development)", "value": "pythor"},
+                        ],
+                    },
+                ],
+            },
+            {
+                "title": "Appearance",
+                "settings": [
+                    {
                         "type": "combo",
                         "title": "Theme",
                         "subtitle": None,
@@ -434,17 +468,6 @@ class MainWindow(Gtk.ApplicationWindow):
                         "command": self.on_dark_log_switch_changed,
                         "setting": "keep_log_dark",
                         "default_value": False,
-                    },
-                    {
-                        "type": "expander",
-                        "title": "Flash Tool",
-                        "subtitle": "The flash-tool Galaxy Flasher should use.",
-                        "setting": "flash_tool",
-                        "options": [
-                            {"name": "Thor", "value": "thor"},
-                            {"name": "Odin4", "value": "odin4"},
-                            {"name": "PyThor (in development)", "value": "pythor"},
-                        ],
                     },
                 ],
             },
@@ -867,23 +890,18 @@ class MainWindow(Gtk.ApplicationWindow):
         # 10000 should be replaced with the actual value, But it works.
         term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
         prompt = self.prompt.strip()
-        if term_text.strip().rsplit(prompt)[-1].strip() == "":
-            print('last = ""')
+        latest_output = term_text.strip().rsplit(prompt)[-1].strip()
+        if latest_output == "":
             try:
-                term_text = term_text.strip().rsplit(prompt)[-2].strip()
-                print("second to last")
+                latest_output = term_text.strip().rsplit(prompt)[-2].strip()
             except:
-                term_text = term_text.strip().rsplit(prompt)[-1].strip()
-                print("except last")
-        else:
-            term_text = term_text.strip().rsplit(prompt)[-1].strip()
-            print("else last")
-        if term_text != self.last_output:
+                latest_output = term_text.strip().rsplit(prompt)[-1].strip()
+        if latest_output != self.last_output:
             for string, commands in strings_to_commands.items():
-                if string in term_text and string not in self.last_output:
+                if string in latest_output and string not in self.last_output:
                     for command in commands:
                         command()
-            self.last_output = term_text
+            self.last_output = latest_output
 
     def remove_blank_lines(self, string):
         lines = string.splitlines()
@@ -1085,7 +1103,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def odin4_select_device(self):
         devices = self.get_output("list")
         # TODO: I haven't actually tested this with two devices connected.
-        #devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
+        # devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
         if not devices[0] or devices[0] == "Timeout":
             return None
         else:
@@ -1184,7 +1202,9 @@ class MainWindow(Gtk.ApplicationWindow):
             return
         style_manager = Adw.StyleManager.get_default()
         style_manager.set_color_scheme(color_scheme)
-        if Adw.StyleManager.get_dark(style_manager) or self.settings.get("keep_log_dark", False):
+        if Adw.StyleManager.get_dark(style_manager) or self.settings.get(
+            "keep_log_dark", False
+        ):
             terminal_foreground = "#ffffff"
             terminal_background = "#242424"
         else:
@@ -1365,12 +1385,18 @@ class MainWindow(Gtk.ApplicationWindow):
                         self.settings.get(setting_name, default_value)
                     )
                     if section_wide_command:
-                        switch_row.connect("notify::active", section_wide_command, setting_name)
+                        switch_row.connect(
+                            "notify::active", section_wide_command, setting_name
+                        )
                     else:
                         if command:
                             switch_row.connect("notify::active", command, setting_name)
                         else:
-                            switch_row.connect("notify::active", self.on_switch_row_changed, setting_name)
+                            switch_row.connect(
+                                "notify::active",
+                                self.on_switch_row_changed,
+                                setting_name,
+                            )
                     preferences_group.add(switch_row)
 
                 elif setting_type == "combo":
@@ -1564,7 +1590,7 @@ class MainWindow(Gtk.ApplicationWindow):
         new_value_index = combo_row.get_selected()
         new_value = value_list[new_value_index]
         self.set_setting(setting, new_value)
-        
+
     def on_dark_log_switch_changed(self, switch, state, setting):
         value = switch.get_active()
         self.set_setting(setting, value)
