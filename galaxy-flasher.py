@@ -214,14 +214,14 @@ class MainWindow(Gtk.ApplicationWindow):
         scrolled_window.set_halign(Gtk.Align.FILL)
         scrolled_window.set_valign(Gtk.Align.FILL)
         self.stack.add_titled(scrolled_window, "Log", "Log")
+        # Set the style_manager
+        self.style_manager = Adw.StyleManager.get_default()
         # Set the theme
         theme = self.settings.get("theme") or "system"
         self.set_theme(theme)
-        # Detect whenever the default theme changes.
-        settings = Gtk.Settings.get_default()
-        settings.connect(
-            "notify::gtk-application-prefer-dark-theme", self.default_theme_changed
-        )
+        self.on_theme_changed(self.style_manager, None)
+        # Detect whenever the theme changes.
+        self.style_manager.connect("notify::dark", self.on_theme_changed)
         # Create other tabs
         for tab in ["Options", "Pit", "Settings"]:
             grid = Gtk.Grid()
@@ -525,10 +525,6 @@ class MainWindow(Gtk.ApplicationWindow):
                           {version}
         """
         )
-
-    def default_theme_changed(self, style_manager, gparam):
-        prefers_dark_theme = style_manager.props.gtk_application_prefer_dark_theme
-        self.set_theme(self.settings.get("theme", "light"))
 
     def load_settings(self):
         self.settings = {}
@@ -1200,16 +1196,25 @@ class MainWindow(Gtk.ApplicationWindow):
                 f'"system", "light", or "dark". Not "{theme}".'
             )
             return
-        style_manager = Adw.StyleManager.get_default()
-        style_manager.set_color_scheme(color_scheme)
-        if Adw.StyleManager.get_dark(style_manager) or self.settings.get(
-            "keep_log_dark", False
-        ):
+        self.style_manager.set_color_scheme(color_scheme)
+
+    def on_dark_log_switch_changed(self, switch, state, setting):
+        active = switch.get_active()
+        self.set_setting(setting, active)
+        self.on_theme_changed(self.style_manager, None)
+
+    def on_theme_changed(self, style_manager, gparam):
+        dark = style_manager.props.dark
+        if dark:
             terminal_foreground = "#ffffff"
             terminal_background = "#242424"
         else:
-            terminal_foreground = "#000000"
-            terminal_background = "#fafafa"
+            if self.settings.get("keep_log_dark"):
+                terminal_foreground = "#ffffff"
+                terminal_background = "#242424"
+            else:
+                terminal_foreground = "#000000"
+                terminal_background = "#fafafa"
 
         foreground = Gdk.RGBA()
         foreground.parse(terminal_foreground)
@@ -1470,6 +1475,9 @@ class MainWindow(Gtk.ApplicationWindow):
                         name = option["name"]
                         value = option["value"]
                         action_row = Adw.ActionRow(title=name)
+                        flashtool_file = self.settings.get(f"{value}_file", None)
+                        if flashtool_file:
+                            action_row.set_subtitle(flashtool_file)
                         setattr(self, f"{value}_action_row", action_row)
                         check_button = Gtk.CheckButton()
                         setattr(action_row, "check_button", check_button)
@@ -1551,6 +1559,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         print(f"Selected {name} executable: {file_path}")
                         self.set_setting(f"{value}_file", file_path)
                         action_row.set_activatable_widget(action_row.check_button)
+                        action_row.set_subtitle(file_path)
                         action_row.do_activate(action_row)
 
                 except GLib.Error as e:
@@ -1590,11 +1599,6 @@ class MainWindow(Gtk.ApplicationWindow):
         new_value_index = combo_row.get_selected()
         new_value = value_list[new_value_index]
         self.set_setting(setting, new_value)
-
-    def on_dark_log_switch_changed(self, switch, state, setting):
-        value = switch.get_active()
-        self.set_setting(setting, value)
-        self.set_theme(self.settings.get("theme", "light"))
 
     def option_changed(self, option, new_value):
         if self.flashtool == "thor":
