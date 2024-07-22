@@ -582,20 +582,23 @@ class MainWindow(Gtk.ApplicationWindow):
                     "Invalid files", self.strings["no_files_selected2"]
                 )
             else:
+
+                def function(device):
+                    if not device:
+                        message = "No devices were found - First connect a device that's in Download Mode"
+                        print(message)
+                        self.create_alert_dialog(
+                            "No devices were found",
+                            "First connect a device that's in Download Mode",
+                        )
+                    else:
+                        args.insert(0, f"-d {device}")
+                        command = " ".join(["flash"] + args)
+                        print(f"Running: {command}")
+                        self.send_cmd(command)
+
                 # This doesn't wait for the user to select a device.
-                device = self.odin4_select_device()
-                if not device:
-                    message = "No devices were found - First connect a device that's in Download Mode"
-                    print(message)
-                    self.create_alert_dialog(
-                        "No devices were found",
-                        "First connect a device that's in Download Mode",
-                    )
-                else:
-                    args.insert(0, f"-d {device}")
-                    command = " ".join(["flash"] + args)
-                    print(f"Running: {command}")
-                    self.send_cmd(command)
+                self.odin4_select_device(function)
 
     def shorten_string(self, string, length):
         current_length = len(string)
@@ -1096,19 +1099,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.strings["choose_a_device"], "", responses, callback, "ok", box
                 )
 
-    def odin4_select_device(self):
+    def odin4_select_device(self, function):
         devices = self.get_output("list")
         # TODO: I haven't actually tested this with two devices connected.
         # devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
         if not devices[0] or devices[0] == "Timeout":
-            return None
+            function(None)
         else:
             if len(devices) == 1:
-                return devices[0]
+                function(devices[0])
             else:
-                return devices[0]
-                # TODO: flash needs to be re-written for this to work.
-                """
                 self.device = devices[0]
 
                 def set_selected_device(btn, device):
@@ -1116,11 +1116,13 @@ class MainWindow(Gtk.ApplicationWindow):
                         self.device = device
 
                 def return_selected_device(cancel=False):
-                    if cancel or not device:
-                        return None
+                    if cancel:
+                        pass
+                    elif not device:
+                        function(None)
                     else:
                         print(f"Selected device: {self.device}")
-                        return self.device
+                        function(self.device)
 
                 def callback(dialog, result):
                     response_id = dialog.choose_finish(result)
@@ -1151,7 +1153,6 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.create_alert_dialog(
                     self.strings["choose_a_device"], "", responses, callback, "ok", box
                 )
-                """
 
     # TODO: Display the partitions that are to be flashed.
     def verify_flash(self, n, partitions, auto):
