@@ -266,7 +266,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 {
                     "name": "connect_button",
                     "text": self.strings["connect"],
-                    "command": lambda _: self.thor_select_device(),
+                    "command": lambda _: self.select_device("thor"),
                 },
                 {
                     "name": "start_odin_button",
@@ -583,7 +583,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 )
             else:
 
-                def function(device):
+                def run_flash_command(device):
                     if not device:
                         message = "No devices were found - First connect a device that's in Download Mode"
                         print(message)
@@ -597,8 +597,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         print(f"Running: {command}")
                         self.send_cmd(command)
 
-                # This doesn't wait for the user to select a device.
-                self.odin4_select_device(function)
+                self.select_device("odin4", run_flash_command)
 
     def shorten_string(self, string, length):
         current_length = len(string)
@@ -1032,127 +1031,99 @@ class MainWindow(Gtk.ApplicationWindow):
             GLib.main_context_default().iteration(True)
         return result
 
-    # TODO: Finish this.
-    def select_device(self, flashtool):
-        if flashtool == "thor":
-            devices = self.get_output(
-                "connect", "Choose a device to connect to:", "Cancel operation"
-            )
-        elif flashtool == "odin4":
-            devices = self.get_output("list")
-
-    # TODO: Merge thor_select_device and odin4_select_device.
-    def thor_select_device(self):
-        def set_selected_device(btn, device_index):
+    # TODO: This could be improved.
+    def select_device(self, flashtool, function=None):
+        def set_selected_device(btn, device):
             if btn.get_active:
-                self.device_index = device_index
+                self.device = device
 
         def send_selected_device(cancel=False):
-            if cancel:
-                times = len(devices)
-            else:
-                times = self.device_index - 1
-            for _ in range(times):
-                # Send "Down Arrow"
-                self.send_cmd("\x1b[B", False)
-            # Send "Enter"
-            self.send_cmd("\n", False)
-
-        devices = self.get_output(
-            "connect", "Choose a device to connect to:", "Cancel operation"
-        )
-        # TODO: I haven't actually tested this with two devices connected.
-        # devices = ["/dev/device1", "/dev/device2"]
-        if not devices[0] or devices[0] == "Timeout":
-            print("No devices were found!")
-        else:
-            if len(devices) == 1:
-                self.device_index = 1
-                send_selected_device()
-            else:
-
-                def callback(dialog, result):
-                    response_id = dialog.choose_finish(result)
-                    if response_id == "ok":
-                        send_selected_device()
-                    elif response_id == "cancel":
-                        send_selected_device(cancel=True)
-
-                box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 5)
-                grid = Gtk.Grid()
-                box.append(grid)
-                group = None
-                row = 1
-                for i, device in enumerate(devices):
-                    checkbutton = self.create_checkbutton(device.strip(), 0, row, grid)
-                    if i == 0:
-                        group = checkbutton
-                    else:
-                        checkbutton.set_group(group)
-                    checkbutton.connect("toggled", set_selected_device, row)
-                    row = row + 1
-                responses = [
-                    {"id": "cancel", "label": "Cancel", "appearance": "0"},
-                    {"id": "ok", "label": "OK", "appearance": "0"},
-                ]
-                self.create_alert_dialog(
-                    self.strings["choose_a_device"], "", responses, callback, "ok", box
-                )
-
-    def odin4_select_device(self, function):
-        devices = self.get_output("list")
-        # TODO: I haven't actually tested this with two devices connected.
-        # devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
-        if not devices[0] or devices[0] == "Timeout":
-            function(None)
-        else:
-            if len(devices) == 1:
-                function(devices[0])
-            else:
-                self.device = devices[0]
-
-                def set_selected_device(btn, device):
-                    if btn.get_active:
-                        self.device = device
-
-                def return_selected_device(cancel=False):
-                    if cancel:
-                        pass
-                    elif not device:
+            if flashtool == "thor":
+                if cancel:
+                    times = len(devices)
+                else:
+                    times = self.device - 1
+                for _ in range(times):
+                    # Send "Down Arrow"
+                    self.send_cmd("\x1b[B", False)
+                # Send "Enter"
+                self.send_cmd("\n", False)
+            elif flashtool == "odin4":
+                if not cancel:
+                    if not self.device:
                         function(None)
                     else:
                         print(f"Selected device: {self.device}")
                         function(self.device)
 
-                def callback(dialog, result):
-                    response_id = dialog.choose_finish(result)
-                    if response_id == "ok":
-                        return_selected_device()
-                    elif response_id == "cancel":
-                        return_selected_device(cancel=True)
+        def callback(dialog, result):
+            response_id = dialog.choose_finish(result)
+            if response_id == "ok":
+                send_selected_device()
+            elif response_id == "cancel":
+                send_selected_device(cancel=True)
 
-                box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 5)
-                grid = Gtk.Grid()
-                box.append(grid)
-                group = None
-                row = 1
-                for i, device in enumerate(devices):
-                    checkbutton = self.create_checkbutton(device, 0, row, grid)
-                    if i == 0:
-                        group = checkbutton
-                        checkbutton.set_active(True)
-                    else:
-                        checkbutton.set_group(group)
+        def display_devices():
+            box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 5)
+            grid = Gtk.Grid()
+            box.append(grid)
+            group = None
+            row = 1
+
+            for i, device in enumerate(devices):
+                checkbutton = self.create_checkbutton(device, 0, row, grid)
+                if i == 0:
+                    group = checkbutton
+                    checkbutton.set_active(True)
+                else:
+                    checkbutton.set_group(group)
+                if flashtool == "thor":
+                    checkbutton.connect("toggled", set_selected_device, row)
+                elif flashtool == "odin4":
                     checkbutton.connect("toggled", set_selected_device, device)
-                    row = row + 1
+                row = row + 1
 
-                responses = [
-                    {"id": "cancel", "label": "Cancel", "appearance": "0"},
-                    {"id": "ok", "label": "OK", "appearance": "0"},
-                ]
-                self.create_alert_dialog(
-                    self.strings["choose_a_device"], "", responses, callback, "ok", box
+            responses = [
+                {"id": "cancel", "label": "Cancel", "appearance": "0"},
+                {"id": "ok", "label": "OK", "appearance": "0"},
+            ]
+            self.create_alert_dialog(
+                self.strings["choose_a_device"], "", responses, callback, "ok", box
+            )
+
+        if flashtool == "thor":
+            devices = self.get_output(
+                "connect", "Choose a device to connect to:", "Cancel operation"
+            )
+            # TODO: I haven't actually tested this with two devices connected.
+            # devices = ["/dev/device1", "/dev/device2"]
+            if not devices[0] or devices[0] == "Timeout":
+                print("No devices were found!")
+            else:
+                if len(devices) == 1:
+                    self.device = 1
+                    send_selected_device()
+                else:
+                    self.device = 1
+                    display_devices()
+
+        elif flashtool == "odin4":
+            if not function:
+                print(
+                    "The flashtool arg must be passed to select_device if the flashtool is odin4."
                 )
+            else:
+                devices = self.get_output("list")
+                # TODO: I haven't actually tested this with two devices connected.
+                # devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
+                if not devices[0] or devices[0] == "Timeout":
+                    function(None)
+                else:
+                    if len(devices) == 1:
+                        function(devices[0])
+                    else:
+                        self.device = devices[0]
+                        display_devices()
 
     # TODO: Display the partitions that are to be flashed.
     def verify_flash(self, n, partitions, auto):
@@ -1276,7 +1247,8 @@ class MainWindow(Gtk.ApplicationWindow):
         if self.flashtool == "thor":
             if cmd == "connect\n":
                 special = True
-                self.thor_select_device()
+                # self.thor_select_device()
+                self.select_device("thor")
             if cmd == "flashTar\n":
                 special = True
                 self.flash()
@@ -1519,8 +1491,8 @@ class MainWindow(Gtk.ApplicationWindow):
                         )
                         info_button.connect(
                             "clicked",
-                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting_name: self.on_info_button_clicked(
-                                expander_row, action_row, setting
+                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting_name, name=name, value=value: self.on_info_button_clicked(
+                                expander_row, action_row, setting, name, value
                             ),
                         )
                         button_box.append(file_chooser_button)
@@ -1588,9 +1560,45 @@ class MainWindow(Gtk.ApplicationWindow):
             file_dialog.set_filters(filter_list)
             file_dialog.open(self, None, file_dialog_callback)
 
-    def on_info_button_clicked(self, expander_row, action_row, setting):
-        # TODO
-        pass
+    def on_info_button_clicked(self, expander_row, action_row, setting, name, value):
+        name = "Pythor" if value == "pythor" else name
+        name = "About " + name
+        if value == "thor":
+            text = """Thor is an open-source flash-tool based off Odin4 and Heimdall.
+
+You can download Thor from <a href="https://github.com/Samsung-Loki/Thor/releases/tag/1.0.4" title="https://github.com/Samsung-Loki/Thor/releases/tag/1.0.4">GitHub</a>, or use
+<a href="https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/#post-89123207"
+title="https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/#post-89123207">this self-contained build of Thor</a>.
+
+Using the self-contained build is recommended, since you don't have to install .NET to use it, but both will work with Galaxy Flasher.
+
+Thor is the currently the default flash-tool for Galaxy Flasher. If you run into issues with Thor, try using Odin4 instead."""
+        elif value == "odin4":
+            text = "TODO."
+        elif value == "pythor":
+            text = "TODO."
+        dialog = Adw.Dialog.new()
+        dialog.set_title(name)
+        dialog.set_content_width(420)
+        # dialog.set_content_height(480)
+        # The gnome-command-center's (GNOME Settings) info dialogs are resizable, but I haven't figured out why our's aren't.
+        # https://github.com/GNOME/gnome-control-center/blob/main/panels/privacy/firmware-security/cc-firmware-security-help-dialog.ui
+        # dialog.set_resizable(True)
+        # dialog.props.resizable = True
+        toolbar_view = Adw.ToolbarView()
+        dialog.set_child(toolbar_view)
+        header_bar = Adw.HeaderBar.new()
+        toolbar_view.add_top_bar(header_bar)
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled_window.set_propagate_natural_height(True)
+        toolbar_view.set_content(scrolled_window)
+        label = Gtk.Label.new()
+        self.set_padding(label, [24, 24, 12, 24])
+        label.set_markup(text)
+        label.set_wrap(True)
+        scrolled_window.set_child(label)
+        dialog.present(self)
 
     def on_switch_row_changed(self, switch, state, setting):
         value = switch.get_active()
