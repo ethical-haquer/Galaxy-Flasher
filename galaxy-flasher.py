@@ -1570,14 +1570,19 @@ You can download Thor from <a href="https://github.com/Samsung-Loki/Thor/release
 <a href="https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/#post-89123207"
 title="https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/#post-89123207">this self-contained build of Thor</a>.
 
-Using the self-contained build is recommended, since you don't have to install .NET to use it, but both will work with Galaxy Flasher.
-
-Thor is the currently the default flash-tool for Galaxy Flasher. If you run into issues with Thor, try using Odin4 instead."""
+Using the self-contained build is recommended, since you don't have to install .NET to use it, but both will work with Galaxy Flasher."""
         elif value == "odin4":
-            text = "TODO."
+            text = """Odin4 is a propriatary flash-tool that was leaked from Samsung.
+
+You can download Odin4 from <a href="https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux.4453423/#post-86977569"
+title="https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux.4453423/#post-86977569">XDA</a>."""
         elif value == "pythor":
-            text = "TODO."
+            text = """PyThor is an open-source flash-tool that is still under development. As such, the only reason to use it is if you want to contribute.
+
+<a href="https://github.com/justaCasualCoder/PyThor"
+title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         dialog = Adw.Dialog.new()
+        dialog.get_accessible_role()
         dialog.set_title(name)
         dialog.set_content_width(420)
         # dialog.set_content_height(480)
