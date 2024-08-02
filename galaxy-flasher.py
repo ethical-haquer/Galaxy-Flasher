@@ -53,7 +53,7 @@ machine = platform.machine()
 system = platform.system().lower()
 
 
-class MainWindow(Gtk.ApplicationWindow):
+class MainWindow(Adw.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         self.last_output = ""
         super().__init__(*args, **kwargs)
@@ -168,11 +168,37 @@ class MainWindow(Gtk.ApplicationWindow):
                         f'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
                     ),
                 )
+        # Create toolbar_view
+        toolbar_view = Adw.ToolbarView.new()
+        self.props.content = toolbar_view
+        # Setup header
+        header = Adw.HeaderBar()
+        toolbar_view.add_top_bar(header)
+        # Create about action
+        about_action = Gio.SimpleAction.new("about", None)
+        about_action.connect("activate", self.about_window)
+        self.add_action(about_action)
+        # Create quit action
+        quit_action = Gio.SimpleAction.new("quit", None)
+        quit_action.connect("activate", lambda _, __: sys.exit())
+        self.add_action(quit_action)
+        # Create menu
+        menu = Gio.Menu.new()
+        menu.append("About", "win.about")
+        menu.append("Quit", "win.quit")
+        # Create popover
+        popover = Gtk.PopoverMenu()
+        popover.set_menu_model(menu)
+        # Create hamburger
+        hamburger = Gtk.MenuButton()
+        hamburger.set_popover(popover)
+        hamburger.set_icon_name("open-menu-symbolic")
+        header.pack_start(hamburger)
         # Define main grid
         self.grid = Gtk.Grid()
+        toolbar_view.set_content(self.grid)
         self.grid.set_column_spacing(10)
         self.grid.set_row_spacing(10)
-        self.set_child(self.grid)
         # Set window title
         self.set_title(f"Galaxy Flasher - {version}")
         # Define stack to hold tabs
@@ -184,7 +210,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.stack_switcher.set_stack(self.stack)
         self.stack_switcher.set_margin_start(10)
         self.stack_switcher.set_margin_end(0)
-        self.stack_switcher.set_margin_top(10)
+        self.stack_switcher.set_margin_top(0)
         self.stack_switcher.set_margin_bottom(0)
         # Attach stack/StackSwitcher
         self.grid.attach(self.stack_switcher, 0, 0, 1, 1)
@@ -316,13 +342,13 @@ class MainWindow(Gtk.ApplicationWindow):
                 },
             ]
         column = 1
-        padding = (0, 0, 10, 0)
+        padding = (0, 0, 0, 0)
         for btn in buttons:
             name = btn["name"]
             text = btn["text"]
             command = btn["command"]
             if btn is buttons[-1]:
-                padding = (0, 10, 10, 0)
+                padding = (0, 10, 0, 0)
             button = self.create_button(
                 text,
                 column=column,
@@ -346,37 +372,19 @@ class MainWindow(Gtk.ApplicationWindow):
             )
         elif self.flashtool == "pythor":
             self.set_widget_state(self.connect_button, state=False)
-        # Setup header
-        header = Gtk.HeaderBar()
-        self.set_titlebar(header)
-        # Create about action
-        about_action = Gio.SimpleAction.new("about", None)
-        about_action.connect("activate", self.about_window)
-        self.add_action(about_action)
-        # Create quit action
-        quit_action = Gio.SimpleAction.new("quit", None)
-        quit_action.connect("activate", lambda _, __: sys.exit())
-        self.add_action(quit_action)
-        # Create menu
-        menu = Gio.Menu.new()
-        menu.append("About", "win.about")
-        menu.append("Quit", "win.quit")
-        # Create popover
-        popover = Gtk.PopoverMenu()
-        popover.set_menu_model(menu)
-        # Create hamburger
-        hamburger = Gtk.MenuButton()
-        hamburger.set_popover(popover)
-        hamburger.set_icon_name("open-menu-symbolic")
-        header.pack_start(hamburger)
         # Create the Option tab widgets.
         row = 0
         if self.flashtool == "thor":
             options_list = [
                 {
                     "title": None,
-                    "command": self.set_option,
-                    "settings": [
+                    "section_wide_command": self.set_option,
+                    "section_wide_command_args": [
+                        "$$switch_row",
+                        "$$active",
+                        "$row_setting",
+                    ],
+                    "rows": [
                         {
                             "type": "switch",
                             "title": "T Flash",
@@ -433,7 +441,7 @@ class MainWindow(Gtk.ApplicationWindow):
         settings_list = [
             {
                 "title": "General",
-                "settings": [
+                "rows": [
                     {
                         "type": "expander",
                         "title": "Flash Tool",
@@ -449,11 +457,13 @@ class MainWindow(Gtk.ApplicationWindow):
             },
             {
                 "title": "Appearance",
-                "settings": [
+                "rows": [
                     {
                         "type": "combo",
                         "title": "Theme",
                         "subtitle": None,
+                        "command": self.on_combo_row_changed,
+                        "command_args": ["$$combo_row", "$value_list", "$row_setting"],
                         "setting": "theme",
                         "options": [
                             {"name": "System", "value": "system"},
@@ -466,6 +476,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         "title": "Keep Log Dark",
                         "subtitle": "Keep the Log Tab dark, regardless of the theme.",
                         "command": self.on_dark_log_switch_changed,
+                        "command_args": ["$$switch_row", "$$active", "$row_setting"],
                         "setting": "keep_log_dark",
                         "default_value": False,
                     },
@@ -473,11 +484,11 @@ class MainWindow(Gtk.ApplicationWindow):
             },
             {
                 "title": "Thor",
-                "settings": [
+                "rows": [
                     {
                         "type": "switch",
                         "title": "Automatically select all partitions",
-                        "subtitle": "Instead of asking you what partitions to flash, automatically select them all.",
+                        "subtitle": "Instead of asking what partitions to flash, automatically select them all.",
                         "setting": "auto_partitions",
                         "default_value": False,
                     },
@@ -1334,119 +1345,334 @@ class MainWindow(Gtk.ApplicationWindow):
             if child.get_first_child():
                 self.print_widget_tree(child, indent_str + sub_indent, False)
 
-    # TODO: Make it so the custom setting-specific mods are specified by a "custom" dict key.
-    def create_preferences(self, main_preferences_list, grid):
+    def create_switch_row(
+        self,
+        name: str,
+        title: str = None,
+        subtitle: str = None,
+        active: bool = None,
+        command: callable = None,
+        command_args: list = None,
+    ) -> Adw.SwitchRow:
+        """
+        Creates a new Adw.SwitchRow instance.
+
+        Args:
+            name (str): The name of the switch row.
+            title (str, optional): The title of the switch row. Defaults to None.
+            subtitle (str, optional): The subtitle of the switch row. Defaults to None.
+            active (bool, optional): Whether the switch row is active. Defaults to None.
+            command (callable, optional): The command to connect to the switch row's "notify::active" signal. Defaults to None.
+            command_args (list, optional): The arguments to pass to the command. Defaults to None.
+
+        Returns:
+            Adw.SwitchRow: The created switch row.
+        """
+
+        switch_row = Adw.SwitchRow.new()
+        setattr(self, name, switch_row)
+
+        if title:
+            switch_row.set_title(title)
+        if subtitle:
+            switch_row.set_subtitle(subtitle)
+        if active is not None:
+            switch_row.set_active(active)
+        if command:
+            if command_args is None:
+                switch_row.connect("notify::active", command)
+            else:
+                switch_row.connect(
+                    "notify::active", lambda _, __: command(*command_args)
+                )
+
+        return switch_row
+
+    def create_switch_row(
+        self,
+        name: str,
+        title: str = None,
+        subtitle: str = None,
+        active: bool = None,
+        command: callable = None,
+        command_args: list = None,
+    ) -> Adw.SwitchRow:
+        """
+        Creates a new Adw.SwitchRow instance.
+
+        Args:
+            name (str): The name of the switch row.
+            title (str, optional): The title of the switch row. Defaults to None.
+            subtitle (str, optional): The subtitle of the switch row. Defaults to None.
+            active (bool, optional): Whether the switch row is active. Defaults to None.
+            command (callable, optional): The command to connect to the switch row's "notify::active" signal. Defaults to None.
+            command_args (list, optional): The arguments to pass to the command. Defaults to None.
+
+        Returns:
+            Adw.SwitchRow: The created switch row.
+        """
+
+        switch_row = Adw.SwitchRow.new()
+        setattr(self, name, switch_row)
+
+        if title:
+            switch_row.set_title(title)
+        if subtitle:
+            switch_row.set_subtitle(subtitle)
+        if active is not None:
+            switch_row.set_active(active)
+        if command:
+            if command_args is None:
+                switch_row.connect("notify::active", command)
+            else:
+                args = []
+                for arg in command_args:
+                    if isinstance(arg, str) and arg.startswith("$$"):
+                        args.append(locals()[arg[2:]])
+                    else:
+                        args.append(arg)
+                switch_row.connect(
+                    "notify::active", lambda *_, args=args: command(*args)
+                )
+
+        return switch_row
+
+    def create_combo_row(
+        self,
+        name: str,
+        title: str = None,
+        subtitle: str = None,
+        model: Gtk.StringList = None,
+        selected: str = None,
+        command: callable = None,
+        command_args: list = None,
+    ) -> Adw.ComboRow:
+        """
+        Creates a new Adw.ComboRow instance.
+
+        Args:
+            name (str): The name of the combo row.
+            title (str, optional): The title of the combo row. Defaults to None.
+            subtitle (str, optional): The subtitle of the combo row. Defaults to None.
+            model (Gtk.StringList, optional): The model to use for the combo row. Defaults to None.
+            selected (str, optional): The selected item in the combo row. Defaults to None.
+            command (callable, optional): The command to connect to the combo row's "notify::active" signal. Defaults to None.
+            command_args (list, optional): The arguments to pass to the command. Defaults to None.
+
+        Returns:
+            Adw.ComboRow: The created combo row.
+        """
+        combo_row = Adw.ComboRow()
+        setattr(self, name, combo_row)
+        if title:
+            combo_row.set_title(title)
+        if subtitle:
+            combo_row.set_subtitle(subtitle)
+        if model:
+            combo_row.set_model(model)
+        if selected:
+            combo_row.set_selected(selected)
+        if command:
+            if command_args is None:
+                combo_row.connect("notify::selected", command)
+            else:
+                args = []
+                for arg in command_args:
+                    if isinstance(arg, str) and arg.startswith("$$"):
+                        args.append(locals()[arg[2:]])
+                    else:
+                        args.append(arg)
+                combo_row.connect(
+                    "notify::selected", lambda *_, args=args: command(*args)
+                )
+        return combo_row
+
+    def create_expander_row(
+        self,
+        name: str,
+        title: str = None,
+        subtitle: str = None,
+        rows: list = None,
+    ) -> Adw.ExpanderRow:
+        """
+        Creates a new Adw.ExpanderRow instance.
+
+        Args:
+            name (str): The name of the expander row.
+            title (str, optional): The title of the expander row. Defaults to None.
+            subtitle (str, optional): The subtitle of the expander row. Defaults to None.
+            rows (list, optional): The rows to add to the expander row. Defaults to None.
+
+        Returns:
+            Adw.ExpanderRow: The created expander row.
+        """
+        expander_row = Adw.ExpanderRow()
+        setattr(self, name, expander_row)
+        if title:
+            expander_row.set_title(title)
+        if subtitle:
+            expander_row.set_subtitle(subtitle)
+        if rows:
+            for row in rows:
+                expander_row.add_row(row)
+        return expander_row
+
+    def add_custom_expander_row_label(
+        self,
+        text: str,
+        expander_row: Adw.ExpanderRow,
+    ) -> None:
+        expander_row.added_label = Gtk.Label(label=text)
+
+        label_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        label_box.append(expander_row.added_label)
+        action_row_box = (
+            expander_row.get_first_child()  # box
+            .get_first_child()  # list_box
+            .get_first_child()  # action_row
+            .get_first_child()  # action_row_box
+        )
+        last_box = action_row_box.get_last_child()
+        label_box.insert_before(action_row_box, last_box)
+
+    def create_preferences(self, main_preferences_list: list, grid: Gtk.Grid):
+        """
+        Creates a preferences page based on the provided main_preferences_list.
+
+        This function creates an Adw.PreferencesPage and populates it with sections and settings
+        based off the items in main_preferences_list. Each section is represented by an Adw.PreferencesGroup,
+        and each row is represented by a row within the group. The type of row depends on the type
+        specified in the row dictionary, which can be "switch", "combo", or "expander".
+
+        Parameters:
+            main_preferences_list (list): A list of dictionaries, where each dictionary represents a section
+            of the preferences page. Each section dictionary should contain:
+                - "title" (str): The title of the section.
+                - "section_wide_command" (function, optional): A function that should be run by all
+                rows contained in the section. If a row has it's own command, then it takes no effect on that row.
+                - "section_wide_command_args" (list, optional): A list of args to pass to the command.
+                If a row has it's own command_args, then it takes no effect on that row.
+                - "rows" (list): A list of dictionaries, where each dictionary represents a row in the section.
+                    Each row dictionary should contain:
+                    - "type" (str): The type of row, which can be "switch", "combo", or "expander".
+                    - "title" (str): The title of the row.
+                    - "subtitle" (str): The subtitle of the row.
+                    - "command" (function, optional): A command to be executed when the row is interacted with.
+                    - "command_args" (list, optional): A list of args to pass to the command.
+                    - "setting" (str): The name of the setting associated with the row.
+
+            grid (Gtk.Grid): The grid to which the preferences page should be attached.
+
+        Returns:
+            None
+        """
         preferences_page = Adw.PreferencesPage.new()
         preferences_page.set_hexpand(True)
         for section in main_preferences_list:
             preferences_group = Adw.PreferencesGroup.new()
             preferences_page.add(preferences_group)
-            group_title = section["title"]
-            section_wide_command = section.get("command")
-            settings = section["settings"]
+            group_title = section.get("title")
+            section_wide_command = section.get("section_wide_command")
+            section_wide_command_args = section.get("section_wide_command_args")
+            rows = section.get("rows")
             if group_title:
                 preferences_group.set_title(group_title)
-            for setting in settings:
-                setting_type = setting["type"]
-                title = setting["title"]
-                subtitle = setting.get("subtitle")
-                command = setting.get("command")
-                setting_name = setting["setting"]
-                if setting_type == "switch":
-                    default_value = setting.get("default_value", False)
-                    switch_row = Adw.SwitchRow.new()
-                    setattr(self, f"{setting_name}_switch_row", switch_row)
-                    switch_row.set_title(title)
-                    if subtitle:
-                        switch_row.set_subtitle(subtitle)
-                    switch_row.set_active(
-                        self.settings.get(setting_name, default_value)
+            for row in rows:
+                row_type = row.get("type")
+                row_title = row.get("title")
+                row_subtitle = row.get("subtitle")
+                row_command = row.get("command")
+                row_command_args = row.get("command_args")
+                row_setting = row.get("setting")
+                if not row_type:
+                    print(
+                        'Error in create_preferences: The "type" arg must be specified.'
                     )
-                    if section_wide_command:
-                        switch_row.connect(
-                            "notify::active", section_wide_command, setting_name
-                        )
-                    else:
-                        if command:
-                            switch_row.connect("notify::active", command, setting_name)
-                        else:
-                            switch_row.connect(
-                                "notify::active",
-                                self.on_switch_row_changed,
-                                setting_name,
-                            )
-                    preferences_group.add(switch_row)
-
-                elif setting_type == "combo":
-                    options = setting["options"]
+                    break
+                if not row_setting:
+                    print(
+                        'Error in create_preferences: The "setting" arg must be specified.'
+                    )
+                    break
+                if row_type == "switch":
+                    name = f"{row_setting}_switch_row"
+                    default_value = row.get("default_value", False)
+                    active = self.settings.get(row_setting, default_value)
+                elif row_type == "combo":
+                    options = row.get("options")
                     default_value = next(
                         (
                             option["value"]
                             for option in options
-                            if option["value"] == self.settings.get(setting_name)
+                            if option["value"] == self.settings.get(row_setting)
                         ),
                         options[0]["value"],
                     )
-                    combo_row = Adw.ComboRow(title=title)
-                    if subtitle:
-                        combo_row.set_subtitle(subtitle)
                     value_name_list = Gtk.StringList.new()
                     value_list = [option["value"] for option in options]
                     for option in options:
                         value_name_list.append(option["name"])
-                    combo_row.set_model(value_name_list)
-                    current_value_index = value_list.index(default_value)
-                    combo_row.set_selected(current_value_index)
-                    combo_row.connect(
-                        "notify::selected",
-                        lambda row, _, ls=value_list, sett=setting_name: self.on_combo_row_changed(
-                            row, ls, sett
-                        ),
+                    name = f"{row_setting}_combo_row"
+                    model = value_name_list
+                    selected = value_list.index(default_value)
+                if row_type == "switch" or row_type == "combo":
+                    if section_wide_command:
+                        command = section_wide_command
+                    elif row_command:
+                        command = row_command
+                    else:
+                        if row_type == "switch":
+                            command = self.on_switch_row_changed
+                        elif row_type == "combo":
+                            command = self.on_combo_row_changed
+                    args = None
+                    if section_wide_command_args:
+                        args = section_wide_command_args
+                    elif row_command_args:
+                        args = row_command_args
+                    if args:
+                        command_args = []
+                        for arg in args:
+                            if arg.startswith("$") and len(arg) > 1 and arg[1] != "$":
+                                command_args.append(locals()[arg[1:]])
+                            else:
+                                command_args.append(arg)
+                    else:
+                        command_args = None
+                if row_type == "switch":
+                    switch_row = self.create_switch_row(
+                        name, row_title, row_subtitle, active, command, command_args
+                    )
+                    preferences_group.add(switch_row)
+                elif row_type == "combo":
+                    combo_row = self.create_combo_row(
+                        name,
+                        row_title,
+                        row_subtitle,
+                        model,
+                        selected,
+                        command,
+                        command_args,
                     )
                     preferences_group.add(combo_row)
-
-                elif setting_type == "expander":
-
-                    def add_custom_label(
-                        text: str,
-                        expander_row: Adw.ExpanderRow,
-                    ) -> None:
-                        expander_row.added_label = Gtk.Label(label=text)
-
-                        label_box = Gtk.Box(
-                            orientation=Gtk.Orientation.HORIZONTAL, spacing=0
-                        )
-                        label_box.append(expander_row.added_label)
-                        action_row_box = (
-                            expander_row.get_first_child()  # box
-                            .get_first_child()  # list_box
-                            .get_first_child()  # action_row
-                            .get_first_child()  # action_row_box
-                        )
-                        last_box = action_row_box.get_last_child()
-                        label_box.insert_before(action_row_box, last_box)
-
-                    options = setting["options"]
+                elif row_type == "expander":
+                    options = row["options"]
                     default_value = next(
                         (
                             option["value"]
                             for option in options
-                            if option["value"] == self.settings.get(setting_name)
+                            if option["value"] == self.settings.get(row_setting)
                         ),
                         options[0]["value"],
                     )
-                    expander_row = Adw.ExpanderRow(title=title)
-                    setattr(self, f"{title}_expander_row", expander_row)
-                    if subtitle:
-                        expander_row.set_subtitle(subtitle)
                     value_name_list = [option["name"] for option in options]
                     value_list = [option["value"] for option in options]
                     current_value_name = "Not set"
-                    add_custom_label(current_value_name, expander_row)
                     radio_group = None
+                    rows = []
                     for i, option in enumerate(options):
-                        name = option["name"]
-                        value = option["value"]
+                        name = option.get("name")
+                        value = option.get("value")
                         action_row = Adw.ActionRow(title=name)
                         flashtool_file = self.settings.get(f"{value}_file", None)
                         if flashtool_file:
@@ -1455,19 +1681,20 @@ class MainWindow(Gtk.ApplicationWindow):
                         check_button = Gtk.CheckButton()
                         setattr(action_row, "check_button", check_button)
                         check_button.set_group(radio_group)
-                        check_button.connect(
-                            "toggled",
-                            lambda _, expander_row=expander_row, action_row=action_row, check_button=check_button, setting=setting_name, value=value: self.on_action_row_checkbutton_clicked(
-                                expander_row, action_row, check_button, setting, value
-                            ),
-                        )
-                        radio_group = check_button
-                        action_row.add_prefix(check_button)
                         if value == default_value and self.settings.get(
                             f"{value}_file", None
                         ):
                             check_button.set_active(True)
                             current_value_name = name
+                        setattr(self, f"{row_setting}_expander_row", None)
+                        check_button.connect(
+                            "toggled",
+                            lambda _, action_row=action_row, check_button=check_button, setting=row_setting, value=value: self.on_action_row_checkbutton_clicked(
+                                action_row, check_button, setting, value
+                            ),
+                        )
+                        radio_group = check_button
+                        action_row.add_prefix(check_button)
                         button_box = Gtk.Box(spacing=0)
                         file_chooser_button = Gtk.Button()
                         info_button = Gtk.Button()
@@ -1485,14 +1712,14 @@ class MainWindow(Gtk.ApplicationWindow):
                         info_button.set_has_frame(False)
                         file_chooser_button.connect(
                             "clicked",
-                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting_name, name=name, value=value: self.on_action_row_file_button_clicked(
-                                expander_row, action_row, setting, name, value
+                            lambda _, action_row=action_row, setting=row_setting, name=name, value=value: self.on_action_row_file_button_clicked(
+                                action_row, setting, name, value
                             ),
                         )
                         info_button.connect(
                             "clicked",
-                            lambda _, expander_row=expander_row, action_row=action_row, setting=setting_name, name=name, value=value: self.on_info_button_clicked(
-                                expander_row, action_row, setting, name, value
+                            lambda _, action_row=action_row, setting=row_setting, name=name, value=value: self.on_info_button_clicked(
+                                action_row, setting, name, value
                             ),
                         )
                         button_box.append(file_chooser_button)
@@ -1502,25 +1729,29 @@ class MainWindow(Gtk.ApplicationWindow):
                             action_row.set_activatable_widget(check_button)
                         else:
                             action_row.set_activatable_widget(file_chooser_button)
-                        expander_row.add_row(action_row)
+                        rows.append(action_row)
+                    name = f"{row_setting}_expander_row"
+                    expander_row = self.create_expander_row(
+                        name, row_title, row_subtitle, rows
+                    )
+                    self.add_custom_expander_row_label(current_value_name, expander_row)
                     expander_row.added_label.set_label(current_value_name)
                     preferences_group.add(expander_row)
                 else:
                     print(
-                        f'Error in create_preferences. "{setting_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
+                        f'Error in create_preferences: "{setting_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
                     )
         grid.attach(preferences_page, 0, 0, 1, 1)
 
     def on_action_row_checkbutton_clicked(
-        self, expander_row, action_row, check_button, setting, value
+        self, action_row, check_button, setting, value
     ):
         if check_button.get_active():
+            expander_row = getattr(self, f"{setting}_expander_row")
             expander_row.added_label.set_label(action_row.get_title())
             self.set_setting(setting, value)
 
-    def on_action_row_file_button_clicked(
-        self, expander_row, action_row, setting, name, value
-    ):
+    def on_action_row_file_button_clicked(self, action_row, setting, name, value):
         if setting == "flash_tool":
             name = "Pythor" if value == "pythor" else name
 
@@ -1560,7 +1791,7 @@ class MainWindow(Gtk.ApplicationWindow):
             file_dialog.set_filters(filter_list)
             file_dialog.open(self, None, file_dialog_callback)
 
-    def on_info_button_clicked(self, expander_row, action_row, setting, name, value):
+    def on_info_button_clicked(self, action_row, setting, name, value):
         name = "Pythor" if value == "pythor" else name
         name = "About " + name
         if value == "thor":
