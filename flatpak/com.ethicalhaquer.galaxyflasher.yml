@@ -18,7 +18,6 @@ modules:
       - pip install -r requirements.txt
       - cp -r locales /app/locales/
       - cp -r odin4-wrapper.sh /app/odin4-wrapper.sh
-      - cp -r usb.ids /app/usb.ids
       - install -D galaxy-flasher.py /app/galaxy-flasher
       - install -D entry.sh /app/bin/entry
       - install -D galaxy-flasher.desktop /app/share/applications/com.ethicalhaquer.galaxyflasher.desktop
