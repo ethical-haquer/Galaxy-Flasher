@@ -5,8 +5,8 @@
 A GUI for Samsung Flash Tools.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/cdfc298d-fb85-4c01-924c-5971a6e380cb">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/f157cbad-d09c-40ae-a68d-91512d52211a">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/85763e62-636c-4fbb-b0d9-0e99532386ff">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/7451f452-e861-477a-a411-4e9726b92db4">
   <img alt="Screenshot of Thor GUI">
 </picture>
 <details>
@@ -15,48 +15,48 @@ A GUI for Samsung Flash Tools.
   Options Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/621b8ecf-c748-499d-8f4c-a8f612f293a2">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/dc08a6bf-2e10-47b0-b7c5-d0ae7a11d695">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/fbcb8c93-4461-42be-874a-8bd39d6f23cb">
+    <source media="(prefers-color-scheme: light)" srcset="ttps://github.com/user-attachments/assets/1a926363-79dc-494a-910e-dc8b359fb864">
     <img alt="Options Tab">
   </picture>
   <br>
   Pit Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/50cda73e-fa59-41f1-a205-3c49f93289dd">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/88fee46a-ed65-4c38-87ba-6695b6e5ae34">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d10aecd0-633f-4c20-a738-d56dad080772">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/ab4ffcf2-1198-43dd-9b2d-a20841821eaf">
     <img alt="Pit Tab">
   </picture>
   <br>
   Settings Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/d574eb2b-c592-4d74-951b-d3effcd9e345">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/58f92b1a-0390-4620-995b-06104a7eda71">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d3f424ad-25c5-4e40-ba74-75ed5713e2ab">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/6340bddb-ad4d-4567-bc97-8f028bbb7865">
     <img alt="Settings Tab">
   </picture>
   <br>
   About Dialog:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/6b479807-9206-41aa-b15a-874867a51825">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/3bfe072f-6cfc-4e5e-8512-0e1561b2834a">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/5e6b5625-4cde-43a4-a459-44d943cfbe74">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/788a7330-69dd-43ea-9cfa-3be68f1c058b">
     <img alt="About Tab">
   </picture>
   <br>
   "Select Partitions" Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/dc7cea25-1819-4ccd-b119-dd45ca7fab61">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/a46b1f00-34da-4e26-a16d-bc7c8223cea1">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/91c6b476-3917-42c4-9d9a-1ac3f3bf931a">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/c1b972a5-a9e1-4e02-81e4-cce970cea5c4">
     <img alt="Select Partitions Window">
   </picture>
   <br>
   "Verify Flash" Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/ead15566-0efa-4e95-a834-01d3ab01c2dd">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/1486223e-254f-4ffd-a3bf-9bfdb7d8a74e">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/ef054041-001a-483e-a438-073b6a49276d">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/90cd9c3a-dc40-4538-837e-571e7c22b8e2">
     <img alt="Verify Flash Window">
   </picture>
 </details>
@@ -67,17 +67,17 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably unknown) bugs. Also, it was just completely re-written, so the readme is still in the process of getting updated. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
-- [#15](https://github.com/ethical-haquer/Galaxy-Flasher/issues/15) The "Run Thor with sudo" setting doesn't work when Galaxy Flasher is a flatpak.
+- Setting options through the Options Tab is buggy.
 
 ## TODO
 
 - Improve the Options Tab for Thor
-- Improve the flash-tool setting
 - Display the partitions to be flashed in the Verify Flash Window
+- Use an Adw.Dialog for the Select Partitions Window
 - Hide Thor-specific settings if the current flash-tool is not Thor
 - Publish Galaxy Flasher on FlatHub
 
@@ -116,7 +116,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   <summary>Prerequisites</summary>
 
   - flatpak - Go [here](https://www.flatpak.org/setup/), select your distro, and follow the directions to install flatpak.
-  - flatpak-builder - "...[flatpak-builder] is usually available from the same repository as the flatpak package (e.g. use apt or dnf). You can also install it as a flatpak with `flatpak install flathub org.flatpak.Builder`". (quote from [here](https://docs.flatpak.org/en/latest/first-build.html))
+  - flatpak-builder - According to [here](https://docs.flatpak.org/en/latest/first-build.html): "...[flatpak-builder] is usually available from the same repository as the flatpak package (e.g. use apt or dnf). You can also install it as a flatpak with `flatpak install flathub org.flatpak.Builder`".
   </details>
   </p>
 
@@ -149,12 +149,10 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   <p>
   <details id="prerequisites">
   <summary>Prerequisites</summary>
-
-  - Debian testing
-    - gir1.2-vte-3.91 >= 0.72
-   
-  - Other
-    - Please let me know what packages you had to install for other distros. Thanks!
+    
+  - Gtk4
+  - Adw 1
+  - Vte >= 0.72
   </details>
   </p>
 
@@ -162,7 +160,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   <details id="installation">
   <summary>Installation</summary>
 
-  1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). Currently only the Debian testing prerequisites are listed. __Please let me know__ what you had to install for other distros. Thanks!
+  1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). Currently they are pretty vague, if you can't figure out what to install just let me know and I'll be glad to help!
   2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
   3. Once the file is downloaded, extract it.
   4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
@@ -198,7 +196,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
   - Bootloader Update - I honestly have no idea what this does. Let me know if you do!
   - Reset Flash Count - I believe this does what it sounds like it does, but I don't know when you'd ever use it. Please correct me if I'm wrong!
 
-  Keep in mind that these options will only be applied if an Odin session has been started. Otherwise the Log Tab will display "This command does not exist".
+  Keep in mind that setting options through the Log Tab is buggy currently, and you need to start an Odin session before you can set any options.
 
   For Odin4, there are currently no options.
   The "-V", "Validate home binary with pit file" option might be added if someone can tell me what it does.
@@ -231,7 +229,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
     - Light - Light theme.
     - Dark - Dark theme.
 
-  - Run Thor with sudo - This allows you to choose whether or not you want to run Thor with sudo. By default it is turned off; Turning it on may fix errors in some cases. This only applies to Thor. You will have to restart Galaxy Flasher after changing this setting for it to apply.
+  - Keep Log dark - Keeps the Log Tab dark, regardless of the theme.
     
   - [Thor] Automatically select all partitions - This automatically selects all of the partitions from the files you select, instead of asking you what ones you would like to select. This only applies to Thor.
 
@@ -258,9 +256,9 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
   - Click the "Connect" button. If there is more than one device connected, you will be prompted to select a device. You will know you have connected when the "Connect" button changes to "Disconnect".
   - Once you're connected to a device, click the "Start Odin Protocol" button. If the button changes to "End Odin Protocol", you're good.
-  - Click the "Flash!" button. (after you've selected at least one file to flash)
+  - Click the "Flash!" button. (after you have selected at least one file to flash)
   - If the "[Thor] Automatically select all partitions" setting is off, you will be asked to select what partitions to flash from each file you selected. If that setting is on, Galaxy Flasher will automatically select all of the partitions for each file you selected.
-  - Once you (or the computer) have selected the partitions to flash from each file you selected, a "Verify Flash" window will appear. This is when you can abort if you didn't mean to flash what you selected. Click "No" to cancel, or "OK" to begin flashing the device.
+  - Once you (or the computer) have selected the partitions to flash from each file you selected, a "Verify Flash" window will appear. This is when you can abort if you didn't mean to flash what you selected. Click "No" to cancel, or "Yes" to begin flashing the device.
   - That's it!
   </details>
   </p>
@@ -271,7 +269,7 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
   Please note that unlike Thor, Odin4 does not have a "Verify Flash" window. If you accidentally started flashing your device, you can disconnect it from your computer when Odin4 is verifying the files. (verifying the files is the first thing it does, followed by flashing them) However, if Odin4 has already started flashing the files to your device, disconnecting your device may cause even more issues.
 
-  - Click the "Flash!" button. (after you've selected at least one file to flash)
+  - Click the "Flash!" button. (after you have selected at least one file to flash)
   - If there is more than one device connected, you will be prompted to select a device.
   - That's it!
   </details>
@@ -279,7 +277,7 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
 ### Command Entry
 
-The Command Entry is somewhere you can enter flash-tool commands. If you read about [the Log Tab](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#log-tab), you might be wondering why it is needed if you can just type commands directly into the Log Tab. The reason is, commands entered into the Log Tab will not be "made graphical". That means if you type "connect" into the Log Tab, you will have to select a device in the terminal. If you type "connect" into the Command Entry, Galaxy Flasher will eitheir display a window asking you what device you want to connect to, or, if there is only one device, it will automatically select it. In other words, typing "connect" in the Command Entry does the same thing as clicking the Connect Button. Currently, only the "connect" and "flashTar" commands behave differently when sent through the Command Entry:
+The Command Entry is somewhere you can enter flash-tool commands. If you read about [the Log Tab](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#log-tab), you might be wondering why it is needed if you can just type commands directly into the Log Tab. The reason is, commands entered into the Log Tab will not be made graphical. That means if you type "connect" into the Log Tab, you will have to select a device in the terminal. If you type "connect" into the Command Entry, Galaxy Flasher will either display a window asking you what device you want to connect to, or, if there is only one device, it will automatically select it. In other words, typing "connect" in the Command Entry does the same thing as clicking the Connect Button. Currently, only the "connect" and "flashTar" commands behave differently when sent through the Command Entry:
 
 - connect - Behaves the same as hitting the Connect Button.
 - flashTar - Behaves the same as hitting the Flash Button. The command entered must be just "flashTar" though. For example, running "flashTar /home/name/folder" will not do this.

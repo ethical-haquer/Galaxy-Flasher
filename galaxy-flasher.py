@@ -147,7 +147,7 @@ class MainWindow(Adw.ApplicationWindow):
                 else:
                     flashtool_exec = [
                         "echo",
-                        f'The {self.flashtool} executable you chose:\n"{self.flashtool_file}"\n, was not found. Please select a new executable by going to:\n"Settings - General - Flash Tool".',
+                        f'The {self.flashtool} executable you chose:\n"{self.flashtool_file}",\nwas not found. Please select a new executable by going to:\n"Settings - General - Flash Tool".',
                     ]
                     self.connect(
                         "show",
@@ -378,11 +378,10 @@ class MainWindow(Adw.ApplicationWindow):
             options_list = [
                 {
                     "title": None,
-                    "section_wide_command": self.set_option,
-                    "section_wide_command_args": [
-                        "$$switch_row",
-                        "$$active",
-                        "$row_setting",
+                    "section_sensitive": False,
+                    "section_function": self.burner,
+                    "section_commands": [
+                        (self.connect_option_switch, ["$switch_row"]),
                     ],
                     "rows": [
                         {
@@ -402,14 +401,12 @@ class MainWindow(Adw.ApplicationWindow):
                         {
                             "type": "switch",
                             "title": "Bootloader Update",
-                            "subtitle": None,
                             "setting": "bootloader_update",
                             "default_value": False,
                         },
                         {
                             "type": "switch",
                             "title": "Reset Flash Count",
-                            "subtitle": None,
                             "setting": "reset_flash_count",
                             "default_value": False,
                         },
@@ -461,9 +458,8 @@ class MainWindow(Adw.ApplicationWindow):
                     {
                         "type": "combo",
                         "title": "Theme",
-                        "subtitle": None,
-                        "command": self.on_combo_row_changed,
-                        "command_args": ["$$combo_row", "$value_list", "$row_setting"],
+                        "function": self.on_combo_row_changed,
+                        "function_args": ["$$combo_row", "$value_list", "$row_setting"],
                         "setting": "theme",
                         "options": [
                             {"name": "System", "value": "system"},
@@ -473,10 +469,10 @@ class MainWindow(Adw.ApplicationWindow):
                     },
                     {
                         "type": "switch",
-                        "title": "Keep Log Dark",
+                        "title": "Keep Log dark",
                         "subtitle": "Keep the Log Tab dark, regardless of the theme.",
-                        "command": self.on_dark_log_switch_changed,
-                        "command_args": ["$$switch_row", "$$active", "$row_setting"],
+                        "function": self.on_dark_log_switch_changed,
+                        "function_args": ["$$switch_row", "$$active", "$row_setting"],
                         "setting": "keep_log_dark",
                         "default_value": False,
                     },
@@ -489,6 +485,8 @@ class MainWindow(Adw.ApplicationWindow):
                         "type": "switch",
                         "title": "Automatically select all partitions",
                         "subtitle": "Instead of asking what partitions to flash, automatically select them all.",
+                        "function": self.on_switch_row_changed,
+                        "function_args": ["$$switch_row", "$$active", "$row_setting"],
                         "setting": "auto_partitions",
                         "default_value": False,
                     },
@@ -542,6 +540,101 @@ class MainWindow(Adw.ApplicationWindow):
         if os.path.exists(settings_file):
             with open(settings_file, "r") as file:
                 self.settings = json.load(file)
+
+    def connect_option_switch(self, switch_row):
+        switch_row.switch.connect("state-set", self.on_switch_state_set)
+
+    def on_switch_state_set(self, switch, new_state):
+        state = not new_state
+        self.delayed_state_set(switch, state)
+        return True  # Prevent the default handler from running
+
+    def delayed_state_set(self, switch, state):
+        #                   box          box          switch_row
+        switch_row = switch.get_parent().get_parent().get_parent()
+        name = switch_row.name
+        # Extract the option from the name
+        option = name.rsplit("_", 2)[0]
+        if state:
+            #print("Turning option off...")
+            pass
+        else:
+            #print("Turning option on...")
+            pass
+        self.set_option(switch, state, option)
+
+    def option_change_successful(self, option, value):
+        switch_row = getattr(self, f"{option}_switch_row")
+        switch = switch_row.switch
+        active = switch.get_active()
+        if value != active:
+            #print("Operation failed.")
+            switch.set_active(False)
+        else:
+            #print("Operation succeded.")
+            pass
+        switch.set_state(value)  # Update the underlying state
+
+    def set_option(self, switch_row, state, option):
+        if not hasattr(self, "toggling_switch_row") or not self.toggling_switch_row:
+            if self.flashtool == "thor":
+                active = switch_row.get_active()
+                if active and option == "efs_clear":
+
+                    def callback(dialog, result):
+                        response_id = dialog.choose_finish(result)
+                        if response_id == "continue":
+                            print(
+                                f'Would have ran "options efsclear {str(switch_row.get_active()).lower()}"'
+                            )
+                            # self.send_cmd(f"options efsclear {str(switch_row.get_active()).lower()}")
+                        else:
+                            self.toggling_switch_row = True
+                            switch_row.set_active(False)
+                            self.toggling_switch_row = False
+
+                    print(
+                        "You are attemting to turn on the EFS Clear option, which wipes important stuff from your phone. Are you sure you want to continue?"
+                    )
+                    responses = [
+                        {"id": "cancel", "label": "Cancel", "appearance": "0"},
+                        {"id": "continue", "label": "Continue", "appearance": "2"},
+                    ]
+                    self.create_alert_dialog(
+                        "Warning - EFS Clear",
+                        "You are attempting to turn on the EFS Clear option, which wipes important stuff from your phone. Are you absolutely sure you want to continue?",
+                        responses,
+                        callback,
+                        "cancel",
+                    )
+                else:
+                    convert = {
+                        "t_flash": "tflash",
+                        "efs_clear": "efsclear",
+                        "reset_flash_count": "resetfc",
+                        "bootloader_update": "blupdate",
+                        "true": True,
+                        "false": False,
+                    }
+                    value = str(switch_row.get_active()).lower()
+
+                    print(f"{option}: {value}")
+                    setattr(self, option, value)
+
+                    option = convert[option]
+                    #print(f'Would have ran "options {option} {value}"')
+                    if option != "efs_clear" or value == "false":
+                        self.send_cmd(f"options {option} {value}")
+
+    def burner(self, *args):
+        pass
+
+    def on_row_clicked(self, gesture, n_press, x, y):
+        # Handle the click event here
+        print("SwitchRow clicked")
+
+    def print_signals(self, obj, signal_name, *args):
+        print(f"Signal emitted: {signal_name}")
 
     def save_settings(self):
         with open(settings_file, "w") as file:
@@ -842,7 +935,11 @@ class MainWindow(Adw.ApplicationWindow):
                 ],
                 "Successfully disconnected the device!": [
                     lambda: print("Successfully disconnected the device!"),
-                    lambda: self.set_widget_state(self.start_odin_button, state=False),
+                    lambda: self.start_odin_button.set_label("Start Odin Session"),
+                    lambda: self.change_button_command(
+                        self.start_odin_button, lambda _: self.send_cmd_entry("begin odin")
+                    ),
+                    lambda: self.set_widget_state(self.start_odin_button, self.flash_button, state=False),
                     lambda: self.connect_button.set_label("Connect"),
                     lambda: self.change_button_command(
                         self.connect_button, lambda _: self.send_cmd_entry("connect")
@@ -853,7 +950,13 @@ class MainWindow(Adw.ApplicationWindow):
                     # NOTE: Why do we need to enable the start_odin_button here?
                     # It's supposed to be enabled above ^.
                     lambda: self.set_widget_state(
-                        self.start_odin_button, self.flash_button, state=True
+                        self.start_odin_button,
+                        self.flash_button,
+                        self.t_flash_switch_row,
+                        self.efs_clear_switch_row,
+                        self.bootloader_update_switch_row,
+                        self.reset_flash_count_switch_row,
+                        state=True,
                     ),
                     lambda: self.start_odin_button.set_label("End Odin Session"),
                     lambda: self.change_button_command(
@@ -862,7 +965,15 @@ class MainWindow(Adw.ApplicationWindow):
                 ],
                 "Successfully ended an Odin session!": [
                     lambda: print("Successfully ended an Odin session!"),
-                    lambda: self.set_widget_state(self.flash_button, state=False),
+                    lambda: self.set_widget_state(
+                        self.flash_button,
+                        self.flash_button,
+                        self.t_flash_switch_row,
+                        self.efs_clear_switch_row,
+                        self.bootloader_update_switch_row,
+                        self.reset_flash_count_switch_row,
+                        state=False,
+                    ),
                     lambda: self.start_odin_button.set_label("Start Odin Session"),
                     lambda: self.change_button_command(
                         self.start_odin_button, lambda _: self.start_odin_session()
@@ -873,11 +984,29 @@ class MainWindow(Adw.ApplicationWindow):
                     # You have to reboot each time."
                     lambda: self.set_widget_state(self.start_odin_button, state=False),
                 ],
+                'Successfully set "T-Flash" to "true"!': [
+                    lambda: self.option_change_successful("t_flash", True)
+                ],
+                'Successfully set "T-Flash" to "false"!': [
+                    lambda: self.option_change_successful("t_flash", False)
+                ],
+                'Successfully set "EFS Clear" to "true"!': [
+                    lambda: self.option_change_successful("efs_clear", True)
+                ],
+                'Successfully set "EFS Clear" to "false"!': [
+                    lambda: self.option_change_successful("efs_clear", False)
+                ],
+                'Successfully set "Bootloader Update" to "true"!': [
+                    lambda: self.option_change_successful("bootloader_update", True)
+                ],
+                'Successfully set "Bootloader Update" to "false"!': [
+                    lambda: self.option_change_successful("bootloader_update", False)
+                ],
                 'Successfully set "Reset Flash Count" to "true"!': [
-                    lambda: self.option_changed("reset_flash_count", True)
+                    lambda: self.option_change_successful("reset_flash_count", True)
                 ],
                 'Successfully set "Reset Flash Count" to "false"!': [
-                    lambda: self.option_changed("reset_flash_count", False)
+                    lambda: self.option_change_successful("reset_flash_count", False)
                 ],
             }
         elif self.flashtool == "odin4":
@@ -1351,8 +1480,11 @@ class MainWindow(Adw.ApplicationWindow):
         title: str = None,
         subtitle: str = None,
         active: bool = None,
-        command: callable = None,
-        command_args: list = None,
+        sensitive: bool = None,
+        signal: str = "notify::active",
+        function: callable = None,
+        function_args: list = None,
+        commands: list = None,
     ) -> Adw.SwitchRow:
         """
         Creates a new Adw.SwitchRow instance.
@@ -1362,8 +1494,13 @@ class MainWindow(Adw.ApplicationWindow):
             title (str, optional): The title of the switch row. Defaults to None.
             subtitle (str, optional): The subtitle of the switch row. Defaults to None.
             active (bool, optional): Whether the switch row is active. Defaults to None.
-            command (callable, optional): The command to connect to the switch row's "notify::active" signal. Defaults to None.
-            command_args (list, optional): The arguments to pass to the command. Defaults to None.
+            sensitive (bool, optional): Whether the switch row is sensitive. Defaults to None.
+            signal (str, optional): The signal to connect the function to. Defaults to 'notify::active'.
+            function (callable, optional): The function to connect to the switch row's signal. Defaults to None.
+            function_args (list, optional): The arguments to pass to the function. Defaults to None.
+            commands (list, optional): A list of commands to execute after creating the switch_row. The format is:
+            [(example_command, ["example_string", "$example_variable", example_variable])] Strings starting with "$"
+            are converted to variables defined in this function at run-time. Defaults to None.
 
         Returns:
             Adw.SwitchRow: The created switch row.
@@ -1371,6 +1508,8 @@ class MainWindow(Adw.ApplicationWindow):
 
         switch_row = Adw.SwitchRow.new()
         setattr(self, name, switch_row)
+        switch_row.name = name
+        switch_row.switch = switch_row.get_child().get_last_child().get_first_child()
 
         if title:
             switch_row.set_title(title)
@@ -1378,62 +1517,30 @@ class MainWindow(Adw.ApplicationWindow):
             switch_row.set_subtitle(subtitle)
         if active is not None:
             switch_row.set_active(active)
-        if command:
-            if command_args is None:
-                switch_row.connect("notify::active", command)
-            else:
-                switch_row.connect(
-                    "notify::active", lambda _, __: command(*command_args)
-                )
-
-        return switch_row
-
-    def create_switch_row(
-        self,
-        name: str,
-        title: str = None,
-        subtitle: str = None,
-        active: bool = None,
-        command: callable = None,
-        command_args: list = None,
-    ) -> Adw.SwitchRow:
-        """
-        Creates a new Adw.SwitchRow instance.
-
-        Args:
-            name (str): The name of the switch row.
-            title (str, optional): The title of the switch row. Defaults to None.
-            subtitle (str, optional): The subtitle of the switch row. Defaults to None.
-            active (bool, optional): Whether the switch row is active. Defaults to None.
-            command (callable, optional): The command to connect to the switch row's "notify::active" signal. Defaults to None.
-            command_args (list, optional): The arguments to pass to the command. Defaults to None.
-
-        Returns:
-            Adw.SwitchRow: The created switch row.
-        """
-
-        switch_row = Adw.SwitchRow.new()
-        setattr(self, name, switch_row)
-
-        if title:
-            switch_row.set_title(title)
-        if subtitle:
-            switch_row.set_subtitle(subtitle)
-        if active is not None:
-            switch_row.set_active(active)
-        if command:
-            if command_args is None:
-                switch_row.connect("notify::active", command)
+        if sensitive is not None:
+            switch_row.set_sensitive(sensitive)
+        if function:
+            if signal is None:
+                signal = "notify::active"
+            if function_args is None:
+                switch_row.connect(signal, function)
             else:
                 args = []
-                for arg in command_args:
+                for arg in function_args:
                     if isinstance(arg, str) and arg.startswith("$$"):
                         args.append(locals()[arg[2:]])
                     else:
                         args.append(arg)
-                switch_row.connect(
-                    "notify::active", lambda *_, args=args: command(*args)
-                )
+                switch_row.connect(signal, lambda *_, args=args: function(*args))
+        if commands:
+            for command, arg_names in commands:
+                args = []
+                for arg_name in arg_names:
+                    if isinstance(arg_name, str) and arg_name.startswith("$"):
+                        args.append(locals()[arg_name[1:]])
+                    else:
+                        args.append(arg_name)
+                command(*args)
 
         return switch_row
 
@@ -1444,8 +1551,9 @@ class MainWindow(Adw.ApplicationWindow):
         subtitle: str = None,
         model: Gtk.StringList = None,
         selected: str = None,
-        command: callable = None,
-        command_args: list = None,
+        function: callable = None,
+        function_args: list = None,
+        commands: list = None,
     ) -> Adw.ComboRow:
         """
         Creates a new Adw.ComboRow instance.
@@ -1456,8 +1564,11 @@ class MainWindow(Adw.ApplicationWindow):
             subtitle (str, optional): The subtitle of the combo row. Defaults to None.
             model (Gtk.StringList, optional): The model to use for the combo row. Defaults to None.
             selected (str, optional): The selected item in the combo row. Defaults to None.
-            command (callable, optional): The command to connect to the combo row's "notify::active" signal. Defaults to None.
-            command_args (list, optional): The arguments to pass to the command. Defaults to None.
+            function (callable, optional): The function to connect to the combo row's "notify::selected" signal. Defaults to None.
+            function_args (list, optional): The arguments to pass to the function. Defaults to None.
+            commands (list, optional): A list of commands to execute after creating the switch_row. The format is:
+            [(example_command, ["example_string", "$example_variable", example_variable])] Strings starting with "$"
+            are converted to variables defined in this function at run-time. Defaults to None.
 
         Returns:
             Adw.ComboRow: The created combo row.
@@ -1472,19 +1583,28 @@ class MainWindow(Adw.ApplicationWindow):
             combo_row.set_model(model)
         if selected:
             combo_row.set_selected(selected)
-        if command:
-            if command_args is None:
+        if function:
+            if function_args is None:
                 combo_row.connect("notify::selected", command)
             else:
                 args = []
-                for arg in command_args:
+                for arg in function_args:
                     if isinstance(arg, str) and arg.startswith("$$"):
                         args.append(locals()[arg[2:]])
                     else:
                         args.append(arg)
                 combo_row.connect(
-                    "notify::selected", lambda *_, args=args: command(*args)
+                    "notify::selected", lambda *_, args=args: function(*args)
                 )
+        if commands:
+            for command, arg_names in commands:
+                args = []
+                for arg_name in arg_names:
+                    if isinstance(arg_name, str) and arg_name.startswith("$"):
+                        args.append(locals()[arg_name[1:]])
+                    else:
+                        args.append(arg_name)
+                command(*args)
         return combo_row
 
     def create_expander_row(
@@ -1515,6 +1635,7 @@ class MainWindow(Adw.ApplicationWindow):
         if rows:
             for row in rows:
                 expander_row.add_row(row)
+
         return expander_row
 
     def add_custom_expander_row_label(
@@ -1535,7 +1656,9 @@ class MainWindow(Adw.ApplicationWindow):
         last_box = action_row_box.get_last_child()
         label_box.insert_before(action_row_box, last_box)
 
-    def create_preferences(self, main_preferences_list: list, grid: Gtk.Grid):
+    def create_preferences(self, main_preferences_list: list, grid: Gtk.Grid) -> None:
+        # TODO: Good in-code documentation takes up too much space, is hard to maintain, and is hard to read.
+        # I need to look into alternative solutions.
         """
         Creates a preferences page based on the provided main_preferences_list.
 
@@ -1548,17 +1671,32 @@ class MainWindow(Adw.ApplicationWindow):
             main_preferences_list (list): A list of dictionaries, where each dictionary represents a section
             of the preferences page. Each section dictionary should contain:
                 - "title" (str): The title of the section.
-                - "section_wide_command" (function, optional): A function that should be run by all
-                rows contained in the section. If a row has it's own command, then it takes no effect on that row.
-                - "section_wide_command_args" (list, optional): A list of args to pass to the command.
-                If a row has it's own command_args, then it takes no effect on that row.
+                - "section_sensitive" (bool, optional): Refer to the description of the sensitive arg below.
+                - "section_signal" (str, optional): Refer to the description of the signal arg below.
+                - "section_function" (function, optional): Refer to the description of the function arg below.
+                - "section_function_args" (list, optional): Refer to the description of the function_args argument below.
+                NOTE: If a row-specific option is specified, it overides a section-wide option.
+                - "section_commands" (list, optional): 
                 - "rows" (list): A list of dictionaries, where each dictionary represents a row in the section.
-                    Each row dictionary should contain:
+                    Each row dictionary can contain:
                     - "type" (str): The type of row, which can be "switch", "combo", or "expander".
                     - "title" (str): The title of the row.
-                    - "subtitle" (str): The subtitle of the row.
-                    - "command" (function, optional): A command to be executed when the row is interacted with.
-                    - "command_args" (list, optional): A list of args to pass to the command.
+                    - "subtitle" (str, optional): The subtitle of the row. Only applies to switch rows.
+                    - "active" (bool, optional): Whether the row is active. Only applies to switch rows.
+                    - "sensitive" (bool, optional): Whether the row is sensitive.
+                    - "signal" (str, optional): The signal to connect the function to. Only applies to switch rows.
+                    - "function" (function, optional): A function to be executed when the row is interacted with.
+                    - "function_args" (list, optional): A list of args to pass to the function. Oftentimes, you want to
+                    pass a variable to the function that is set in this function, say row_setting. Or maybe you want to
+                    pass a variable that is set in the function that creates the row, like switch_row in create_switch_row.
+                    You can do this by taking the variable you want to pass to the function, making it a string, and then
+                    adding a "$" to the beggining of it. For example, row_setting becomes "$row_setting". You can do
+                    the same with variables that should be set in the function that creates the individual
+                    row (create_switch_row, create_combo_row, and create_expander_row), just add two "$"s instead of one.
+                    For, example, switch_row would become "$$switch_row" in command_args.
+                    - "commands" (list, optional): A list of commands to execute after creating the row. The format is:
+                    [(example_command, ["example_string", "$example_variable", example_variable])]
+                    Strings starting with "$" are converted to variables defined in create_{type}_switch at run-time.
                     - "setting" (str): The name of the setting associated with the row.
 
             grid (Gtk.Grid): The grid to which the preferences page should be attached.
@@ -1572,8 +1710,11 @@ class MainWindow(Adw.ApplicationWindow):
             preferences_group = Adw.PreferencesGroup.new()
             preferences_page.add(preferences_group)
             group_title = section.get("title")
-            section_wide_command = section.get("section_wide_command")
-            section_wide_command_args = section.get("section_wide_command_args")
+            section_sensitive = section.get("section_sensitive")
+            section_signal = section.get("section_signal")
+            section_function = section.get("section_function")
+            section_function_args = section.get("section_function_args")
+            section_commands = section.get("section_commands")
             rows = section.get("rows")
             if group_title:
                 preferences_group.set_title(group_title)
@@ -1581,8 +1722,11 @@ class MainWindow(Adw.ApplicationWindow):
                 row_type = row.get("type")
                 row_title = row.get("title")
                 row_subtitle = row.get("subtitle")
-                row_command = row.get("command")
-                row_command_args = row.get("command_args")
+                row_sensitive = row.get("sensitive")
+                row_signal = row.get("signal")
+                row_function = row.get("function")
+                row_function_args = row.get("function_args")
+                row_commands = row.get("commands")
                 row_setting = row.get("setting")
                 if not row_type:
                     print(
@@ -1616,32 +1760,52 @@ class MainWindow(Adw.ApplicationWindow):
                     model = value_name_list
                     selected = value_list.index(default_value)
                 if row_type == "switch" or row_type == "combo":
-                    if section_wide_command:
-                        command = section_wide_command
-                    elif row_command:
-                        command = row_command
+                    if row_sensitive is not None:
+                        sensitive = row_sensitive
+                    else:
+                        sensitive = section_sensitive
+                    if row_signal is not None:
+                        signal = row_signal
+                    else:
+                        signal = section_signal
+                    if row_function:
+                        function = row_function
+                    elif section_function:
+                        function = section_function
                     else:
                         if row_type == "switch":
-                            command = self.on_switch_row_changed
+                            function = self.on_switch_row_changed
                         elif row_type == "combo":
-                            command = self.on_combo_row_changed
+                            function = self.on_combo_row_changed
                     args = None
-                    if section_wide_command_args:
-                        args = section_wide_command_args
-                    elif row_command_args:
-                        args = row_command_args
+                    if row_function_args is not None:
+                        args = row_function_args
+                    else:
+                        args = section_function_args
                     if args:
-                        command_args = []
+                        function_args = []
                         for arg in args:
                             if arg.startswith("$") and len(arg) > 1 and arg[1] != "$":
-                                command_args.append(locals()[arg[1:]])
+                                function_args.append(locals()[arg[1:]])
                             else:
-                                command_args.append(arg)
+                                function_args.append(arg)
                     else:
-                        command_args = None
+                        function_args = None
+                    if row_commands is not None:
+                        commands = row_commands
+                    else:
+                        commands = section_commands
                 if row_type == "switch":
                     switch_row = self.create_switch_row(
-                        name, row_title, row_subtitle, active, command, command_args
+                        name,
+                        row_title,
+                        row_subtitle,
+                        active,
+                        sensitive,
+                        signal,
+                        function,
+                        function_args,
+                        commands,
                     )
                     preferences_group.add(switch_row)
                 elif row_type == "combo":
@@ -1651,8 +1815,8 @@ class MainWindow(Adw.ApplicationWindow):
                         row_subtitle,
                         model,
                         selected,
-                        command,
-                        command_args,
+                        function,
+                        function_args,
                     )
                     preferences_group.add(combo_row)
                 elif row_type == "expander":
@@ -1813,14 +1977,12 @@ title="https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux
 <a href="https://github.com/justaCasualCoder/PyThor"
 title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         dialog = Adw.Dialog.new()
+        # The gnome-command-center's (GNOME Settings) info dialogs are resizable, but I haven't figured out why our's aren't.
+        # https://github.com/GNOME/gnome-control-center/blob/main/panels/privacy/firmware-security/cc-firmware-security-help-dialog.ui
         dialog.get_accessible_role()
         dialog.set_title(name)
         dialog.set_content_width(420)
         # dialog.set_content_height(480)
-        # The gnome-command-center's (GNOME Settings) info dialogs are resizable, but I haven't figured out why our's aren't.
-        # https://github.com/GNOME/gnome-control-center/blob/main/panels/privacy/firmware-security/cc-firmware-security-help-dialog.ui
-        # dialog.set_resizable(True)
-        # dialog.props.resizable = True
         toolbar_view = Adw.ToolbarView()
         dialog.set_child(toolbar_view)
         header_bar = Adw.HeaderBar.new()
@@ -1853,57 +2015,6 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
             switch_row.set_active(new_value)
             self.toggling_switch_row = False
 
-    def set_option(self, switch_row, state, option):
-        if not hasattr(self, "toggling_switch_row") or not self.toggling_switch_row:
-            if self.flashtool == "thor":
-                active = switch_row.get_active()
-                if active and option == "efs_clear":
-
-                    def callback(dialog, result):
-                        response_id = dialog.choose_finish(result)
-                        if response_id == "continue":
-                            print(
-                                f'Would have ran "options efsclear {str(switch_row.get_active()).lower()}"'
-                            )
-                            # self.send_cmd(f"options efsclear {str(switch_row.get_active()).lower()}")
-                        else:
-                            self.toggling_switch_row = True
-                            switch_row.set_active(False)
-                            self.toggling_switch_row = False
-
-                    print(
-                        "You are attemting to turn on the EFS Clear option, which wipes important stuff from your phone. Are you sure you want to continue?"
-                    )
-                    responses = [
-                        {"id": "cancel", "label": "Cancel", "appearance": "0"},
-                        {"id": "continue", "label": "Continue", "appearance": "2"},
-                    ]
-                    self.create_alert_dialog(
-                        "Warning - EFS Clear",
-                        "You are attempting to turn on the EFS Clear option, which wipes important stuff from your phone. Are you absolutely sure you want to continue?",
-                        responses,
-                        callback,
-                        "cancel",
-                    )
-                else:
-                    convert = {
-                        "t_flash": "tflash",
-                        "efs_clear": "efsclear",
-                        "reset_flash_count": "resetfc",
-                        "bootloader_update": "blupdate",
-                    }
-                    value = str(switch_row.get_active()).lower()
-
-                    print(f"{option}: {value}")
-                    setattr(self, option, value)
-
-                    option = convert[option]
-                    print(f'Would have ran "options {option} {value}"')
-                    # self.send_cmd(f"options {option} {value}")
-
-    # TODO: Whenever the dialog closes I get:
-    # "...Gtk-CRITICAL...Widget of type “AdwAlertDialog” already has an accessible role of type “GTK_ACCESSIBLE_ROLE_GENERIC”"
-    # I haven't figured out what causes it.
     def create_alert_dialog(
         self,
         title,
