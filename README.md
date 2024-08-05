@@ -15,48 +15,48 @@ A GUI for Samsung Flash Tools.
   Options Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/621b8ecf-c748-499d-8f4c-a8f612f293a2">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/dc08a6bf-2e10-47b0-b7c5-d0ae7a11d695">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/fbcb8c93-4461-42be-874a-8bd39d6f23cb">
+    <source media="(prefers-color-scheme: light)" srcset="ttps://github.com/user-attachments/assets/1a926363-79dc-494a-910e-dc8b359fb864">
     <img alt="Options Tab">
   </picture>
   <br>
   Pit Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/50cda73e-fa59-41f1-a205-3c49f93289dd">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/88fee46a-ed65-4c38-87ba-6695b6e5ae34">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d10aecd0-633f-4c20-a738-d56dad080772">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/ab4ffcf2-1198-43dd-9b2d-a20841821eaf">
     <img alt="Pit Tab">
   </picture>
   <br>
   Settings Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/d574eb2b-c592-4d74-951b-d3effcd9e345">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/58f92b1a-0390-4620-995b-06104a7eda71">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d3f424ad-25c5-4e40-ba74-75ed5713e2ab">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/6340bddb-ad4d-4567-bc97-8f028bbb7865">
     <img alt="Settings Tab">
   </picture>
   <br>
   About Dialog:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/6b479807-9206-41aa-b15a-874867a51825">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/3bfe072f-6cfc-4e5e-8512-0e1561b2834a">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/5e6b5625-4cde-43a4-a459-44d943cfbe74">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/788a7330-69dd-43ea-9cfa-3be68f1c058b">
     <img alt="About Tab">
   </picture>
   <br>
   "Select Partitions" Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/dc7cea25-1819-4ccd-b119-dd45ca7fab61">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/a46b1f00-34da-4e26-a16d-bc7c8223cea1">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/91c6b476-3917-42c4-9d9a-1ac3f3bf931a">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/c1b972a5-a9e1-4e02-81e4-cce970cea5c4">
     <img alt="Select Partitions Window">
   </picture>
   <br>
   "Verify Flash" Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/ead15566-0efa-4e95-a834-01d3ab01c2dd">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/ethical-haquer/Galaxy-Flasher/assets/141518185/1486223e-254f-4ffd-a3bf-9bfdb7d8a74e">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/ef054041-001a-483e-a438-073b6a49276d">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/90cd9c3a-dc40-4538-837e-571e7c22b8e2">
     <img alt="Verify Flash Window">
   </picture>
 </details>
