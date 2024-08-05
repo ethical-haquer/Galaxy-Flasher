@@ -67,17 +67,17 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably unknown) bugs. Also, it was just completely re-written, so the readme is still in the process of getting updated. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
-- [#15](https://github.com/ethical-haquer/Galaxy-Flasher/issues/15) The "Run Thor with sudo" setting doesn't work when Galaxy Flasher is a flatpak.
+- Setting options through the Options Tab is buggy.
 
 ## TODO
 
 - Improve the Options Tab for Thor
-- Improve the flash-tool setting
 - Display the partitions to be flashed in the Verify Flash Window
+- Use an Adw.Dialog for the Select Partitions Window
 - Hide Thor-specific settings if the current flash-tool is not Thor
 - Publish Galaxy Flasher on FlatHub
 
@@ -116,7 +116,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   <summary>Prerequisites</summary>
 
   - flatpak - Go [here](https://www.flatpak.org/setup/), select your distro, and follow the directions to install flatpak.
-  - flatpak-builder - "...[flatpak-builder] is usually available from the same repository as the flatpak package (e.g. use apt or dnf). You can also install it as a flatpak with `flatpak install flathub org.flatpak.Builder`". (quote from [here](https://docs.flatpak.org/en/latest/first-build.html))
+  - flatpak-builder - According to [here](https://docs.flatpak.org/en/latest/first-build.html): "...[flatpak-builder] is usually available from the same repository as the flatpak package (e.g. use apt or dnf). You can also install it as a flatpak with `flatpak install flathub org.flatpak.Builder`".
   </details>
   </p>
 
@@ -149,12 +149,10 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   <p>
   <details id="prerequisites">
   <summary>Prerequisites</summary>
-
-  - Debian testing
-    - gir1.2-vte-3.91 >= 0.72
-   
-  - Other
-    - Please let me know what packages you had to install for other distros. Thanks!
+    
+  - Gtk4
+  - Adw 1
+  - Vte >= 0.72
   </details>
   </p>
 
@@ -162,7 +160,7 @@ The [first way](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-f
   <details id="installation">
   <summary>Installation</summary>
 
-  1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). Currently only the Debian testing prerequisites are listed. __Please let me know__ what you had to install for other distros. Thanks!
+  1. First of all, make sure you have the [above prerequisites](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#prerequisites). Currently they are pretty vague, if you can't figure out what to install just let me know and I'll be glad to help!
   2. Download the latest "galaxy-flasher-version-os.zip" file from [the Releases page](https://github.com/ethical-haquer/Galaxy-Flasher/releases). It is a good idea to make a new directory and save the file there, to keep it more contained.
   3. Once the file is downloaded, extract it.
   4. Move into the newly extracted directory. It should be named the same as the file, minus the ".zip" part.
@@ -198,7 +196,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
   - Bootloader Update - I honestly have no idea what this does. Let me know if you do!
   - Reset Flash Count - I believe this does what it sounds like it does, but I don't know when you'd ever use it. Please correct me if I'm wrong!
 
-  Keep in mind that these options will only be applied if an Odin session has been started. Otherwise the Log Tab will display "This command does not exist".
+  Keep in mind that setting options through the Log Tab is buggy currently, and you need to start an Odin session before you can set any options.
 
   For Odin4, there are currently no options.
   The "-V", "Validate home binary with pit file" option might be added if someone can tell me what it does.
@@ -231,7 +229,7 @@ Galaxy Flasher's layout is similar to Odin. In the upper-right there are four bu
     - Light - Light theme.
     - Dark - Dark theme.
 
-  - Run Thor with sudo - This allows you to choose whether or not you want to run Thor with sudo. By default it is turned off; Turning it on may fix errors in some cases. This only applies to Thor. You will have to restart Galaxy Flasher after changing this setting for it to apply.
+  - Keep Log dark - Keeps the Log Tab dark, regardless of the theme.
     
   - [Thor] Automatically select all partitions - This automatically selects all of the partitions from the files you select, instead of asking you what ones you would like to select. This only applies to Thor.
 
@@ -258,9 +256,9 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
   - Click the "Connect" button. If there is more than one device connected, you will be prompted to select a device. You will know you have connected when the "Connect" button changes to "Disconnect".
   - Once you're connected to a device, click the "Start Odin Protocol" button. If the button changes to "End Odin Protocol", you're good.
-  - Click the "Flash!" button. (after you've selected at least one file to flash)
+  - Click the "Flash!" button. (after you have selected at least one file to flash)
   - If the "[Thor] Automatically select all partitions" setting is off, you will be asked to select what partitions to flash from each file you selected. If that setting is on, Galaxy Flasher will automatically select all of the partitions for each file you selected.
-  - Once you (or the computer) have selected the partitions to flash from each file you selected, a "Verify Flash" window will appear. This is when you can abort if you didn't mean to flash what you selected. Click "No" to cancel, or "OK" to begin flashing the device.
+  - Once you (or the computer) have selected the partitions to flash from each file you selected, a "Verify Flash" window will appear. This is when you can abort if you didn't mean to flash what you selected. Click "No" to cancel, or "Yes" to begin flashing the device.
   - That's it!
   </details>
   </p>
@@ -271,7 +269,7 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
   Please note that unlike Thor, Odin4 does not have a "Verify Flash" window. If you accidentally started flashing your device, you can disconnect it from your computer when Odin4 is verifying the files. (verifying the files is the first thing it does, followed by flashing them) However, if Odin4 has already started flashing the files to your device, disconnecting your device may cause even more issues.
 
-  - Click the "Flash!" button. (after you've selected at least one file to flash)
+  - Click the "Flash!" button. (after you have selected at least one file to flash)
   - If there is more than one device connected, you will be prompted to select a device.
   - That's it!
   </details>
@@ -279,7 +277,7 @@ Flashing files with Galaxy Flasher is easy. Here's how to do it:
 
 ### Command Entry
 
-The Command Entry is somewhere you can enter flash-tool commands. If you read about [the Log Tab](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#log-tab), you might be wondering why it is needed if you can just type commands directly into the Log Tab. The reason is, commands entered into the Log Tab will not be "made graphical". That means if you type "connect" into the Log Tab, you will have to select a device in the terminal. If you type "connect" into the Command Entry, Galaxy Flasher will eitheir display a window asking you what device you want to connect to, or, if there is only one device, it will automatically select it. In other words, typing "connect" in the Command Entry does the same thing as clicking the Connect Button. Currently, only the "connect" and "flashTar" commands behave differently when sent through the Command Entry:
+The Command Entry is somewhere you can enter flash-tool commands. If you read about [the Log Tab](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#log-tab), you might be wondering why it is needed if you can just type commands directly into the Log Tab. The reason is, commands entered into the Log Tab will not be made graphical. That means if you type "connect" into the Log Tab, you will have to select a device in the terminal. If you type "connect" into the Command Entry, Galaxy Flasher will either display a window asking you what device you want to connect to, or, if there is only one device, it will automatically select it. In other words, typing "connect" in the Command Entry does the same thing as clicking the Connect Button. Currently, only the "connect" and "flashTar" commands behave differently when sent through the Command Entry:
 
 - connect - Behaves the same as hitting the Connect Button.
 - flashTar - Behaves the same as hitting the Flash Button. The command entered must be just "flashTar" though. For example, running "flashTar /home/name/folder" will not do this.

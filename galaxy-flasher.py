@@ -469,7 +469,7 @@ class MainWindow(Adw.ApplicationWindow):
                     },
                     {
                         "type": "switch",
-                        "title": "Keep Log Dark",
+                        "title": "Keep Log dark",
                         "subtitle": "Keep the Log Tab dark, regardless of the theme.",
                         "function": self.on_dark_log_switch_changed,
                         "function_args": ["$$switch_row", "$$active", "$row_setting"],
