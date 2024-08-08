@@ -19,6 +19,7 @@ body:
       label: Galaxy Flasher version
       description: What version of Thor GUI are you using? (check by clicking the upper-left hamburger button, and then click "About")
       options:
+        - Alpha v0.5.1
         - Alpha v0.5.0
         - Alpha v0.4.6
         - Alpha v0.4.5.1
