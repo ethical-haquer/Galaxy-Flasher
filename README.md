@@ -5,7 +5,7 @@
 A GUI for Samsung flash-tools.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/85763e62-636c-4fbb-b0d9-0e99532386ff">
+  <source media="(prefers-color-scheme: dark)" srcset="images/galaxy-flasher-dark-light.png">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/7451f452-e861-477a-a411-4e9726b92db4">
   <img alt="Screenshot of Thor GUI">
 </picture>
