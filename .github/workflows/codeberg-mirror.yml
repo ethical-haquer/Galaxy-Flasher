@@ -1,0 +1,19 @@
+# Sync repo to the Codeberg mirror
+name: Repo sync GitHub -> Codeberg
+on:
+  push:
+    branches:
+    - '**'
+
+jobs:
+  codeberg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: yesolutions/mirror-action@v0.7.0
+        with:
+          REMOTE: "https://codeberg.org/ethical_haquer/Galaxy-Flasher.git"
+          GIT_USERNAME: ethical_haquer
+          GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
