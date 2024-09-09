@@ -11,7 +11,9 @@
 A GUI for Samsung flash-tools.
 
 [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher)
+
 </div>
+
 <details>
   <summary><b>Screenshots</b></summary>
   <br>
