@@ -65,7 +65,7 @@ A GUI for Samsung flash-tools.
   <br>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-verify-flash-dialog-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-verify-flash-window-dialog.png">
+    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-verify-flash-dialog-light.png">
     <img src="images/galaxy-flasher-verify-flash-dialog-dark.png" alt="Screenshot of the Verify Flash Dialog">
   </picture>
 </details>
