@@ -1,7 +1,3 @@
-# Galaxy Flasher
-
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Github Releases](https://img.shields.io/github/downloads/ethical-haquer/Galaxy-Flasher/total.svg?style=flat)](https://github.com/ethical-haquer/Galaxy-Flasher/releases)
-
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="images/galaxy-flasher-dark-light.png">
@@ -9,7 +5,11 @@
     <img src="images/galaxy-flasher-dark-light.png" alt="Screenshot of Galaxy Flasher" width="300">
   </picture>
 </div>
+<h1 align="center">Galaxy Flasher</h1>
 <div align="center">
+
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Github Releases](https://img.shields.io/github/downloads/ethical-haquer/Galaxy-Flasher/total.svg?style=flat)](https://github.com/ethical-haquer/Galaxy-Flasher/releases)
+
 A GUI for Samsung flash-tools.
 
 [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher)
