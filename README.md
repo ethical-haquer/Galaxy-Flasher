@@ -32,41 +32,41 @@ A GUI for Samsung flash-tools.
   Pit Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d10aecd0-633f-4c20-a738-d56dad080772">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/ab4ffcf2-1198-43dd-9b2d-a20841821eaf">
-    <img alt="Pit Tab">
+    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-pit-tab-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-pit-tab-light.png">
+    <img src="images/galaxy-flasher-pit-tab-dark.png" alt="Screenshot of the Pit Tab">
   </picture>
   <br>
   Settings Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d3f424ad-25c5-4e40-ba74-75ed5713e2ab">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/6340bddb-ad4d-4567-bc97-8f028bbb7865">
-    <img alt="Settings Tab">
+    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-settings-tab-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-settings-tab-light.png">
+    <img src="images/galaxy-flasher-settings-tab-dark.png" alt="Screenshot of the Settings Tab">
   </picture>
   <br>
   About Dialog:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/5e6b5625-4cde-43a4-a459-44d943cfbe74">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/788a7330-69dd-43ea-9cfa-3be68f1c058b">
-    <img alt="About Tab">
+    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-about-dialog-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-about-dialog-light.png">
+    <img src="images/galaxy-flasher-about-dialog-dark.png" alt="Screenshot of the About Dialog">
   </picture>
   <br>
-  "Select Partitions" Window:
+  Select Partitions Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/91c6b476-3917-42c4-9d9a-1ac3f3bf931a">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/c1b972a5-a9e1-4e02-81e4-cce970cea5c4">
-    <img alt="Select Partitions Window">
+    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-select-partitions-window-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-select-partitions-window-light.png">
+    <img src="images/galaxy-flasher-select-partitions-window-dark.png" alt="Screenshot of the Select Partitions Window">
   </picture>
   <br>
-  "Verify Flash" Window:
+  Verify Flash Window:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/ef054041-001a-483e-a438-073b6a49276d">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/90cd9c3a-dc40-4538-837e-571e7c22b8e2">
-    <img alt="Verify Flash Window">
+    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-verify-flash-window-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-verify-flash-window-light.png">
+    <img src="images/galaxy-flasher-verify-flash-window-dark.png" alt="Screenshot of the Verify Flash Window">
   </picture>
 </details>
 
