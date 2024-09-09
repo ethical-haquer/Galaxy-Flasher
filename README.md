@@ -7,7 +7,7 @@
 </div>
 <div align="center">
 
-Have any ideas for the icon? Let me know on [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues/21) or [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher/issues/21).
+Have any ideas for the icon? Let me know on [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues/21), [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher/issues/21), or [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/page-4#post-89701721).
 
 </div>
 <h1 align="center">Galaxy Flasher</h1>
@@ -15,7 +15,7 @@ Have any ideas for the icon? Let me know on [Codeberg](https://codeberg.org/ethi
 
 A GUI for Samsung flash-tools.
 
-[Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher)
+[Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher) | [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/)
 
 </div>
 <details>
