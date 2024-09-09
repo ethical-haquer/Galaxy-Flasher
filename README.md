@@ -12,7 +12,7 @@ A GUI for Samsung flash-tools.
   <img src="/images/galaxy-flasher-light-dark.png" alt="Screenshot of Galaxy Flasher">
 </picture>
 
-<img src="/images/galaxy-flasher-light-dark.png" alt="Screenshot of Galaxy Flasher">
+<img src="https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/main/images/galaxy-flasher-dark-light.png" alt="Screenshot of Galaxy Flasher">
 
 <details>
   <summary><b>Screenshots</b></summary>
