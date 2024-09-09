@@ -7,7 +7,7 @@
 </div>
 <div align="center">
 
-[Have any ideas for the icon?](https://github.com/ethical-haquer/Galaxy-Flasher/issues/21)
+Have any ideas for the icon? Let me know on [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues/21) or [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher/issues/21)).
 
 </div>
 <h1 align="center">Galaxy Flasher</h1>
