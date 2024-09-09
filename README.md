@@ -7,11 +7,11 @@
   <source media="(prefers-color-scheme: light)" src="images/galaxy-flasher-light-dark.png">
   <img src="images/galaxy-flasher-dark-light.png" alt="Screenshot of Galaxy Flasher">
 </picture>
-<p align="center">
+<div align="center">
 A GUI for Samsung flash-tools.
 
 [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher)
-</p>
+</div>
 <details>
   <summary><b>Screenshots</b></summary>
   <br>
