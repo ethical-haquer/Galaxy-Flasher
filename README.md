@@ -4,17 +4,11 @@
 
 A GUI for Samsung flash-tools.
 
-
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/galaxy-flasher-dark-light.png">
   <source media="(prefers-color-scheme: light)" src="images/galaxy-flasher-light-dark.png">
-  <!-- <source src="images/galaxy-flasher-light-dark.png"> -->
   <img src="images/galaxy-flasher-light-dark.png" alt="Screenshot of Galaxy Flasher">
 </picture>
-
-
-<!-- ![Screenshot of Galaxy Flasher](images/galaxy-flasher-light-dark.png "Screenshot of Galaxy Flasher") -->
-
 <details>
   <summary><b>Screenshots</b></summary>
   <br>
