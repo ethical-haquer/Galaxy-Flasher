@@ -13,7 +13,7 @@ A GUI for Samsung flash-tools.
 </picture>
 
 
-![Screenshot of Galaxy Flasher](images/galaxy-flasher-light-dark.png "Screenshot of Galaxy Flasher")
+<!-- ![Screenshot of Galaxy Flasher](images/galaxy-flasher-light-dark.png "Screenshot of Galaxy Flasher") -->
 
 <details>
   <summary><b>Screenshots</b></summary>
