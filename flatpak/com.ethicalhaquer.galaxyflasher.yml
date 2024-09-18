@@ -18,12 +18,19 @@ modules:
       - pip install -r requirements.txt
       - cp -r locales /app/locales/
       - cp -r odin4-wrapper.sh /app/odin4-wrapper.sh
-      - install -D galaxy-flasher.py /app/galaxy-flasher
+      - install -D usb.ids /app/usb.ids
+      - install -D galaxy-flasher-gtk.py /app/galaxy-flasher-gtk
+      - install -D shared_utils.py /app/shared_utils.py
       - install -D entry.sh /app/bin/entry
+      - install -D com.ethicalhaquer.galaxyflasher.svg /app/share/icons/hicolor/scalable/apps/com.ethicalhaquer.galaxyflasher.svg
       - install -D galaxy-flasher.desktop /app/share/applications/com.ethicalhaquer.galaxyflasher.desktop
     sources:
       - type: file
-        path: ../galaxy-flasher.py
+        path: ../usb.ids
+      - type: file
+        path: ../galaxy-flasher-gtk.py
+      - type: file
+        path: ../shared_utils.py
       - type: file
         path: galaxy-flasher.desktop
       - type: file

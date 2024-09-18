@@ -18,13 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
-import locale
 import os
 import platform
 import re
 import sys
 import time
+import shared_utils
 
 import gi
 
@@ -32,14 +31,11 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Vte", "3.91")
 
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Vte
-
-locale.setlocale(locale.LC_ALL, "")
-locale = locale.getlocale(locale.LC_MESSAGES)[0]
-seperator = "_"
-lang = locale.split(seperator, 1)[0]
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Vte  # noqa: E402
 
 version = "Alpha v0.5.1"
+year = shared_utils.get_current_year()
+copyright = f"© {year} ethical_haquer"
 config_dir = GLib.get_user_config_dir()
 app_dir = "galaxy-flasher"
 app_config_dir = os.path.join(config_dir, app_dir)
@@ -47,15 +43,13 @@ if not os.path.exists(app_config_dir):
     os.makedirs(app_config_dir)
 settings_file = os.path.join(app_config_dir, "settings.json")
 swd = os.path.dirname(os.path.realpath(__file__))
-locale_file = f"{swd}/locales/{lang}.json"
-is_flatpak = "FLATPAK_ID" in os.environ or "FLATPAK_APP_ID" in os.environ
 machine = platform.machine()
 system = platform.system().lower()
-
 
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         self.last_output = ""
+        self.i = 1
         super().__init__(*args, **kwargs)
         # Add the CSS provider to the screen
         style_provider = Gtk.CssProvider()
@@ -71,13 +65,17 @@ class MainWindow(Adw.ApplicationWindow):
             style_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
-        # Load strings
-        # TODO: Remove unneeded strings from en.json
-        with open(locale_file) as json_string:
-            self.strings = json.load(json_string)
+        # Get the system language.
+        self.lang = shared_utils.get_system_lang()
+        # Load strings.
+        # TODO: Update en.json.
+        locale_file = shared_utils.get_locale_file(swd, self.lang)
+        self.strings = shared_utils.load_strings(locale_file)
         # Load settings
-        self.load_settings()
+        self.settings = shared_utils.load_settings(settings_file)
         self.flashtool = self.settings.get("flash_tool", "thor")
+        # Check if the app is running as a flatpak.
+        self.is_flatpak = shared_utils.get_is_flatpak()
         # If the system isn't linux.
         if system != "linux":
             self.prompt = "never going to happen :)"
@@ -95,7 +93,7 @@ class MainWindow(Adw.ApplicationWindow):
             ]
         # If the system is Linux.
         else:
-            # Set the flash-tool path
+            # Set the flash-tool path.
             self.odin4_wrapper_file = f"{swd}/odin4-wrapper.sh"
             self.flashtool_file = self.settings.get(f"{self.flashtool}_file", None)
             if self.flashtool == "thor":
@@ -106,10 +104,9 @@ class MainWindow(Adw.ApplicationWindow):
                 self.prompt = ">> "
             if self.flashtool_file:
                 if os.path.isfile(self.flashtool_file):
-                    flashtool_path = os.path.dirname(self.flashtool_file)
                     if self.flashtool == "odin4":
                         if os.path.isfile(self.odin4_wrapper_file):
-                            if is_flatpak:
+                            if self.is_flatpak:
                                 # Works when the file-system isn't host.
                                 """
                                 flashtool_exec = [
@@ -165,7 +162,7 @@ class MainWindow(Adw.ApplicationWindow):
                     "show",
                     lambda _: self.create_alert_dialog(
                         "Welcome to Galaxy Flasher!",
-                        f'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
+                        'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
                     ),
                 )
         # Create toolbar_view
@@ -176,16 +173,11 @@ class MainWindow(Adw.ApplicationWindow):
         toolbar_view.add_top_bar(header)
         # Create about action
         about_action = Gio.SimpleAction.new("about", None)
-        about_action.connect("activate", self.about_window)
+        about_action.connect("activate", self.create_about_dialog)
         self.add_action(about_action)
-        # Create quit action
-        quit_action = Gio.SimpleAction.new("quit", None)
-        quit_action.connect("activate", lambda _, __: sys.exit())
-        self.add_action(quit_action)
         # Create menu
         menu = Gio.Menu.new()
-        menu.append("About", "win.about")
-        menu.append("Quit", "win.quit")
+        menu.append("About Galaxy Flasher", "win.about")
         # Create popover
         popover = Gtk.PopoverMenu()
         popover.set_menu_model(menu)
@@ -221,7 +213,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.vte_term = Vte.Terminal()
         self.vte_term.spawn_async(
             Vte.PtyFlags.DEFAULT,  # Pty Flags
-            swd,  # Working DIR
+            swd,  # Working directory
             flashtool_exec,  # Command/BIN (argv)
             None,  # Environmental Variables (env)
             GLib.SpawnFlags.DEFAULT,  # Spawn Flags
@@ -520,7 +512,7 @@ class MainWindow(Adw.ApplicationWindow):
         term_popover.set_child(term_option_box)
         self.vte_term.set_context_menu(term_popover)
         # Scan the output whenever it changes
-        self.vte_term.connect("contents-changed", self.scan_output)
+        self.vte_term.connect("contents-changed", lambda *args: self.scan_output(*args, self.i))
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
         print(
             rf"""
@@ -534,12 +526,6 @@ class MainWindow(Adw.ApplicationWindow):
                           {version}
         """
         )
-
-    def load_settings(self):
-        self.settings = {}
-        if os.path.exists(settings_file):
-            with open(settings_file, "r") as file:
-                self.settings = json.load(file)
 
     def connect_option_switch(self, switch_row):
         switch_row.switch.connect("state-set", self.on_switch_state_set)
@@ -629,17 +615,6 @@ class MainWindow(Adw.ApplicationWindow):
     def burner(self, *args):
         pass
 
-    def on_row_clicked(self, gesture, n_press, x, y):
-        # Handle the click event here
-        print("SwitchRow clicked")
-
-    def print_signals(self, obj, signal_name, *args):
-        print(f"Signal emitted: {signal_name}")
-
-    def save_settings(self):
-        with open(settings_file, "w") as file:
-            json.dump(self.settings, file)
-
     def flash(self):
         if self.flashtool == "thor":
             auto = self.settings.get("auto_partitions", False)
@@ -703,14 +678,6 @@ class MainWindow(Adw.ApplicationWindow):
 
                 self.select_device("odin4", run_flash_command)
 
-    def shorten_string(self, string, length):
-        current_length = len(string)
-        if current_length > length:
-            new_string = string[: length - 3] + "..."
-        else:
-            new_string = string
-        return new_string
-
     def thor_select_partitions(self, files, base_dir, auto):
         self.retry_partition = False
         run = 0
@@ -719,7 +686,7 @@ class MainWindow(Adw.ApplicationWindow):
             print(f"selected_partitions: {selected_partitions}")
             n_partitions = len(selected_partitions)
             for i, partition in enumerate(selected_partitions):
-                if partition == True:
+                if partition:
                     print('SENDING: "Space"')
                     self.send_cmd("\x20", False)
                     time.sleep(0.05)
@@ -877,7 +844,7 @@ class MainWindow(Adw.ApplicationWindow):
                                 return GLib.SOURCE_CONTINUE
                             else:
                                 print(f'Select what partitions to flash from: "{file}"')
-                                shortened_file = self.shorten_string(file, 46)
+                                shortened_file = shared_utils.shorten_string(file, 46)
                                 display_partitions(partitions, shortened_file)
                         # If the file wasn't selected by the user.
                         else:
@@ -915,7 +882,9 @@ class MainWindow(Adw.ApplicationWindow):
         window.set_transient_for(self)
         return window, grid
 
-    def scan_output(self, vte):
+    def scan_output(self, vte, i):
+        print(f"contents changed: {i}")
+        self.i += 1
         if self.flashtool == "thor":
             strings_to_commands = {
                 "[sudo] password for": [
@@ -1026,14 +995,16 @@ class MainWindow(Adw.ApplicationWindow):
             }
         # This is a pretty bad way to do this.
         # 10000 should be replaced with the actual value, But it works.
-        term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
+        num_cols = vte.get_column_count()
+        term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, num_cols)[0]
         prompt = self.prompt.strip()
-        latest_output = term_text.strip().rsplit(prompt)[-1].strip()
-        if latest_output == "":
-            try:
-                latest_output = term_text.strip().rsplit(prompt)[-2].strip()
-            except:
-                latest_output = term_text.strip().rsplit(prompt)[-1].strip()
+        parts = term_text.strip().rsplit(prompt)
+        for part in reversed(parts):
+            latest_output = part.strip()
+            if latest_output:
+                break
+        else:
+            latest_output = ""
         if latest_output != self.last_output:
             for string, commands in strings_to_commands.items():
                 if string in latest_output and string not in self.last_output:
@@ -1041,17 +1012,19 @@ class MainWindow(Adw.ApplicationWindow):
                         command()
             self.last_output = latest_output
 
+    """
     def remove_blank_lines(self, string):
         lines = string.splitlines()
         filtered_lines = [line for line in lines if line.strip()]
         new_string = "\n".join(filtered_lines)
         return new_string
+    """
 
     def check_output(self, vte, command, result, start, end, wait, add_enter, timeout):
         # This is a pretty bad way to do this.
         # 10000 should be replaced with the actual value, But it works.
         old_output = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
-        old_output = self.remove_blank_lines(old_output)
+        old_output = shared_utils.remove_blank_lines(old_output)
         if command:
             self.send_cmd(command, add_enter)
 
@@ -1078,9 +1051,9 @@ class MainWindow(Adw.ApplicationWindow):
             current_output = vte.get_text_range_format(
                 Vte.Format(1), 0, 0, 10000, 10000
             )[0]
-            current_output = self.remove_blank_lines(current_output)
+            current_output = shared_utils.remove_blank_lines(current_output)
             # If the output has changed or wait is False.
-            if current_output != old_output or wait == False:
+            if current_output != old_output or wait is False:
                 lines = current_output.splitlines()
                 new_lines = []
                 start_index = -1
@@ -1106,8 +1079,8 @@ class MainWindow(Adw.ApplicationWindow):
                             break
                 # If end was found or was None, return the result,
                 # otherwise continue.
-                if end_index != None or end == None:
-                    if end != None:
+                if end_index is not None or end is None:
+                    if end is not None:
                         new_lines = new_lines[:end_index]
                     cleaned_new_output = "\n".join(new_lines)
                     # Check if cleaned_new_output is empty or contains only whitespace.
@@ -1292,7 +1265,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.set_theme(value)
         self.settings[setting] = value
         print(f"{setting} set to: '{value}'")
-        self.save_settings()
+        shared_utils.save_settings(self.settings, settings_file)
 
     # TODO: There has to be a better way to handle the terminal's colors...
     def set_theme(self, theme):
@@ -1374,7 +1347,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.command_entry.connect("icon-press", self.toggle_entry_visibility)
 
     def send_cmd(self, cmd, add_enter=True):
-        if add_enter == True:
+        if add_enter:
             cmd = cmd + "\n"
         self.vte_term.feed_child(cmd.encode("utf-8"))
 
@@ -1585,7 +1558,7 @@ class MainWindow(Adw.ApplicationWindow):
             combo_row.set_selected(selected)
         if function:
             if function_args is None:
-                combo_row.connect("notify::selected", command)
+                combo_row.connect("notify::selected", function)
             else:
                 args = []
                 for arg in function_args:
@@ -1655,6 +1628,24 @@ class MainWindow(Adw.ApplicationWindow):
         )
         last_box = action_row_box.get_last_child()
         label_box.insert_before(action_row_box, last_box)
+        
+    def create_action_row(self, name, title, subtitle, prefixes, suffixes, activatable_widget):
+        action_row = Adw.ActionRow.new()
+        setattr(self, name, action_row)
+        if title:
+            action_row.set_title(title)
+        if subtitle:
+            action_row.set_subtitle(subtitle)
+        if prefixes:
+            for prefix in prefixes:
+                action_row.add_prefix(prefix)
+        if suffixes:
+            for suffix in suffixes:
+                action_row.add_suffix(suffix)
+        if activatable_widget:
+            action_row.set_activatable_widget(activatable_widget)
+        
+        return action_row
 
     def create_preferences(self, main_preferences_list: list, grid: Gtk.Grid) -> None:
         # TODO: Good in-code documentation takes up too much space, is hard to maintain, and is hard to read.
@@ -1903,7 +1894,7 @@ class MainWindow(Adw.ApplicationWindow):
                     preferences_group.add(expander_row)
                 else:
                     print(
-                        f'Error in create_preferences: "{setting_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
+                        f'Error in create_preferences: "{row_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
                     )
         grid.attach(preferences_page, 0, 0, 1, 1)
 
@@ -2101,9 +2092,8 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
                 radiobutton_group = radiobutton
             else:
                 radiobutton.set_group(radiobutton_group)
-            handler = lambda widget, value=value: self.on_radiobutton_toggled(
-                widget, setting, value
-            )
+            def handler(widget, value=value):
+                return self.on_radiobutton_toggled(widget, setting, value)
             radiobutton.connect("toggled", handler)
 
     def create_toggle_switch(
@@ -2124,30 +2114,68 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         widget.set_margin_end(padding[1])
         widget.set_margin_top(padding[2])
         widget.set_margin_bottom(padding[3])
+        
+    def create_about_dialog(self, *_):
+        about_dialog = Adw.AboutDialog.new()
+        about_dialog.set_application_name("Galaxy Flasher")
+        about_dialog.set_developer_name("ethical_haquer")
+        about_dialog.set_version(version)
+        about_dialog.set_website("https://codeberg.org/ethical_haquer/Galaxy-Flasher")
+        about_dialog.set_support_url("https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/")
+        about_dialog.set_issue_url("https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues")
+        #about_dialog.add_link("Codeberg repo", "https://codeberg.org/ethical_haquer/Galaxy-Flasher")
+        #about_dialog.add_link("Report an issue", "https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues")
+        #about_dialog.add_link("Documentation", "https://galaxy-flasher-docs.readthedocs.io/en/latest/")
+        #about_dialog.add_link("Chat on XDA", "https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/")
+        about_dialog.set_developers(["ethical_haquer https://codeberg.org/ethical_haquer/", "justaCasualCoder https://github.com/justaCasualCoder"])
+        about_dialog.add_credit_section("Thor by", ["TheAirBlow https://github.com/TheAirBlow"])
+        about_dialog.set_copyright(copyright)
+        about_dialog.set_license_type(Gtk.License.GPL_3_0)
+        about_dialog.present(self)
+        # This was ethical_haquer customizing the About Dialog.
+        """        
+        listbox = (
+            about_dialog.get_first_child()  # BreakpointBin
+            .get_first_child()  # AdwFloatingSheet
+            .get_last_child()  # AdwGizmo
+            .get_first_child()  # BreakpointBin
+            .get_first_child()  # ToastOverlay
+            .get_first_child()  # NavigationView
+            .get_first_child()  # AdwGizmo
+            .get_next_sibling()
+            .get_next_sibling()
+            .get_next_sibling()
+            .get_next_sibling()
+            .get_next_sibling() # navpage
+            .get_next_sibling() # navpage
+            .get_next_sibling() # navpage    
+            .get_first_child()  # toolbarview
+            .get_first_child()  # scrolledwindow
+            .get_first_child()  # viewport
+            .get_first_child()  # clamp
+            .get_first_child()  # box
+            .get_last_child()  # preferencesgroup
+            .get_first_child()  # box
+            .get_last_child()  # box  
+            .get_first_child()  # listbox   
+        )
+        #label.set_label("YO!!!")
+        
+        img = Gtk.Image(icon_name="adw-external-link-symbolic")
+        action_row = self.create_action_row("action_row", "On Codeberg", None, None, [img], img)
+        
+        img = Gtk.Image(icon_name="adw-external-link-symbolic")
+        action_row2 = self.create_action_row("action_row", "On GitHub", None, None, [img], img)
 
-    def about_window(self, *_):
-        dialog = Adw.AboutWindow(transient_for=app.get_active_window())
-        dialog.set_application_name("Galaxy Flasher")
-        dialog.set_version(version)
-        dialog.set_developer_name("ethical_haquer")
-        dialog.set_license_type(Gtk.License(Gtk.License.GPL_3_0))
-        credits = [
-            {"name": "justaCasualCoder", "github_profile": "justaCasualCoder"},
-            {"name": "ethical_haquer", "github_profile": "ethical-haquer"},
-            {"name": "TheAirBlow", "github_profile": "TheAirBlow"},
-        ]
-        for credit in credits:
-            name = credit["name"]
-            github_profile = credit["github_profile"]
-            dialog.add_credit_section(
-                name, [f"Github Profile https://github.com/{github_profile}"]
-            )
-        dialog.set_website("https://github.com/ethical-haquer/Galaxy-Flasher")
-        dialog.set_issue_url("https://github.com/ethical-haquer/Galaxy-Flasher/issues")
-        dialog.set_visible(True)
+        action_row.connect("activated", lambda _: shared_utils.open_link("https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues"))
+        action_row2.connect("activated", lambda _: shared_utils.open_link("https://github.com/ethical-haquer/Galaxy-Flasher/issues"))
 
+        expander_row = self.create_expander_row("report_issue_expander_row", "Report an issue", rows=[action_row, action_row2])
 
-class GalaxyFlasher(Adw.Application):
+        listbox.append(expander_row)
+        """
+
+class GalaxyFlasherGtk(Adw.Application):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.connect("activate", self.on_activate)
@@ -2157,6 +2185,6 @@ class GalaxyFlasher(Adw.Application):
         self.win.set_default_size(950, 400)
         self.win.present()
 
-
-app = GalaxyFlasher(application_id="com.ethicalhaquer.galaxyflasher")
-app.run(sys.argv)
+if __name__ == "__main__":
+    app = GalaxyFlasherGtk(application_id="com.ethicalhaquer.galaxyflasher")
+    app.run(sys.argv)

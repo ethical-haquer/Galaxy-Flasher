@@ -3,5 +3,6 @@ Version=1.0
 Type=Application
 Name=Galaxy Flasher
 Exec=/app/bin/entry
+Icon=com.ethicalhaquer.galaxyflasher
 Terminal=false
 Categories=Utility;Application;
