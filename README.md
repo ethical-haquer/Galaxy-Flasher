@@ -1,9 +1,5 @@
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-dark-light.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-light-dark.png">
-    <img src="images/galaxy-flasher-dark-light.png" alt="Screenshot of Galaxy Flasher" width="500">
-  </picture>
+   <img src="icons/com.ethicalhaquer.galaxyflasher.svg" alt="Galaxy Flasher icon." width=500>
 </div>
 <div align="center">
 
