@@ -1,5 +1,5 @@
 <div align="center">
-   <img src="icons/com.ethicalhaquer.galaxyflasher.svg" alt="Galaxy Flasher icon." width=500>
+<img src="./icons/com.ethicalhaquer.galaxyflasher.svg?raw=true" width="256" height="256" alt="Galaxy Flasher icon.">
 </div>
 <div align="center">
 
