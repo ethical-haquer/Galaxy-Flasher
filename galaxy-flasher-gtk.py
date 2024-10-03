@@ -33,7 +33,7 @@ gi.require_version("Vte", "3.91")
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Vte  # noqa: E402
 
-version = "Alpha v0.5.1"
+version = "Alpha v0.5.2"
 year = shared_utils.get_current_year()
 copyright = f"© {year} ethical_haquer"
 config_dir = GLib.get_user_config_dir()
@@ -73,7 +73,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.strings = shared_utils.load_strings(locale_file)
         # Load settings
         self.settings = shared_utils.load_settings(settings_file)
-        self.flashtool = self.settings.get("flash_tool", "thor")
+        self.flashtool = self.settings.get("flash_tool", "odin4")
         # Check if the app is running as a flatpak.
         self.is_flatpak = shared_utils.get_is_flatpak()
         # If the system isn't linux.
@@ -96,10 +96,10 @@ class MainWindow(Adw.ApplicationWindow):
             # Set the flash-tool path.
             self.odin4_wrapper_file = f"{swd}/odin4-wrapper.sh"
             self.flashtool_file = self.settings.get(f"{self.flashtool}_file", None)
-            if self.flashtool == "thor":
-                self.prompt = "shell> "
-            elif self.flashtool == "odin4":
+            if self.flashtool == "odin4":
                 self.prompt = ">> "
+            elif self.flashtool == "thor":
+                self.prompt = "shell> "
             elif self.flashtool == "pythor":
                 self.prompt = ">> "
             if self.flashtool_file:
@@ -165,50 +165,123 @@ class MainWindow(Adw.ApplicationWindow):
                         'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
                     ),
                 )
+        self.window_title = Adw.WindowTitle.new("Galaxy Flasher", f"{version}")
+
         # Create toolbar_view
         toolbar_view = Adw.ToolbarView.new()
         self.props.content = toolbar_view
+
         # Setup header
-        header = Adw.HeaderBar()
-        toolbar_view.add_top_bar(header)
+        self.header_bar = Adw.HeaderBar()
+        toolbar_view.add_top_bar(self.header_bar)
+        
+        # Create a toggle button for the command bar
+        self.command_button = Gtk.ToggleButton.new()
+        self.command_button.set_tooltip_text("Command")
+        self.command_button.set_icon_name("utilities-terminal-symbolic")
+
+        # Create command_entry
+        self.command_entry = Gtk.Entry.new()
+        self.command_entry.set_hexpand(True)
+        self.command_entry.set_icon_from_icon_name(0, "utilities-terminal-symbolic")
+        self.command_entry.set_placeholder_text("Run a command")
+        self.command_entry.connect(
+            "activate", lambda _, __: self.on_command_enter(), None
+        )
+
+        # Create command_bar
+        self.command_bar = Gtk.ActionBar.new()
+        self.command_bar.set_center_widget(self.command_entry)
+        self.command_bar.set_revealed(False)  # Hide the command bar initially
+        toolbar_view.add_top_bar(self.command_bar)
+
+        # Connect the toggled signal to toggle_command_bar
+        self.command_button.connect('toggled', self.toggle_command_bar)
+        self.header_bar.pack_start(self.command_button)
+
         # Create about action
         about_action = Gio.SimpleAction.new("about", None)
         about_action.connect("activate", self.create_about_dialog)
         self.add_action(about_action)
+
         # Create menu
         menu = Gio.Menu.new()
         menu.append("About Galaxy Flasher", "win.about")
+
         # Create popover
         popover = Gtk.PopoverMenu()
         popover.set_menu_model(menu)
+
         # Create hamburger
         hamburger = Gtk.MenuButton()
         hamburger.set_popover(popover)
         hamburger.set_icon_name("open-menu-symbolic")
-        header.pack_start(hamburger)
-        # Define main grid
+        self.header_bar.pack_end(hamburger)
+
+        # Create main grid
         self.grid = Gtk.Grid()
         toolbar_view.set_content(self.grid)
         self.grid.set_column_spacing(10)
         self.grid.set_row_spacing(10)
-        # Set window title
-        self.set_title(f"Galaxy Flasher - {version}")
-        # Define stack to hold tabs
-        self.stack = Gtk.Stack()
-        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-        self.stack.set_transition_duration(500)
-        # Setup StackSwitcher
-        self.stack_switcher = Gtk.StackSwitcher()
-        self.stack_switcher.set_stack(self.stack)
-        self.stack_switcher.set_margin_start(10)
-        self.stack_switcher.set_margin_end(0)
-        self.stack_switcher.set_margin_top(0)
-        self.stack_switcher.set_margin_bottom(0)
-        # Attach stack/StackSwitcher
-        self.grid.attach(self.stack_switcher, 0, 0, 1, 1)
-        self.grid.attach_next_to(
-            self.stack, self.stack_switcher, Gtk.PositionType.BOTTOM, 1, 6
-        )
+
+        # Define the stack to hold tabs
+        self.stack = Adw.ViewStack()
+
+        # Create view_switcher
+        self.view_switcher = Adw.ViewSwitcher()
+        self.view_switcher.set_stack(self.stack)
+        self.view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
+
+        # Set view_switcher as the title widget for header_bar
+        self.header_bar.set_title_widget(self.view_switcher)
+
+        # Create view_switcher_bar
+        self.view_switcher_bar = Adw.ViewSwitcherBar()
+        self.view_switcher_bar.set_stack(self.stack)
+
+        # Add view_switcher_bar to the toolbar_view
+        toolbar_view.add_bottom_bar(self.view_switcher_bar)
+
+        # Attach stack to grid
+        self.grid.attach(self.stack, 0, 0, 1, 7)
+
+        # Create breakpoint
+        condition = Adw.BreakpointCondition.new_length(1, 700, Adw.LengthUnit.SP)
+        self.breakpoint = Adw.Breakpoint.new(condition)
+        self.breakpoint.connect('apply', self.on_width_breakpoint_applied)
+        self.breakpoint.connect('unapply', self.on_width_breakpoint_unapplied)
+
+        # Attach setters to breakpoint
+        self.breakpoint.add_setter(self.view_switcher_bar, 'reveal', True)
+
+        # Add breakpoint
+        self.add_breakpoint(self.breakpoint)
+
+        # Specify what tabs to display
+        if self.flashtool == "odin4":
+            tabs = ["Log", "Settings", "Files"]
+        if self.flashtool == "thor":
+            tabs = ["Log", "Options", "Settings", "Files"]
+        if self.flashtool == "pythor":
+            tabs = ["Log", "Options", "Settings", "Files"]
+
+        # Create tabs
+        for tab in tabs:
+            grid = Gtk.Grid()
+            grid.set_column_spacing(10)
+            grid.set_row_spacing(10)
+            self.stack.add_titled(grid, tab, tab)
+            setattr(self, f"{tab.lower()}_grid", grid)
+        if self.flashtool == "odin4":
+            self.command_entry_width = 1
+            self.term_width = 1
+        elif self.flashtool == "thor":
+            self.command_entry_width = 3
+            self.term_width = 3
+        else:
+            self.command_entry_width = 3
+            self.term_width = 3
+
         # Create flash-tool output box
         self.vte_term = Vte.Terminal()
         self.vte_term.spawn_async(
@@ -224,62 +297,37 @@ class MainWindow(Adw.ApplicationWindow):
             None,  # Callback
             None,  # User Data
         )
-        # Create scrolled window
+
+        # Create scrolled_window
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_child(self.vte_term)
         scrolled_window.set_hexpand(True)
         scrolled_window.set_vexpand(True)
         scrolled_window.set_halign(Gtk.Align.FILL)
         scrolled_window.set_valign(Gtk.Align.FILL)
-        self.stack.add_titled(scrolled_window, "Log", "Log")
+        self.log_grid.attach(scrolled_window, 0, 0, self.term_width, 1)
+
         # Set the style_manager
         self.style_manager = Adw.StyleManager.get_default()
+
         # Set the theme
         theme = self.settings.get("theme") or "system"
         self.set_theme(theme)
         self.on_theme_changed(self.style_manager, None)
+
         # Detect whenever the theme changes.
         self.style_manager.connect("notify::dark", self.on_theme_changed)
-        # Create other tabs
-        for tab in ["Options", "Pit", "Settings"]:
-            grid = Gtk.Grid()
-            grid.set_column_spacing(10)
-            grid.set_row_spacing(10)
-            self.stack.add_titled(grid, tab, tab)
-            setattr(self, f"{tab.lower()}_grid", grid)
-        # Create file slots
-        row = 2
-        padding = (0, 0, 0, 0)
-        entry_padding = (0, 10, 0, 0)
-        slots = ["BL", "AP", "CP", "CSC", "USERDATA"]
-        for slot in slots:
-            if slot is slots[-1]:
-                padding = (0, 0, 0, 10)
-                entry_padding = (0, 10, 0, 10)
-            button = self.create_button(
-                slot, 1, row, self.grid, lambda _, x=slot: self.open_file(x), padding
-            )
-            entry = self.create_entry(2, row, self.grid, entry_padding, 2, 1, True)
-            setattr(self, f"{slot}_button", button)
-            setattr(self, f"{slot}_entry", entry)
-            if self.flashtool == "pythor":
-                button.set_sensitive(False)
-                entry.set_sensitive(False)
-            row += 1
-        # Create command entry
-        self.command_entry = self.create_entry(
-            column=1,
-            row=1,
-            grid=self.grid,
-            padding=(0, 10, 0, 0),
-            width=3,
-            height=1,
-        )
-        self.command_entry.connect(
-            "activate", lambda _, __: self.on_command_enter(), None
-        )
+
         # Create the upper-right buttons.
-        if self.flashtool == "thor":
+        if self.flashtool == "odin4":
+            buttons = [
+                {
+                    "name": "flash_button",
+                    "text": "Flash!",
+                    "command": lambda _: self.flash(),
+                },
+            ]
+        elif self.flashtool == "thor":
             buttons = [
                 {
                     "name": "connect_button",
@@ -315,56 +363,47 @@ class MainWindow(Adw.ApplicationWindow):
                     "command": lambda _: self.start_odin_session(),
                 },
             ]
-        elif self.flashtool == "odin4":
-            buttons = [
-                {
-                    "name": "help_button",
-                    "text": "Help",
-                    "command": lambda _: self.send_cmd("help"),
-                },
-                {
-                    "name": "list_button",
-                    "text": "List Devices",
-                    "command": lambda _: self.send_cmd("list"),
-                },
-                {
-                    "name": "flash_button",
-                    "text": "Flash!",
-                    "command": lambda _: self.flash(),
-                },
-            ]
-        column = 1
+        column = 0
         padding = (0, 0, 0, 0)
         for btn in buttons:
             name = btn["name"]
             text = btn["text"]
             command = btn["command"]
-            if btn is buttons[-1]:
-                padding = (0, 10, 0, 0)
+            if len(buttons) == 1 and btn is buttons[0]:
+                padding = (10, 10, 0, 10)
+            elif btn is buttons[0]:
+                padding = (10, 0, 0, 10)
+            elif btn is buttons[-1]:
+                padding = (0, 10, 0, 10)
+            else:
+                padding = (0, 0, 0, 10)
+            width = 1
             button = self.create_button(
                 text,
                 column=column,
-                row=0,
-                grid=self.grid,
+                row=1,
+                grid=self.log_grid,
                 command=command,
                 padding=padding,
+                width=width,
             )
             setattr(self, name, button)
             column += 1
-        if self.flashtool == "thor":
+        if self.flashtool == "odin4":
+            self.set_widget_state(
+                self.flash_button, state=False
+            )
+        elif self.flashtool == "thor":
             self.set_widget_state(
                 self.connect_button,
                 self.start_odin_button,
                 self.flash_button,
                 state=False,
             )
-        elif self.flashtool == "odin4":
-            self.set_widget_state(
-                self.help_button, self.list_button, self.flash_button, state=False
-            )
         elif self.flashtool == "pythor":
             self.set_widget_state(self.connect_button, state=False)
-        # Create the Option tab widgets.
+
+        # Create the Option Tab widgets.
         row = 0
         if self.flashtool == "thor":
             options_list = [
@@ -406,27 +445,8 @@ class MainWindow(Adw.ApplicationWindow):
                 }
             ]
             self.create_preferences(options_list, self.options_grid)
-        elif self.flashtool == "odin4":
-            row = 0
-            self.create_label(
-                text='The "-V" option will be added once I know what it does.',
-                grid=self.options_grid,
-                row=row,
-                padding=(10, 0, 0, 0),
-            )
-        elif self.flashtool == "pythor":
-            self.create_label(
-                text="Currently, PyThor has no options.",
-                grid=self.options_grid,
-                padding=(10, 0, 0, 0),
-            )
-        # Create place-holder label for Pit tab.
-        self.create_label(
-            text=f"{self.strings['just_a_test']}\n\n{self.strings['pull_requests_welcome']}",
-            grid=self.pit_grid,
-            padding=(10, 0, 0, 0),
-        )
-        # Create the Settings tab widgets.
+
+        # Create the Settings Tab widgets.
         settings_list = [
             {
                 "title": "General",
@@ -437,8 +457,8 @@ class MainWindow(Adw.ApplicationWindow):
                         "subtitle": "The flash-tool Galaxy Flasher should use.",
                         "setting": "flash_tool",
                         "options": [
-                            {"name": "Thor", "value": "thor"},
                             {"name": "Odin4", "value": "odin4"},
+                            {"name": "Thor", "value": "thor"},
                             {"name": "PyThor (in development)", "value": "pythor"},
                         ],
                     },
@@ -486,8 +506,31 @@ class MainWindow(Adw.ApplicationWindow):
             },
         ]
         self.create_preferences(settings_list, self.settings_grid)
+
+        # Create the File Tab widgets.
+        row = 0
+        padding = (10, 0, 0, 0)
+        entry_padding = (0, 10, 0, 0)
+        slots = ["BL", "AP", "CP", "CSC", "USERDATA"]
+        for slot in slots:
+            if slot is slots[-1]:
+                padding = (10, 0, 0, 10)
+                entry_padding = (0, 10, 0, 10)
+            button = self.create_button(
+                slot, 1, row, self.files_grid, lambda _, x=slot: self.open_file(x), padding
+            )
+            width = 1
+            entry = self.create_entry(2, row, self.files_grid, entry_padding, width, 1, True)
+            setattr(self, f"{slot}_button", button)
+            setattr(self, f"{slot}_entry", entry)
+            if self.flashtool == "pythor":
+                button.set_sensitive(False)
+                entry.set_sensitive(False)
+            row += 1
+
         # Create the terminal's right-click options.
         term_popover = Gtk.Popover()
+
         # This doesn't show an arrow, I'm not sure if we want one though.
         # term_popover.set_has_arrow(True)
         term_option_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -511,8 +554,10 @@ class MainWindow(Adw.ApplicationWindow):
         term_option_box.append(paste_button)
         term_popover.set_child(term_option_box)
         self.vte_term.set_context_menu(term_popover)
+
         # Scan the output whenever it changes
         self.vte_term.connect("contents-changed", lambda *args: self.scan_output(*args, self.i))
+
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
         print(
             rf"""
@@ -526,6 +571,18 @@ class MainWindow(Adw.ApplicationWindow):
                           {version}
         """
         )
+
+    def on_width_breakpoint_applied(self, breakpoint):
+        self.header_bar.set_title_widget(self.window_title)
+
+    def on_width_breakpoint_unapplied(self, breakpoint):
+        self.header_bar.set_title_widget(self.view_switcher)
+
+    def toggle_command_bar(self, button):
+        active = button.get_active()
+        if active:
+            self.command_entry.grab_focus()
+        self.command_bar.set_revealed(active)
 
     def connect_option_switch(self, switch_row):
         switch_row.switch.connect("state-set", self.on_switch_state_set)
@@ -707,14 +764,51 @@ class MainWindow(Adw.ApplicationWindow):
                     selected_partitions[row] = False
 
             def return_selected_partitions(cancel=False):
-                window.destroy()
+                #window.destroy()
                 if not cancel:
                     send_selected_partitions(selected_partitions)
                 print('SENDING: "Enter"')
                 self.send_cmd("\n", False)
                 time.sleep(0.3)
                 GLib.idle_add(select)
+                
+            def callback(dialog, result):
+                response_id = dialog.choose_finish(result)
+                print(response_id)
+                if response_id == "ok":
+                    return_selected_partitions()
+                elif response_id == "cancel":
+                    return_selected_partitions(cancel=True)
 
+            """
+            dialog = Adw.Dialog.new()
+            dialog.set_child()
+            """
+            
+            """
+            def create_alert_dialog(
+                self,
+                title,
+                text,
+                responses=None,
+                callback=None,
+                default_response="NULL",
+                extra_child=None,
+            ):
+            """
+            
+            grid = Gtk.Grid.new()
+            
+            box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+            box.append(grid)
+            
+            responses = [
+                {"id": "ok", "label": "OK", "appearance": "0"},
+            ]
+
+            dialog = self.create_alert_dialog("Select Partitions", f"Select what partitions to flash from:/n{file}", responses, callback, extra_child=box)
+
+            """
             window, grid = self.create_window("Select Partitions")
             window.connect(
                 "close_request", lambda _: return_selected_partitions(cancel=True)
@@ -737,7 +831,8 @@ class MainWindow(Adw.ApplicationWindow):
                 align=Gtk.Align.CENTER,
                 width=2,
             )
-            row += 1
+            """
+            row = 0
             for i, partition in enumerate(partitions):
                 btn = self.create_checkbutton(
                     partition, 0, row, grid, padding=(5, 5, 0, 0), width=2
@@ -748,6 +843,7 @@ class MainWindow(Adw.ApplicationWindow):
                 )
                 selected_partitions.append(False)
                 row += 1
+            """
             self.create_button(
                 "Cancel",
                 0,
@@ -765,6 +861,7 @@ class MainWindow(Adw.ApplicationWindow):
                 padding=(0, 5, 5, 5),
             )
             window.present()
+            """
 
         def select():
             nonlocal run
@@ -785,19 +882,22 @@ class MainWindow(Adw.ApplicationWindow):
             # Get the output.
             output = self.get_output(
                 command=None,
-                start="shell>*",
+                start="shell>",
                 end=end,
                 wait=wait,
             )
             # print(f"output: {output}")
             if not output[0] or output[0] == "Timeout":
                 print("No output was found.")
+                print(output[0])
                 return GLib.SOURCE_CONTINUE
             else:
                 # If the output is for selecting partitions and is complete.
                 if output[0] == "Choose what partitions to flash from":
                     print("Found start of partitions.")
-                    if output[-1] == "(Press <space> to select, <enter> to accept)":
+                    # TODO: Have a function that checks for a string (which may or may not be on one line) in output.
+                    #if output[-1] == "(Press <space> to select, <enter> to accept)":
+                    if "ept)" in output[-1]:
                         print("Found end of partitions.")
                         output = output[1:]
                         file_lines = []
@@ -856,19 +956,18 @@ class MainWindow(Adw.ApplicationWindow):
                     else:
                         self.retry_partition = True
                         return GLib.SOURCE_CONTINUE
-                elif (
-                    output[-1]
-                    == "Are you absolutely sure you want to flash those? [y/n] (n):"
-                ):
+                elif output[0].startswith("You chose to flash"):    
                     print("Verifying flash.")
                     n_partitions = re.search(r"(\d+) partitions", output[0])
                     partition_list = []
-                    for line in output[1:-1]:
+                    for line in output:
+                        if line.startswith("Are you absol"):
+                            break
                         partition_list.append(line)
                     self.verify_flash(n_partitions.group(1), partition_list, auto)
                     return GLib.SOURCE_REMOVE
                 else:
-                    print("Unknown output.")
+                    print(f"Unknown output:\n{output}")
                     return GLib.SOURCE_REMOVE
 
         GLib.idle_add(select)
@@ -883,7 +982,7 @@ class MainWindow(Adw.ApplicationWindow):
         return window, grid
 
     def scan_output(self, vte, i):
-        print(f"contents changed: {i}")
+        #print(f"contents changed: {i}")
         self.i += 1
         if self.flashtool == "thor":
             strings_to_commands = {
@@ -982,8 +1081,6 @@ class MainWindow(Adw.ApplicationWindow):
             strings_to_commands = {
                 "Welcome to Interactive Odin4!": [
                     lambda: self.set_widget_state(
-                        self.help_button,
-                        self.list_button,
                         self.flash_button,
                         state=True,
                     )
@@ -1012,18 +1109,11 @@ class MainWindow(Adw.ApplicationWindow):
                         command()
             self.last_output = latest_output
 
-    """
-    def remove_blank_lines(self, string):
-        lines = string.splitlines()
-        filtered_lines = [line for line in lines if line.strip()]
-        new_string = "\n".join(filtered_lines)
-        return new_string
-    """
-
     def check_output(self, vte, command, result, start, end, wait, add_enter, timeout):
         # This is a pretty bad way to do this.
         # 10000 should be replaced with the actual value, But it works.
-        old_output = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, 10000)[0]
+        num_cols = vte.get_column_count()
+        old_output = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, num_cols)[0]
         old_output = shared_utils.remove_blank_lines(old_output)
         if command:
             self.send_cmd(command, add_enter)
@@ -1048,8 +1138,9 @@ class MainWindow(Adw.ApplicationWindow):
             nonlocal cycles
             # This is a pretty bad way to do this.
             # 10000 should be replaced with the actual value, But it works.
+            num_cols = vte.get_column_count()
             current_output = vte.get_text_range_format(
-                Vte.Format(1), 0, 0, 10000, 10000
+                Vte.Format(1), 0, 0, 10000, num_cols
             )[0]
             current_output = shared_utils.remove_blank_lines(current_output)
             # If the output has changed or wait is False.
@@ -1057,24 +1148,53 @@ class MainWindow(Adw.ApplicationWindow):
                 lines = current_output.splitlines()
                 new_lines = []
                 start_index = -1
-                # Find the last occurence of start.
+                """
+                trimmed_start = start[:num_cols]
+                print(f"trimmed_start: {trimmed_start}")
+                # Find the last occurence of trimmed_start.
                 for i in range(len(lines) - 1, -1, -1):
-                    start_match = re.search(start, lines[i])
-                    # if lines[i].startswith(start):
-                    if start_match:
+                    if trimmed_start in lines[i]:
                         start_index = i
                         break
+                    """
+                words = start.split()  # split the start string into a list of words
+                shortened_start = ''  # initialize an empty string
+                for word in words:
+                    if len(shortened_start) + len(word) + 1 <= num_cols:  # check if adding the word fits in num_cols space
+                        shortened_start += word + ' '
+                    else:
+                        break
+
+                shortened_start = shortened_start.strip()  # remove the trailing space
+
+                print(f"shortened_start: {shortened_start}")
+
+                for i in range(len(lines) - 1, -1, -1):
+                    if shortened_start in lines[i]:
+                        start_index = i
+                        break
+                    #start_match = re.search(trimmed_start, lines[i])
+                    #if start_match:
                 # Get all the lines after start and up to end, if it's
                 # found, otherwise get everything after start.
                 if start_index != -1:
                     new_lines = lines[start_index + 1 :]
                 end_index = None
                 if end:
+                    words = end.split()  # split the start string into a list of words
+                    shortened_end = ''  # initialize an empty string
+                    for word in words:
+                        if len(shortened_end) + len(word) + 1 <= num_cols:  # check if adding the word fits in num_cols space
+                            shortened_end += word + ' '
+                        else:
+                            break
+
+                    shortened_end = shortened_end.strip()  # remove the trailing space
+
+                    print(f"shortened_end: {shortened_end}")
                     for i, line in enumerate(new_lines):
                         line = line.strip()
-                        end_match = re.search(end, line)
-                        # if line.strip() == end:
-                        if end_match:
+                        if shortened_end in line:
                             end_index = i
                             break
                 # If end was found or was None, return the result,
@@ -1175,6 +1295,35 @@ class MainWindow(Adw.ApplicationWindow):
                 send_selected_device()
             elif response_id == "cancel":
                 send_selected_device(cancel=True)
+                
+        def clean_devices(devices):
+            """Returns a cleaned version of the given list of devices,
+            to ensure that they all start with '> '.
+            
+            Adds a ' ' between each part of the device, if it was on multiple lines.
+            This may or may not be necessary, depending on the specific case.
+
+            Args:
+                devices (list): A list of devices, which may or may not each be on one line.
+
+            Returns:
+                list: A cleaned list of devices, where each device is on one line.
+            """
+            cleaned_devices = []
+            ongoing_device = ""
+
+            for device in devices:
+                if device.startswith("> "):
+                    if ongoing_device:
+                        cleaned_devices.append(ongoing_device.strip())
+                    ongoing_device = device
+                else:
+                    ongoing_device += " " + device
+
+            if ongoing_device:
+                cleaned_devices.append(ongoing_device.strip())
+
+            return cleaned_devices
 
         def display_devices():
             box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 5)
@@ -1208,6 +1357,8 @@ class MainWindow(Adw.ApplicationWindow):
             devices = self.get_output(
                 "connect", "Choose a device to connect to:", "Cancel operation"
             )
+            # Make sure each device is on one line.
+            devices = clean_devices(devices)
             # TODO: I haven't actually tested this with two devices connected.
             # devices = ["/dev/device1", "/dev/device2"]
             if not devices[0] or devices[0] == "Timeout":
@@ -1968,8 +2119,6 @@ title="https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux
 <a href="https://github.com/justaCasualCoder/PyThor"
 title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         dialog = Adw.Dialog.new()
-        # The gnome-command-center's (GNOME Settings) info dialogs are resizable, but I haven't figured out why our's aren't.
-        # https://github.com/GNOME/gnome-control-center/blob/main/panels/privacy/firmware-security/cc-firmware-security-help-dialog.ui
         dialog.get_accessible_role()
         dialog.set_title(name)
         dialog.set_content_width(420)
@@ -2132,48 +2281,6 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         about_dialog.set_copyright(copyright)
         about_dialog.set_license_type(Gtk.License.GPL_3_0)
         about_dialog.present(self)
-        # This was ethical_haquer customizing the About Dialog.
-        """        
-        listbox = (
-            about_dialog.get_first_child()  # BreakpointBin
-            .get_first_child()  # AdwFloatingSheet
-            .get_last_child()  # AdwGizmo
-            .get_first_child()  # BreakpointBin
-            .get_first_child()  # ToastOverlay
-            .get_first_child()  # NavigationView
-            .get_first_child()  # AdwGizmo
-            .get_next_sibling()
-            .get_next_sibling()
-            .get_next_sibling()
-            .get_next_sibling()
-            .get_next_sibling() # navpage
-            .get_next_sibling() # navpage
-            .get_next_sibling() # navpage    
-            .get_first_child()  # toolbarview
-            .get_first_child()  # scrolledwindow
-            .get_first_child()  # viewport
-            .get_first_child()  # clamp
-            .get_first_child()  # box
-            .get_last_child()  # preferencesgroup
-            .get_first_child()  # box
-            .get_last_child()  # box  
-            .get_first_child()  # listbox   
-        )
-        #label.set_label("YO!!!")
-        
-        img = Gtk.Image(icon_name="adw-external-link-symbolic")
-        action_row = self.create_action_row("action_row", "On Codeberg", None, None, [img], img)
-        
-        img = Gtk.Image(icon_name="adw-external-link-symbolic")
-        action_row2 = self.create_action_row("action_row", "On GitHub", None, None, [img], img)
-
-        action_row.connect("activated", lambda _: shared_utils.open_link("https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues"))
-        action_row2.connect("activated", lambda _: shared_utils.open_link("https://github.com/ethical-haquer/Galaxy-Flasher/issues"))
-
-        expander_row = self.create_expander_row("report_issue_expander_row", "Report an issue", rows=[action_row, action_row2])
-
-        listbox.append(expander_row)
-        """
 
 class GalaxyFlasherGtk(Adw.Application):
     def __init__(self, **kwargs):
