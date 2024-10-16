@@ -12,6 +12,7 @@ gi.require_version("Gtk", "4.0")
 
 from gi.repository import Gtk  # noqa: E402
 
+
 def load_strings(locale_file):
     """Load strings from a specified JSON file.
 
@@ -25,7 +26,8 @@ def load_strings(locale_file):
         strings = json.load(json_string)
     return strings
 
-def get_locale_file(swd,lang):
+
+def get_locale_file(swd, lang):
     """Get the location of the locale file.
 
     Args:
@@ -41,6 +43,7 @@ def get_locale_file(swd,lang):
     else:
         return f"{swd}/locales/en.json"
 
+
 def file_exists(file):
     """Checks if a file exists.
     Returns True if it does, or False if it doesn't.
@@ -53,6 +56,7 @@ def file_exists(file):
     """
     file_path = pathlib.Path(file)
     return file_path.is_file()
+
 
 def load_settings(settings_file):
     """Load settings from the specified JSON file.
@@ -69,6 +73,7 @@ def load_settings(settings_file):
             settings = json.load(file)
     return settings
 
+
 def save_settings(settings, settings_file):
     """Save settings to the specified JSON file.
 
@@ -78,7 +83,8 @@ def save_settings(settings, settings_file):
     """
     with open(settings_file, "w") as file:
         json.dump(settings, file)
-        
+
+
 def shorten_string(string, length):
     """Shorten a string to a given length.
 
@@ -96,6 +102,7 @@ def shorten_string(string, length):
         shortened_string = string
     return shortened_string
 
+
 def remove_blank_lines(string):
     """Remove blank lines from a string.
 
@@ -110,6 +117,7 @@ def remove_blank_lines(string):
     new_string = "\n".join(filtered_lines)
     return new_string
 
+
 def get_current_year():
     """Returns the current year.
 
@@ -117,6 +125,7 @@ def get_current_year():
         str: The current year.
     """
     return datetime.date.today().year
+
 
 def open_link(link):
     """Opens a link in the user's preferred browser.
@@ -126,7 +135,8 @@ def open_link(link):
     """
     launcher = Gtk.UriLauncher.new(link)
     launcher.launch()
-    
+
+
 def get_system_lang():
     """Returns the lowercase, two-letter abbreviation code of the system language.
 
@@ -138,6 +148,7 @@ def get_system_lang():
     separator = "_"
     lang = system_locale.split(separator, 1)[0]
     return lang
+
 
 def get_is_flatpak():
     is_flatpak = "FLATPAK_ID" in os.environ or "FLATPAK_APP_ID" in os.environ

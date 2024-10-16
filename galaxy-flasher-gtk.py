@@ -24,6 +24,7 @@ import re
 import sys
 import time
 import shared_utils
+from flash_tool_plugins import load_plugins
 
 import gi
 
@@ -46,10 +47,16 @@ swd = os.path.dirname(os.path.realpath(__file__))
 machine = platform.machine()
 system = platform.system().lower()
 
+
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         self.last_output = ""
         self.i = 1
+        self.glib = GLib
+        self.time = time
+        self.shared_utils = shared_utils
+        self.gtk = Gtk
+        self.re = re
         super().__init__(*args, **kwargs)
         # Add the CSS provider to the screen
         style_provider = Gtk.CssProvider()
@@ -74,6 +81,31 @@ class MainWindow(Adw.ApplicationWindow):
         # Load settings
         self.settings = shared_utils.load_settings(settings_file)
         self.flashtool = self.settings.get("flash_tool", "odin4")
+        # Load plug-ins
+        flash_tool_options = []
+        try:
+            plugins = load_plugins(self)
+            if not plugins:
+                print("No flash-tool plugins found.")
+                return
+
+            for plugin in plugins:
+                print(f"Available flash-tool plugin: {plugin.name}")
+                flash_tool_options.append(
+                    {"name": plugin.displayed_name, "value": plugin.name}
+                )
+
+            plugin_name = self.flashtool
+            for plugin in plugins:
+                if plugin.__class__.__name__.lower() == plugin_name.lower():
+                    self.ft_plugin = plugin
+                    break
+            else:
+                print(f"Plugin {plugin_name} not found")
+
+        except Exception as e:
+            print(f"Error: {e}")
+        self.ft_plugin.test()
         # Check if the app is running as a flatpak.
         self.is_flatpak = shared_utils.get_is_flatpak()
         # If the system isn't linux.
@@ -96,12 +128,8 @@ class MainWindow(Adw.ApplicationWindow):
             # Set the flash-tool path.
             self.odin4_wrapper_file = f"{swd}/odin4-wrapper.sh"
             self.flashtool_file = self.settings.get(f"{self.flashtool}_file", None)
-            if self.flashtool == "odin4":
-                self.prompt = ">> "
-            elif self.flashtool == "thor":
-                self.prompt = "shell> "
-            elif self.flashtool == "pythor":
-                self.prompt = ">> "
+            self.prompt = self.ft_plugin.prompt
+
             if self.flashtool_file:
                 if os.path.isfile(self.flashtool_file):
                     if self.flashtool == "odin4":
@@ -174,7 +202,7 @@ class MainWindow(Adw.ApplicationWindow):
         # Setup header
         self.header_bar = Adw.HeaderBar()
         toolbar_view.add_top_bar(self.header_bar)
-        
+
         # Create a toggle button for the command bar
         self.command_button = Gtk.ToggleButton.new()
         self.command_button.set_tooltip_text("Command")
@@ -196,7 +224,7 @@ class MainWindow(Adw.ApplicationWindow):
         toolbar_view.add_top_bar(self.command_bar)
 
         # Connect the toggled signal to toggle_command_bar
-        self.command_button.connect('toggled', self.toggle_command_bar)
+        self.command_button.connect("toggled", self.toggle_command_bar)
         self.header_bar.pack_start(self.command_button)
 
         # Create about action
@@ -204,250 +232,7 @@ class MainWindow(Adw.ApplicationWindow):
         about_action.connect("activate", self.create_about_dialog)
         self.add_action(about_action)
 
-        # Create menu
-        menu = Gio.Menu.new()
-        menu.append("About Galaxy Flasher", "win.about")
-
-        # Create popover
-        popover = Gtk.PopoverMenu()
-        popover.set_menu_model(menu)
-
-        # Create hamburger
-        hamburger = Gtk.MenuButton()
-        hamburger.set_popover(popover)
-        hamburger.set_icon_name("open-menu-symbolic")
-        self.header_bar.pack_end(hamburger)
-
-        # Create main grid
-        self.grid = Gtk.Grid()
-        toolbar_view.set_content(self.grid)
-        self.grid.set_column_spacing(10)
-        self.grid.set_row_spacing(10)
-
-        # Define the stack to hold tabs
-        self.stack = Adw.ViewStack()
-
-        # Create view_switcher
-        self.view_switcher = Adw.ViewSwitcher()
-        self.view_switcher.set_stack(self.stack)
-        self.view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
-
-        # Set view_switcher as the title widget for header_bar
-        self.header_bar.set_title_widget(self.view_switcher)
-
-        # Create view_switcher_bar
-        self.view_switcher_bar = Adw.ViewSwitcherBar()
-        self.view_switcher_bar.set_stack(self.stack)
-
-        # Add view_switcher_bar to the toolbar_view
-        toolbar_view.add_bottom_bar(self.view_switcher_bar)
-
-        # Attach stack to grid
-        self.grid.attach(self.stack, 0, 0, 1, 7)
-
-        # Create breakpoint
-        condition = Adw.BreakpointCondition.new_length(1, 700, Adw.LengthUnit.SP)
-        self.breakpoint = Adw.Breakpoint.new(condition)
-        self.breakpoint.connect('apply', self.on_width_breakpoint_applied)
-        self.breakpoint.connect('unapply', self.on_width_breakpoint_unapplied)
-
-        # Attach setters to breakpoint
-        self.breakpoint.add_setter(self.view_switcher_bar, 'reveal', True)
-
-        # Add breakpoint
-        self.add_breakpoint(self.breakpoint)
-
-        # Specify what tabs to display
-        if self.flashtool == "odin4":
-            tabs = ["Log", "Settings", "Files"]
-        if self.flashtool == "thor":
-            tabs = ["Log", "Options", "Settings", "Files"]
-        if self.flashtool == "pythor":
-            tabs = ["Log", "Options", "Settings", "Files"]
-
-        # Create tabs
-        for tab in tabs:
-            grid = Gtk.Grid()
-            grid.set_column_spacing(10)
-            grid.set_row_spacing(10)
-            self.stack.add_titled(grid, tab, tab)
-            setattr(self, f"{tab.lower()}_grid", grid)
-        if self.flashtool == "odin4":
-            self.command_entry_width = 1
-            self.term_width = 1
-        elif self.flashtool == "thor":
-            self.command_entry_width = 3
-            self.term_width = 3
-        else:
-            self.command_entry_width = 3
-            self.term_width = 3
-
-        # Create flash-tool output box
-        self.vte_term = Vte.Terminal()
-        self.vte_term.spawn_async(
-            Vte.PtyFlags.DEFAULT,  # Pty Flags
-            swd,  # Working directory
-            flashtool_exec,  # Command/BIN (argv)
-            None,  # Environmental Variables (env)
-            GLib.SpawnFlags.DEFAULT,  # Spawn Flags
-            None,
-            None,  # Child Setup
-            -1,  # Timeout (-1 for indefinitely)
-            None,  # Cancellable
-            None,  # Callback
-            None,  # User Data
-        )
-
-        # Create scrolled_window
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_child(self.vte_term)
-        scrolled_window.set_hexpand(True)
-        scrolled_window.set_vexpand(True)
-        scrolled_window.set_halign(Gtk.Align.FILL)
-        scrolled_window.set_valign(Gtk.Align.FILL)
-        self.log_grid.attach(scrolled_window, 0, 0, self.term_width, 1)
-
-        # Set the style_manager
-        self.style_manager = Adw.StyleManager.get_default()
-
-        # Set the theme
-        theme = self.settings.get("theme") or "system"
-        self.set_theme(theme)
-        self.on_theme_changed(self.style_manager, None)
-
-        # Detect whenever the theme changes.
-        self.style_manager.connect("notify::dark", self.on_theme_changed)
-
-        # Create the upper-right buttons.
-        if self.flashtool == "odin4":
-            buttons = [
-                {
-                    "name": "flash_button",
-                    "text": "Flash!",
-                    "command": lambda _: self.flash(),
-                },
-            ]
-        elif self.flashtool == "thor":
-            buttons = [
-                {
-                    "name": "connect_button",
-                    "text": self.strings["connect"],
-                    "command": lambda _: self.select_device("thor"),
-                },
-                {
-                    "name": "start_odin_button",
-                    "text": self.strings["start_odin_protocol"],
-                    "command": lambda _: self.start_odin_session(),
-                },
-                {
-                    "name": "flash_button",
-                    "text": "Flash!",
-                    "command": lambda _: self.flash(),
-                },
-            ]
-        elif self.flashtool == "pythor":
-            buttons = [
-                {
-                    "name": "help_button",
-                    "text": "Help",
-                    "command": lambda _: self.send_cmd("help"),
-                },
-                {
-                    "name": "connect_button",
-                    "text": "Connect",
-                    "command": lambda _: self.connect_device(),
-                },
-                {
-                    "name": "start_odin_button",
-                    "text": "Start Session",
-                    "command": lambda _: self.start_odin_session(),
-                },
-            ]
-        column = 0
-        padding = (0, 0, 0, 0)
-        for btn in buttons:
-            name = btn["name"]
-            text = btn["text"]
-            command = btn["command"]
-            if len(buttons) == 1 and btn is buttons[0]:
-                padding = (10, 10, 0, 10)
-            elif btn is buttons[0]:
-                padding = (10, 0, 0, 10)
-            elif btn is buttons[-1]:
-                padding = (0, 10, 0, 10)
-            else:
-                padding = (0, 0, 0, 10)
-            width = 1
-            button = self.create_button(
-                text,
-                column=column,
-                row=1,
-                grid=self.log_grid,
-                command=command,
-                padding=padding,
-                width=width,
-            )
-            setattr(self, name, button)
-            column += 1
-        if self.flashtool == "odin4":
-            self.set_widget_state(
-                self.flash_button, state=False
-            )
-        elif self.flashtool == "thor":
-            self.set_widget_state(
-                self.connect_button,
-                self.start_odin_button,
-                self.flash_button,
-                state=False,
-            )
-        elif self.flashtool == "pythor":
-            self.set_widget_state(self.connect_button, state=False)
-
-        # Create the Option Tab widgets.
-        row = 0
-        if self.flashtool == "thor":
-            options_list = [
-                {
-                    "title": None,
-                    "section_sensitive": False,
-                    "section_function": self.burner,
-                    "section_commands": [
-                        (self.connect_option_switch, ["$switch_row"]),
-                    ],
-                    "rows": [
-                        {
-                            "type": "switch",
-                            "title": "T Flash",
-                            "subtitle": "Writes the boot-loader of the device to the SD card.",
-                            "setting": "t_flash",
-                            "default_value": False,
-                        },
-                        {
-                            "type": "switch",
-                            "title": "EFS Clear",
-                            "subtitle": "Wipes phone/network-related stuff from the device.",
-                            "setting": "efs_clear",
-                            "default_value": False,
-                        },
-                        {
-                            "type": "switch",
-                            "title": "Bootloader Update",
-                            "setting": "bootloader_update",
-                            "default_value": False,
-                        },
-                        {
-                            "type": "switch",
-                            "title": "Reset Flash Count",
-                            "setting": "reset_flash_count",
-                            "default_value": False,
-                        },
-                    ],
-                }
-            ]
-            self.create_preferences(options_list, self.options_grid)
-
-        # Create the Settings Tab widgets.
-        settings_list = [
+        self.preferences_dialog_layout = [
             {
                 "title": "General",
                 "rows": [
@@ -456,11 +241,7 @@ class MainWindow(Adw.ApplicationWindow):
                         "title": "Flash Tool",
                         "subtitle": "The flash-tool Galaxy Flasher should use.",
                         "setting": "flash_tool",
-                        "options": [
-                            {"name": "Odin4", "value": "odin4"},
-                            {"name": "Thor", "value": "thor"},
-                            {"name": "PyThor (in development)", "value": "pythor"},
-                        ],
+                        "options": flash_tool_options,
                     },
                 ],
             },
@@ -505,7 +286,146 @@ class MainWindow(Adw.ApplicationWindow):
                 ],
             },
         ]
-        self.create_preferences(settings_list, self.settings_grid)
+
+        # Create preferences action
+        preferences_action = Gio.SimpleAction.new("preferences", None)
+        preferences_action.connect("activate", self.create_preferences_dialog)
+
+        # Connect the signal to the handler
+        self.add_action(preferences_action)
+
+        # Create menu
+        menu = Gio.Menu.new()
+        menu.append("Preferences", "win.preferences")
+        menu.append("About Galaxy Flasher", "win.about")
+
+        # Create popover
+        popover = Gtk.PopoverMenu()
+        popover.set_menu_model(menu)
+
+        # Create hamburger
+        hamburger = Gtk.MenuButton()
+        hamburger.set_popover(popover)
+        hamburger.set_icon_name("open-menu-symbolic")
+        self.header_bar.pack_end(hamburger)
+
+        # Create main grid
+        self.grid = Gtk.Grid()
+        toolbar_view.set_content(self.grid)
+        self.grid.set_column_spacing(10)
+        self.grid.set_row_spacing(10)
+
+        # Define the stack to hold tabs
+        self.stack = Adw.ViewStack()
+
+        # Create view_switcher
+        self.view_switcher = Adw.ViewSwitcher()
+        self.view_switcher.set_stack(self.stack)
+        self.view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
+
+        # Set view_switcher as the title widget for header_bar
+        self.header_bar.set_title_widget(self.view_switcher)
+
+        # Create view_switcher_bar
+        self.view_switcher_bar = Adw.ViewSwitcherBar()
+        self.view_switcher_bar.set_stack(self.stack)
+
+        # Add view_switcher_bar to the toolbar_view
+        toolbar_view.add_bottom_bar(self.view_switcher_bar)
+
+        # Attach stack to grid
+        self.grid.attach(self.stack, 0, 0, 1, 7)
+
+        # Create breakpoint
+        condition = Adw.BreakpointCondition.new_length(1, 700, Adw.LengthUnit.SP)
+        self.breakpoint = Adw.Breakpoint.new(condition)
+        self.breakpoint.connect("apply", self.on_width_breakpoint_applied)
+        self.breakpoint.connect("unapply", self.on_width_breakpoint_unapplied)
+
+        # Attach setters to breakpoint
+        self.breakpoint.add_setter(self.view_switcher_bar, "reveal", True)
+
+        # Add breakpoint
+        self.add_breakpoint(self.breakpoint)
+
+        # Specify what tabs to display
+        tabs = self.ft_plugin.tabs
+
+        # Create tabs
+        for tab in tabs:
+            grid = Gtk.Grid()
+            grid.set_column_spacing(10)
+            grid.set_row_spacing(10)
+            self.stack.add_titled(grid, tab, tab)
+            setattr(self, f"{tab.lower()}_grid", grid)
+
+        # Create flash-tool output box
+        self.vte_term = Vte.Terminal()
+        self.vte_term.spawn_async(
+            Vte.PtyFlags.DEFAULT,  # Pty Flags
+            swd,  # Working directory
+            flashtool_exec,  # Command/BIN (argv)
+            None,  # Environmental Variables (env)
+            GLib.SpawnFlags.DEFAULT,  # Spawn Flags
+            None,
+            None,  # Child Setup
+            -1,  # Timeout (-1 for indefinitely)
+            None,  # Cancellable
+            None,  # Callback
+            None,  # User Data
+        )
+
+        # Create scrolled_window
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_child(self.vte_term)
+        scrolled_window.set_hexpand(True)
+        scrolled_window.set_vexpand(True)
+        scrolled_window.set_halign(Gtk.Align.FILL)
+        scrolled_window.set_valign(Gtk.Align.FILL)
+        self.log_grid.attach(scrolled_window, 0, 0, 1, 1)
+
+        # Set the style_manager
+        self.style_manager = Adw.StyleManager.get_default()
+
+        # Set the theme
+        theme = self.settings.get("theme") or "system"
+        self.set_theme(theme)
+        self.on_theme_changed(self.style_manager, None)
+
+        # Detect whenever the theme changes.
+        self.style_manager.connect("notify::dark", self.on_theme_changed)
+
+        # Create the main buttons.
+        buttons = self.ft_plugin.buttons
+
+        button_grid = Gtk.Grid(column_spacing=10)
+        self.set_padding(button_grid, (10, 10, 10, 10))
+
+        for column, btn in enumerate(buttons):
+            name = btn["name"]
+            text = btn["text"]
+            command = btn["command"]
+            button = self.create_button(
+                text,
+                column=column,
+                row=0,
+                grid=button_grid,
+                command=command,
+            )
+            button.set_hexpand(True)
+            button.set_halign(Gtk.Align.FILL)
+            setattr(self, name, button)
+
+        self.log_grid.attach(button_grid, column=0, row=1, width=1, height=1)
+
+        # Initialise the main buttons
+        self.ft_plugin.initialise_buttons(self)
+
+        # Create the Option Tab widgets.
+        row = 0
+        options_list = self.ft_plugin.options_list
+        if options_list:
+            self.create_preferences(options_list, self.options_grid)
 
         # Create the File Tab widgets.
         row = 0
@@ -517,10 +437,17 @@ class MainWindow(Adw.ApplicationWindow):
                 padding = (10, 0, 0, 10)
                 entry_padding = (0, 10, 0, 10)
             button = self.create_button(
-                slot, 1, row, self.files_grid, lambda _, x=slot: self.open_file(x), padding
+                slot,
+                1,
+                row,
+                self.files_grid,
+                lambda _, x=slot: self.open_file(x),
+                padding,
             )
             width = 1
-            entry = self.create_entry(2, row, self.files_grid, entry_padding, width, 1, True)
+            entry = self.create_entry(
+                2, row, self.files_grid, entry_padding, width, 1, True
+            )
             setattr(self, f"{slot}_button", button)
             setattr(self, f"{slot}_entry", entry)
             if self.flashtool == "pythor":
@@ -556,7 +483,9 @@ class MainWindow(Adw.ApplicationWindow):
         self.vte_term.set_context_menu(term_popover)
 
         # Scan the output whenever it changes
-        self.vte_term.connect("contents-changed", lambda *args: self.scan_output(*args, self.i))
+        self.vte_term.connect(
+            "contents-changed", lambda *args: self.scan_output(*args, self.i)
+        )
 
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
         print(
@@ -584,393 +513,8 @@ class MainWindow(Adw.ApplicationWindow):
             self.command_entry.grab_focus()
         self.command_bar.set_revealed(active)
 
-    def connect_option_switch(self, switch_row):
-        switch_row.switch.connect("state-set", self.on_switch_state_set)
-
-    def on_switch_state_set(self, switch, new_state):
-        state = not new_state
-        self.delayed_state_set(switch, state)
-        return True  # Prevent the default handler from running
-
-    def delayed_state_set(self, switch, state):
-        #                   box          box          switch_row
-        switch_row = switch.get_parent().get_parent().get_parent()
-        name = switch_row.name
-        # Extract the option from the name
-        option = name.rsplit("_", 2)[0]
-        if state:
-            #print("Turning option off...")
-            pass
-        else:
-            #print("Turning option on...")
-            pass
-        self.set_option(switch, state, option)
-
-    def option_change_successful(self, option, value):
-        switch_row = getattr(self, f"{option}_switch_row")
-        switch = switch_row.switch
-        active = switch.get_active()
-        if value != active:
-            #print("Operation failed.")
-            switch.set_active(False)
-        else:
-            #print("Operation succeded.")
-            pass
-        switch.set_state(value)  # Update the underlying state
-
-    def set_option(self, switch_row, state, option):
-        if not hasattr(self, "toggling_switch_row") or not self.toggling_switch_row:
-            if self.flashtool == "thor":
-                active = switch_row.get_active()
-                if active and option == "efs_clear":
-
-                    def callback(dialog, result):
-                        response_id = dialog.choose_finish(result)
-                        if response_id == "continue":
-                            print(
-                                f'Would have ran "options efsclear {str(switch_row.get_active()).lower()}"'
-                            )
-                            # self.send_cmd(f"options efsclear {str(switch_row.get_active()).lower()}")
-                        else:
-                            self.toggling_switch_row = True
-                            switch_row.set_active(False)
-                            self.toggling_switch_row = False
-
-                    print(
-                        "You are attemting to turn on the EFS Clear option, which wipes important stuff from your phone. Are you sure you want to continue?"
-                    )
-                    responses = [
-                        {"id": "cancel", "label": "Cancel", "appearance": "0"},
-                        {"id": "continue", "label": "Continue", "appearance": "2"},
-                    ]
-                    self.create_alert_dialog(
-                        "Warning - EFS Clear",
-                        "You are attempting to turn on the EFS Clear option, which wipes important stuff from your phone. Are you absolutely sure you want to continue?",
-                        responses,
-                        callback,
-                        "cancel",
-                    )
-                else:
-                    convert = {
-                        "t_flash": "tflash",
-                        "efs_clear": "efsclear",
-                        "reset_flash_count": "resetfc",
-                        "bootloader_update": "blupdate",
-                        "true": True,
-                        "false": False,
-                    }
-                    value = str(switch_row.get_active()).lower()
-
-                    print(f"{option}: {value}")
-                    setattr(self, option, value)
-
-                    option = convert[option]
-                    #print(f'Would have ran "options {option} {value}"')
-                    if option != "efs_clear" or value == "false":
-                        self.send_cmd(f"options {option} {value}")
-
-    def burner(self, *args):
-        pass
-
-    def flash(self):
-        if self.flashtool == "thor":
-            auto = self.settings.get("auto_partitions", False)
-            files = []
-            paths = {}
-            for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
-                entry = getattr(self, f"{slot}_entry")
-                if entry.get_text():
-                    file_path = entry.get_text()
-                    file = os.path.basename(file_path)
-                    files.append(file)
-                    paths[slot] = os.path.dirname(entry.get_text())
-            if len(paths) == 0:
-                print(self.strings["no_files_selected2"])
-                self.create_alert_dialog(
-                    "Invalid files", self.strings["no_files_selected2"]
-                )
-            elif len(set(paths.values())) > 1:
-                print("The files NEED to be in the same dir...")
-                self.create_alert_dialog("Invalid files", self.strings["invalid_files"])
-            else:
-                base_dir = list(paths.values())[0]
-                self.thor_select_partitions(files, base_dir, auto)
-
-        elif self.flashtool == "odin4":
-            args = []
-            for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
-                slot_to_arg = {
-                    "BL": "-b",
-                    "AP": "-a",
-                    "CP": "-c",
-                    "CSC": "-s",
-                    "USERDATA": "-u",
-                }
-                entry = getattr(self, f"{slot}_entry")
-                file = entry.get_text()
-                if file:
-                    arg = slot_to_arg[slot]
-                    file_arg = f"{arg} {file}"
-                    args.append(file_arg)
-            if len(args) == 0:
-                print(self.strings["no_files_selected2"])
-                self.create_alert_dialog(
-                    "Invalid files", self.strings["no_files_selected2"]
-                )
-            else:
-
-                def run_flash_command(device):
-                    if not device:
-                        message = "No devices were found - First connect a device that's in Download Mode"
-                        print(message)
-                        self.create_alert_dialog(
-                            "No devices were found",
-                            "First connect a device that's in Download Mode",
-                        )
-                    else:
-                        args.insert(0, f"-d {device}")
-                        command = " ".join(["flash"] + args)
-                        print(f"Running: {command}")
-                        self.send_cmd(command)
-
-                self.select_device("odin4", run_flash_command)
-
     def thor_select_partitions(self, files, base_dir, auto):
-        self.retry_partition = False
-        run = 0
-
-        def send_selected_partitions(selected_partitions):
-            print(f"selected_partitions: {selected_partitions}")
-            n_partitions = len(selected_partitions)
-            for i, partition in enumerate(selected_partitions):
-                if partition:
-                    print('SENDING: "Space"')
-                    self.send_cmd("\x20", False)
-                    time.sleep(0.05)
-                # If it's the last partition displayed,
-                # we don't need to send a down arrow.
-                if not i == n_partitions:
-                    print('SENDING: "Down Arrow"')
-                    self.send_cmd("\x1b[B", False)
-                    time.sleep(0.05)
-
-        def display_partitions(partitions, file):
-            selected_partitions = []
-
-            def partition_toggled(button, row):
-                if button.get_active():
-                    selected_partitions[row] = True
-                else:
-                    selected_partitions[row] = False
-
-            def return_selected_partitions(cancel=False):
-                #window.destroy()
-                if not cancel:
-                    send_selected_partitions(selected_partitions)
-                print('SENDING: "Enter"')
-                self.send_cmd("\n", False)
-                time.sleep(0.3)
-                GLib.idle_add(select)
-                
-            def callback(dialog, result):
-                response_id = dialog.choose_finish(result)
-                print(response_id)
-                if response_id == "ok":
-                    return_selected_partitions()
-                elif response_id == "cancel":
-                    return_selected_partitions(cancel=True)
-
-            """
-            dialog = Adw.Dialog.new()
-            dialog.set_child()
-            """
-            
-            """
-            def create_alert_dialog(
-                self,
-                title,
-                text,
-                responses=None,
-                callback=None,
-                default_response="NULL",
-                extra_child=None,
-            ):
-            """
-            
-            grid = Gtk.Grid.new()
-            
-            box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-            box.append(grid)
-            
-            responses = [
-                {"id": "ok", "label": "OK", "appearance": "0"},
-            ]
-
-            dialog = self.create_alert_dialog("Select Partitions", f"Select what partitions to flash from:/n{file}", responses, callback, extra_child=box)
-
-            """
-            window, grid = self.create_window("Select Partitions")
-            window.connect(
-                "close_request", lambda _: return_selected_partitions(cancel=True)
-            )
-            row = 0
-            self.create_label(
-                text="Select what partitions to flash from:",
-                grid=grid,
-                row=row,
-                padding=(5, 5, 5, 5),
-                align=Gtk.Align.CENTER,
-                width=2,
-            )
-            row += 1
-            self.create_label(
-                text=file,
-                grid=grid,
-                row=row,
-                padding=(5, 5, 0, 5),
-                align=Gtk.Align.CENTER,
-                width=2,
-            )
-            """
-            row = 0
-            for i, partition in enumerate(partitions):
-                btn = self.create_checkbutton(
-                    partition, 0, row, grid, padding=(5, 5, 0, 0), width=2
-                )
-                btn.connect(
-                    "toggled",
-                    lambda _, btn=btn, row=i: partition_toggled(btn, row),
-                )
-                selected_partitions.append(False)
-                row += 1
-            """
-            self.create_button(
-                "Cancel",
-                0,
-                row,
-                grid,
-                lambda _: return_selected_partitions(cancel=True),
-                padding=(5, 10, 5, 5),
-            )
-            self.create_button(
-                "OK",
-                1,
-                row,
-                grid,
-                lambda _: return_selected_partitions(),
-                padding=(0, 5, 5, 5),
-            )
-            window.present()
-            """
-
-        def select():
-            nonlocal run
-            run += 1
-            print(f"RUN {run}")
-            end = None
-            command = None
-            wait = True
-            if self.retry_partition:
-                wait = False
-                self.retry_partition = False
-            # If this is the first run, run the flashTar command.
-            if run == 1:
-                end = "(Press <space> to select, <enter> to accept)"
-                command = f"flashTar {base_dir}"
-                print(f'RUNNING: "{command}"')
-                self.send_cmd(command)
-            # Get the output.
-            output = self.get_output(
-                command=None,
-                start="shell>",
-                end=end,
-                wait=wait,
-            )
-            # print(f"output: {output}")
-            if not output[0] or output[0] == "Timeout":
-                print("No output was found.")
-                print(output[0])
-                return GLib.SOURCE_CONTINUE
-            else:
-                # If the output is for selecting partitions and is complete.
-                if output[0] == "Choose what partitions to flash from":
-                    print("Found start of partitions.")
-                    # TODO: Have a function that checks for a string (which may or may not be on one line) in output.
-                    #if output[-1] == "(Press <space> to select, <enter> to accept)":
-                    if "ept)" in output[-1]:
-                        print("Found end of partitions.")
-                        output = output[1:]
-                        file_lines = []
-                        print(output)
-                        for line in output:
-                            if line.startswith("> [ ]"):
-                                break
-                            # This is displayed if Thor can't match any partitions.
-                            elif line == "…":
-                                break
-                            file_lines.append(line)
-                        file = ""
-                        if file_lines:
-                            if ":" in file_lines[0]:
-                                file = file_lines[0].split(":")[0].strip()
-                            else:
-                                file = "".join(file_lines)
-                                if file.endswith(":"):
-                                    file = file[:-1]
-                        print(f'FILE: "{file}"')
-                        # If the file was selected by the user.
-                        if file in files:
-                            print("File was selected.")
-                            # Extract the partitions
-                            partitions = [
-                                line.lstrip("> [ ] ")
-                                for line in output
-                                if line.startswith("> [ ] ") or line.startswith("[ ] ")
-                            ]
-                            print(f"PARTITIONS: {partitions}")
-                            selected_partitions = []
-                            # If the "Automatically select all partitions"
-                            # setting is True.
-                            if auto:
-                                print("Automatically selecting all partitions.")
-                                for partition in partitions:
-                                    selected_partitions.append(True)
-                                send_selected_partitions(selected_partitions)
-                                # Send "Enter" once we have selected the partitions
-                                # that we want.
-                                print('SENDING: "Enter"')
-                                self.send_cmd("\n", False)
-                                time.sleep(0.3)
-                                return GLib.SOURCE_CONTINUE
-                            else:
-                                print(f'Select what partitions to flash from: "{file}"')
-                                shortened_file = shared_utils.shorten_string(file, 46)
-                                display_partitions(partitions, shortened_file)
-                        # If the file wasn't selected by the user.
-                        else:
-                            print("File wasn't selected.")
-                            print('SENDING: "Enter"')
-                            self.send_cmd("\n", False)
-                            time.sleep(0.3)
-                            return GLib.SOURCE_CONTINUE
-                    else:
-                        self.retry_partition = True
-                        return GLib.SOURCE_CONTINUE
-                elif output[0].startswith("You chose to flash"):    
-                    print("Verifying flash.")
-                    n_partitions = re.search(r"(\d+) partitions", output[0])
-                    partition_list = []
-                    for line in output:
-                        if line.startswith("Are you absol"):
-                            break
-                        partition_list.append(line)
-                    self.verify_flash(n_partitions.group(1), partition_list, auto)
-                    return GLib.SOURCE_REMOVE
-                else:
-                    print(f"Unknown output:\n{output}")
-                    return GLib.SOURCE_REMOVE
-
-        GLib.idle_add(select)
+        self.ft_plugin.select_partitions(self, files, base_dir, auto)
 
     def create_window(self, title):
         grid = Gtk.Grid()
@@ -982,114 +526,9 @@ class MainWindow(Adw.ApplicationWindow):
         return window, grid
 
     def scan_output(self, vte, i):
-        #print(f"contents changed: {i}")
+        # print(f"contents changed: {i}")
         self.i += 1
-        if self.flashtool == "thor":
-            strings_to_commands = {
-                "[sudo] password for": [
-                    lambda: self.set_password_entry(self.command_entry, True)
-                ],
-                "Welcome to Thor Shell": [
-                    lambda: self.set_password_entry(self.command_entry, False),
-                    lambda: self.set_widget_state(self.connect_button, state=True),
-                ],
-                "Successfully connected to the device!": [
-                    lambda: print("Successfully connected to the device!"),
-                    lambda: self.set_widget_state(self.start_odin_button, state=True),
-                    lambda: self.connect_button.set_label("Disconnect"),
-                    lambda: self.change_button_command(
-                        self.connect_button, lambda _: self.send_cmd("disconnect")
-                    ),
-                ],
-                "Successfully disconnected the device!": [
-                    lambda: print("Successfully disconnected the device!"),
-                    lambda: self.start_odin_button.set_label("Start Odin Session"),
-                    lambda: self.change_button_command(
-                        self.start_odin_button, lambda _: self.send_cmd_entry("begin odin")
-                    ),
-                    lambda: self.set_widget_state(self.start_odin_button, self.flash_button, state=False),
-                    lambda: self.connect_button.set_label("Connect"),
-                    lambda: self.change_button_command(
-                        self.connect_button, lambda _: self.send_cmd_entry("connect")
-                    ),
-                ],
-                "Successfully began an Odin session!": [
-                    lambda: print("Successfully began an Odin session!"),
-                    # NOTE: Why do we need to enable the start_odin_button here?
-                    # It's supposed to be enabled above ^.
-                    lambda: self.set_widget_state(
-                        self.start_odin_button,
-                        self.flash_button,
-                        self.t_flash_switch_row,
-                        self.efs_clear_switch_row,
-                        self.bootloader_update_switch_row,
-                        self.reset_flash_count_switch_row,
-                        state=True,
-                    ),
-                    lambda: self.start_odin_button.set_label("End Odin Session"),
-                    lambda: self.change_button_command(
-                        self.start_odin_button, lambda _: self.end_odin()
-                    ),
-                ],
-                "Successfully ended an Odin session!": [
-                    lambda: print("Successfully ended an Odin session!"),
-                    lambda: self.set_widget_state(
-                        self.flash_button,
-                        self.flash_button,
-                        self.t_flash_switch_row,
-                        self.efs_clear_switch_row,
-                        self.bootloader_update_switch_row,
-                        self.reset_flash_count_switch_row,
-                        state=False,
-                    ),
-                    lambda: self.start_odin_button.set_label("Start Odin Session"),
-                    lambda: self.change_button_command(
-                        self.start_odin_button, lambda _: self.start_odin_session()
-                    ),
-                    # We disable it because with Thor:
-                    # "You can't reuse the same USB connection after you close an
-                    # Odin session, and you can't re-connect the device.
-                    # You have to reboot each time."
-                    lambda: self.set_widget_state(self.start_odin_button, state=False),
-                ],
-                'Successfully set "T-Flash" to "true"!': [
-                    lambda: self.option_change_successful("t_flash", True)
-                ],
-                'Successfully set "T-Flash" to "false"!': [
-                    lambda: self.option_change_successful("t_flash", False)
-                ],
-                'Successfully set "EFS Clear" to "true"!': [
-                    lambda: self.option_change_successful("efs_clear", True)
-                ],
-                'Successfully set "EFS Clear" to "false"!': [
-                    lambda: self.option_change_successful("efs_clear", False)
-                ],
-                'Successfully set "Bootloader Update" to "true"!': [
-                    lambda: self.option_change_successful("bootloader_update", True)
-                ],
-                'Successfully set "Bootloader Update" to "false"!': [
-                    lambda: self.option_change_successful("bootloader_update", False)
-                ],
-                'Successfully set "Reset Flash Count" to "true"!': [
-                    lambda: self.option_change_successful("reset_flash_count", True)
-                ],
-                'Successfully set "Reset Flash Count" to "false"!': [
-                    lambda: self.option_change_successful("reset_flash_count", False)
-                ],
-            }
-        elif self.flashtool == "odin4":
-            strings_to_commands = {
-                "Welcome to Interactive Odin4!": [
-                    lambda: self.set_widget_state(
-                        self.flash_button,
-                        state=True,
-                    )
-                ]
-            }
-        elif self.flashtool == "pythor":
-            strings_to_commands = {
-                ">>": [lambda: self.set_widget_state(self.connect_button, state=True)]
-            }
+        strings_to_commands = self.ft_plugin.strings_to_commands
         # This is a pretty bad way to do this.
         # 10000 should be replaced with the actual value, But it works.
         num_cols = vte.get_column_count()
@@ -1158,10 +597,12 @@ class MainWindow(Adw.ApplicationWindow):
                         break
                     """
                 words = start.split()  # split the start string into a list of words
-                shortened_start = ''  # initialize an empty string
+                shortened_start = ""  # initialize an empty string
                 for word in words:
-                    if len(shortened_start) + len(word) + 1 <= num_cols:  # check if adding the word fits in num_cols space
-                        shortened_start += word + ' '
+                    if (
+                        len(shortened_start) + len(word) + 1 <= num_cols
+                    ):  # check if adding the word fits in num_cols space
+                        shortened_start += word + " "
                     else:
                         break
 
@@ -1173,8 +614,8 @@ class MainWindow(Adw.ApplicationWindow):
                     if shortened_start in lines[i]:
                         start_index = i
                         break
-                    #start_match = re.search(trimmed_start, lines[i])
-                    #if start_match:
+                    # start_match = re.search(trimmed_start, lines[i])
+                    # if start_match:
                 # Get all the lines after start and up to end, if it's
                 # found, otherwise get everything after start.
                 if start_index != -1:
@@ -1182,10 +623,12 @@ class MainWindow(Adw.ApplicationWindow):
                 end_index = None
                 if end:
                     words = end.split()  # split the start string into a list of words
-                    shortened_end = ''  # initialize an empty string
+                    shortened_end = ""  # initialize an empty string
                     for word in words:
-                        if len(shortened_end) + len(word) + 1 <= num_cols:  # check if adding the word fits in num_cols space
-                            shortened_end += word + ' '
+                        if (
+                            len(shortened_end) + len(word) + 1 <= num_cols
+                        ):  # check if adding the word fits in num_cols space
+                            shortened_end += word + " "
                         else:
                             break
 
@@ -1265,129 +708,8 @@ class MainWindow(Adw.ApplicationWindow):
         return result
 
     # TODO: This could be improved.
-    def select_device(self, flashtool, function=None):
-        def set_selected_device(btn, device):
-            if btn.get_active:
-                self.device = device
-
-        def send_selected_device(cancel=False):
-            if flashtool == "thor":
-                if cancel:
-                    times = len(devices)
-                else:
-                    times = self.device - 1
-                for _ in range(times):
-                    # Send "Down Arrow"
-                    self.send_cmd("\x1b[B", False)
-                # Send "Enter"
-                self.send_cmd("\n", False)
-            elif flashtool == "odin4":
-                if not cancel:
-                    if not self.device:
-                        function(None)
-                    else:
-                        print(f"Selected device: {self.device}")
-                        function(self.device)
-
-        def callback(dialog, result):
-            response_id = dialog.choose_finish(result)
-            if response_id == "ok":
-                send_selected_device()
-            elif response_id == "cancel":
-                send_selected_device(cancel=True)
-                
-        def clean_devices(devices):
-            """Returns a cleaned version of the given list of devices,
-            to ensure that they all start with '> '.
-            
-            Adds a ' ' between each part of the device, if it was on multiple lines.
-            This may or may not be necessary, depending on the specific case.
-
-            Args:
-                devices (list): A list of devices, which may or may not each be on one line.
-
-            Returns:
-                list: A cleaned list of devices, where each device is on one line.
-            """
-            cleaned_devices = []
-            ongoing_device = ""
-
-            for device in devices:
-                if device.startswith("> "):
-                    if ongoing_device:
-                        cleaned_devices.append(ongoing_device.strip())
-                    ongoing_device = device
-                else:
-                    ongoing_device += " " + device
-
-            if ongoing_device:
-                cleaned_devices.append(ongoing_device.strip())
-
-            return cleaned_devices
-
-        def display_devices():
-            box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 5)
-            grid = Gtk.Grid()
-            box.append(grid)
-            group = None
-            row = 1
-
-            for i, device in enumerate(devices):
-                checkbutton = self.create_checkbutton(device, 0, row, grid)
-                if i == 0:
-                    group = checkbutton
-                    checkbutton.set_active(True)
-                else:
-                    checkbutton.set_group(group)
-                if flashtool == "thor":
-                    checkbutton.connect("toggled", set_selected_device, row)
-                elif flashtool == "odin4":
-                    checkbutton.connect("toggled", set_selected_device, device)
-                row = row + 1
-
-            responses = [
-                {"id": "cancel", "label": "Cancel", "appearance": "0"},
-                {"id": "ok", "label": "OK", "appearance": "0"},
-            ]
-            self.create_alert_dialog(
-                self.strings["choose_a_device"], "", responses, callback, "ok", box
-            )
-
-        if flashtool == "thor":
-            devices = self.get_output(
-                "connect", "Choose a device to connect to:", "Cancel operation"
-            )
-            # Make sure each device is on one line.
-            devices = clean_devices(devices)
-            # TODO: I haven't actually tested this with two devices connected.
-            # devices = ["/dev/device1", "/dev/device2"]
-            if not devices[0] or devices[0] == "Timeout":
-                print("No devices were found!")
-            else:
-                if len(devices) == 1:
-                    self.device = 1
-                    send_selected_device()
-                else:
-                    self.device = 1
-                    display_devices()
-
-        elif flashtool == "odin4":
-            if not function:
-                print(
-                    "The flashtool arg must be passed to select_device if the flashtool is odin4."
-                )
-            else:
-                devices = self.get_output("list")
-                # TODO: I haven't actually tested this with two devices connected.
-                # devices = ["/dev/bus/usb/device1", "/dev/bus/usb/device2"]
-                if not devices[0] or devices[0] == "Timeout":
-                    function(None)
-                else:
-                    if len(devices) == 1:
-                        function(devices[0])
-                    else:
-                        self.device = devices[0]
-                        display_devices()
+    def select_device(self, function=None):
+        self.ft_plugin.select_device(self, function=None)
 
     # TODO: Display the partitions that are to be flashed.
     def verify_flash(self, n, partitions, auto):
@@ -1479,24 +801,6 @@ class MainWindow(Adw.ApplicationWindow):
         for widget in args:
             widget.set_sensitive(state)
 
-    def toggle_entry_visibility(self, entry, icon_pos):
-        visible = entry.get_visibility()
-        if visible:
-            icon = "view-reveal-symbolic"
-        else:
-            icon = "view-conceal-symbolic"
-            entry.set_visibility(not visible)
-            entry.set_icon_from_icon_name(Gtk.EntryIconPosition(icon_pos), icon)
-
-    def set_password_entry(self, entry, state):
-        if state:
-            icon = "view-reveal-symbolic"
-        else:
-            icon = "view-conceal-symbolic"
-        entry.set_visibility(not state)
-        entry.set_icon_from_icon_name(Gtk.EntryIconPosition(1), icon)
-        self.command_entry.connect("icon-press", self.toggle_entry_visibility)
-
     def send_cmd(self, cmd, add_enter=True):
         if add_enter:
             cmd = cmd + "\n"
@@ -1511,11 +815,10 @@ class MainWindow(Adw.ApplicationWindow):
         if self.flashtool == "thor":
             if cmd == "connect\n":
                 special = True
-                # self.thor_select_device()
-                self.select_device("thor")
+                self.ft_plugin.select_device()
             if cmd == "flashTar\n":
                 special = True
-                self.flash()
+                self.ft_plugin.flash(self)
         if not special:
             self.vte_term.feed_child(cmd.encode("utf-8"))
 
@@ -1779,8 +1082,10 @@ class MainWindow(Adw.ApplicationWindow):
         )
         last_box = action_row_box.get_last_child()
         label_box.insert_before(action_row_box, last_box)
-        
-    def create_action_row(self, name, title, subtitle, prefixes, suffixes, activatable_widget):
+
+    def create_action_row(
+        self, name, title, subtitle, prefixes, suffixes, activatable_widget
+    ):
         action_row = Adw.ActionRow.new()
         setattr(self, name, action_row)
         if title:
@@ -1795,7 +1100,7 @@ class MainWindow(Adw.ApplicationWindow):
                 action_row.add_suffix(suffix)
         if activatable_widget:
             action_row.set_activatable_widget(activatable_widget)
-        
+
         return action_row
 
     def create_preferences(self, main_preferences_list: list, grid: Gtk.Grid) -> None:
@@ -1818,7 +1123,7 @@ class MainWindow(Adw.ApplicationWindow):
                 - "section_function" (function, optional): Refer to the description of the function arg below.
                 - "section_function_args" (list, optional): Refer to the description of the function_args argument below.
                 NOTE: If a row-specific option is specified, it overides a section-wide option.
-                - "section_commands" (list, optional): 
+                - "section_commands" (list, optional):
                 - "rows" (list): A list of dictionaries, where each dictionary represents a row in the section.
                     Each row dictionary can contain:
                     - "type" (str): The type of row, which can be "switch", "combo", or "expander".
@@ -2049,6 +1354,258 @@ class MainWindow(Adw.ApplicationWindow):
                     )
         grid.attach(preferences_page, 0, 0, 1, 1)
 
+    def create_preferences_dialog(self, *_):
+        """
+        Creates a preferences dialog based on the provided main_preferences_list.
+
+        This function creates an Adw.PreferencesPage and populates it with sections and settings
+        based off the items in main_preferences_list. Each section is represented by an Adw.PreferencesGroup,
+        and each row is represented by a row within the group. The type of row depends on the type
+        specified in the row dictionary, which can be "switch", "combo", or "expander".
+
+        Parameters:
+            main_preferences_list (list): A list of dictionaries, where each dictionary represents a section
+            of the preferences page. Each section dictionary should contain:
+                - "title" (str): The title of the section.
+                - "section_sensitive" (bool, optional): Refer to the description of the sensitive arg below.
+                - "section_signal" (str, optional): Refer to the description of the signal arg below.
+                - "section_function" (function, optional): Refer to the description of the function arg below.
+                - "section_function_args" (list, optional): Refer to the description of the function_args argument below.
+                NOTE: If a row-specific option is specified, it overides a section-wide option.
+                - "section_commands" (list, optional):
+                - "rows" (list): A list of dictionaries, where each dictionary represents a row in the section.
+                    Each row dictionary can contain:
+                    - "type" (str): The type of row, which can be "switch", "combo", or "expander".
+                    - "title" (str): The title of the row.
+                    - "subtitle" (str, optional): The subtitle of the row. Only applies to switch rows.
+                    - "active" (bool, optional): Whether the row is active. Only applies to switch rows.
+                    - "sensitive" (bool, optional): Whether the row is sensitive.
+                    - "signal" (str, optional): The signal to connect the function to. Only applies to switch rows.
+                    - "function" (function, optional): A function to be executed when the row is interacted with.
+                    - "function_args" (list, optional): A list of args to pass to the function. Oftentimes, you want to
+                    pass a variable to the function that is set in this function, say row_setting. Or maybe you want to
+                    pass a variable that is set in the function that creates the row, like switch_row in create_switch_row.
+                    You can do this by taking the variable you want to pass to the function, making it a string, and then
+                    adding a "$" to the beggining of it. For example, row_setting becomes "$row_setting". You can do
+                    the same with variables that should be set in the function that creates the individual
+                    row (create_switch_row, create_combo_row, and create_expander_row), just add two "$"s instead of one.
+                    For, example, switch_row would become "$$switch_row" in command_args.
+                    - "commands" (list, optional): A list of commands to execute after creating the row. The format is:
+                    [(example_command, ["example_string", "$example_variable", example_variable])]
+                    Strings starting with "$" are converted to variables defined in create_{type}_switch at run-time.
+                    - "setting" (str): The name of the setting associated with the row.
+
+            grid (Gtk.Grid): The grid to which the preferences page should be attached.
+
+        Returns:
+            None
+        """
+        main_preferences_list = self.preferences_dialog_layout
+        preferences_dialog = Adw.PreferencesDialog.new()
+        preferences_page = Adw.PreferencesPage.new()
+        preferences_page.set_hexpand(True)
+        preferences_dialog.add(preferences_page)
+        for section in main_preferences_list:
+            preferences_group = Adw.PreferencesGroup.new()
+            preferences_page.add(preferences_group)
+            group_title = section.get("title")
+            section_sensitive = section.get("section_sensitive")
+            section_signal = section.get("section_signal")
+            section_function = section.get("section_function")
+            section_function_args = section.get("section_function_args")
+            section_commands = section.get("section_commands")
+            rows = section.get("rows")
+            if group_title:
+                preferences_group.set_title(group_title)
+            for row in rows:
+                row_type = row.get("type")
+                row_title = row.get("title")
+                row_subtitle = row.get("subtitle")
+                row_sensitive = row.get("sensitive")
+                row_signal = row.get("signal")
+                row_function = row.get("function")
+                row_function_args = row.get("function_args")
+                row_commands = row.get("commands")
+                row_setting = row.get("setting")
+                if not row_type:
+                    print(
+                        'Error in create_preferences: The "type" arg must be specified.'
+                    )
+                    break
+                if not row_setting:
+                    print(
+                        'Error in create_preferences: The "setting" arg must be specified.'
+                    )
+                    break
+                if row_type == "switch":
+                    name = f"{row_setting}_switch_row"
+                    default_value = row.get("default_value", False)
+                    active = self.settings.get(row_setting, default_value)
+                elif row_type == "combo":
+                    options = row.get("options")
+                    default_value = next(
+                        (
+                            option["value"]
+                            for option in options
+                            if option["value"] == self.settings.get(row_setting)
+                        ),
+                        options[0]["value"],
+                    )
+                    value_name_list = Gtk.StringList.new()
+                    value_list = [option["value"] for option in options]
+                    for option in options:
+                        value_name_list.append(option["name"])
+                    name = f"{row_setting}_combo_row"
+                    model = value_name_list
+                    selected = value_list.index(default_value)
+                if row_type == "switch" or row_type == "combo":
+                    if row_sensitive is not None:
+                        sensitive = row_sensitive
+                    else:
+                        sensitive = section_sensitive
+                    if row_signal is not None:
+                        signal = row_signal
+                    else:
+                        signal = section_signal
+                    if row_function:
+                        function = row_function
+                    elif section_function:
+                        function = section_function
+                    else:
+                        if row_type == "switch":
+                            function = self.on_switch_row_changed
+                        elif row_type == "combo":
+                            function = self.on_combo_row_changed
+                    args = None
+                    if row_function_args is not None:
+                        args = row_function_args
+                    else:
+                        args = section_function_args
+                    if args:
+                        function_args = []
+                        for arg in args:
+                            if arg.startswith("$") and len(arg) > 1 and arg[1] != "$":
+                                function_args.append(locals()[arg[1:]])
+                            else:
+                                function_args.append(arg)
+                    else:
+                        function_args = None
+                    if row_commands is not None:
+                        commands = row_commands
+                    else:
+                        commands = section_commands
+                if row_type == "switch":
+                    switch_row = self.create_switch_row(
+                        name,
+                        row_title,
+                        row_subtitle,
+                        active,
+                        sensitive,
+                        signal,
+                        function,
+                        function_args,
+                        commands,
+                    )
+                    preferences_group.add(switch_row)
+                elif row_type == "combo":
+                    combo_row = self.create_combo_row(
+                        name,
+                        row_title,
+                        row_subtitle,
+                        model,
+                        selected,
+                        function,
+                        function_args,
+                    )
+                    preferences_group.add(combo_row)
+                elif row_type == "expander":
+                    options = row["options"]
+                    default_value = next(
+                        (
+                            option["value"]
+                            for option in options
+                            if option["value"] == self.settings.get(row_setting)
+                        ),
+                        options[0]["value"],
+                    )
+                    value_name_list = [option["name"] for option in options]
+                    value_list = [option["value"] for option in options]
+                    current_value_name = "Not set"
+                    radio_group = None
+                    rows = []
+                    for i, option in enumerate(options):
+                        name = option.get("name")
+                        value = option.get("value")
+                        action_row = Adw.ActionRow(title=name)
+                        flashtool_file = self.settings.get(f"{value}_file", None)
+                        if flashtool_file:
+                            action_row.set_subtitle(flashtool_file)
+                        setattr(self, f"{value}_action_row", action_row)
+                        check_button = Gtk.CheckButton()
+                        setattr(action_row, "check_button", check_button)
+                        check_button.set_group(radio_group)
+                        if value == default_value and self.settings.get(
+                            f"{value}_file", None
+                        ):
+                            check_button.set_active(True)
+                            current_value_name = name
+                        setattr(self, f"{row_setting}_expander_row", None)
+                        check_button.connect(
+                            "toggled",
+                            lambda _, action_row=action_row, check_button=check_button, setting=row_setting, value=value: self.on_action_row_checkbutton_clicked(
+                                action_row, check_button, setting, value
+                            ),
+                        )
+                        radio_group = check_button
+                        action_row.add_prefix(check_button)
+                        button_box = Gtk.Box(spacing=0)
+                        file_chooser_button = Gtk.Button()
+                        info_button = Gtk.Button()
+                        self.set_padding(file_chooser_button, [0, 0, 10, 10])
+                        self.set_padding(info_button, [0, 0, 10, 10])
+                        file_chooser_button_content = Adw.ButtonContent(
+                            label="", icon_name="document-open-symbolic"
+                        )
+                        info_button_content = Adw.ButtonContent(
+                            label="", icon_name="help-about-symbolic"
+                        )
+                        file_chooser_button.set_child(file_chooser_button_content)
+                        info_button.set_child(info_button_content)
+                        file_chooser_button.set_has_frame(False)
+                        info_button.set_has_frame(False)
+                        file_chooser_button.connect(
+                            "clicked",
+                            lambda _, action_row=action_row, setting=row_setting, name=name, value=value: self.on_action_row_file_button_clicked(
+                                action_row, setting, name, value
+                            ),
+                        )
+                        info_button.connect(
+                            "clicked",
+                            lambda _, action_row=action_row, setting=row_setting, name=name, value=value: self.on_info_button_clicked(
+                                action_row, setting, name, value
+                            ),
+                        )
+                        button_box.append(file_chooser_button)
+                        button_box.append(info_button)
+                        action_row.add_suffix(button_box)
+                        if self.settings.get(f"{value}_file", None):
+                            action_row.set_activatable_widget(check_button)
+                        else:
+                            action_row.set_activatable_widget(file_chooser_button)
+                        rows.append(action_row)
+                    name = f"{row_setting}_expander_row"
+                    expander_row = self.create_expander_row(
+                        name, row_title, row_subtitle, rows
+                    )
+                    self.add_custom_expander_row_label(current_value_name, expander_row)
+                    expander_row.added_label.set_label(current_value_name)
+                    preferences_group.add(expander_row)
+                else:
+                    print(
+                        f'Error in create_preferences: "{row_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
+                    )
+        preferences_dialog.present(self)
+
     def on_action_row_checkbutton_clicked(
         self, action_row, check_button, setting, value
     ):
@@ -2147,14 +1704,6 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         new_value = value_list[new_value_index]
         self.set_setting(setting, new_value)
 
-    def option_changed(self, option, new_value):
-        if self.flashtool == "thor":
-            switch_row_name = option + "_switch_row"
-            switch_row = getattr(self, switch_row_name)
-            self.toggling_switch_row = True
-            switch_row.set_active(new_value)
-            self.toggling_switch_row = False
-
     def create_alert_dialog(
         self,
         title,
@@ -2241,8 +1790,10 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
                 radiobutton_group = radiobutton
             else:
                 radiobutton.set_group(radiobutton_group)
+
             def handler(widget, value=value):
                 return self.on_radiobutton_toggled(widget, setting, value)
+
             radiobutton.connect("toggled", handler)
 
     def create_toggle_switch(
@@ -2263,24 +1814,36 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         widget.set_margin_end(padding[1])
         widget.set_margin_top(padding[2])
         widget.set_margin_bottom(padding[3])
-        
+
     def create_about_dialog(self, *_):
         about_dialog = Adw.AboutDialog.new()
         about_dialog.set_application_name("Galaxy Flasher")
         about_dialog.set_developer_name("ethical_haquer")
         about_dialog.set_version(version)
         about_dialog.set_website("https://codeberg.org/ethical_haquer/Galaxy-Flasher")
-        about_dialog.set_support_url("https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/")
-        about_dialog.set_issue_url("https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues")
-        #about_dialog.add_link("Codeberg repo", "https://codeberg.org/ethical_haquer/Galaxy-Flasher")
-        #about_dialog.add_link("Report an issue", "https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues")
-        #about_dialog.add_link("Documentation", "https://galaxy-flasher-docs.readthedocs.io/en/latest/")
-        #about_dialog.add_link("Chat on XDA", "https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/")
-        about_dialog.set_developers(["ethical_haquer https://codeberg.org/ethical_haquer/", "justaCasualCoder https://github.com/justaCasualCoder"])
-        about_dialog.add_credit_section("Thor by", ["TheAirBlow https://github.com/TheAirBlow"])
+        about_dialog.set_support_url(
+            "https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/"
+        )
+        about_dialog.set_issue_url(
+            "https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues"
+        )
+        # about_dialog.add_link("Codeberg repo", "https://codeberg.org/ethical_haquer/Galaxy-Flasher")
+        # about_dialog.add_link("Report an issue", "https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues")
+        # about_dialog.add_link("Documentation", "https://galaxy-flasher-docs.readthedocs.io/en/latest/")
+        # about_dialog.add_link("Chat on XDA", "https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/")
+        about_dialog.set_developers(
+            [
+                "ethical_haquer https://codeberg.org/ethical_haquer/",
+                "justaCasualCoder https://github.com/justaCasualCoder",
+            ]
+        )
+        about_dialog.add_credit_section(
+            "Thor by", ["TheAirBlow https://github.com/TheAirBlow"]
+        )
         about_dialog.set_copyright(copyright)
         about_dialog.set_license_type(Gtk.License.GPL_3_0)
         about_dialog.present(self)
+
 
 class GalaxyFlasherGtk(Adw.Application):
     def __init__(self, **kwargs):
@@ -2291,6 +1854,7 @@ class GalaxyFlasherGtk(Adw.Application):
         self.win = MainWindow(application=app)
         self.win.set_default_size(950, 400)
         self.win.present()
+
 
 if __name__ == "__main__":
     app = GalaxyFlasherGtk(application_id="com.ethicalhaquer.galaxyflasher")

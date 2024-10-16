@@ -170,3 +170,8 @@ settings.json
 other-thor-flashes.py
 /release
 test.py
+/flash_tool_plugins/__pycache__/
+
+galaxy-flasher-gtk.py.bk
+flash_tool_plugins/wannabe.py
+*.pyc
