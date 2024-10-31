@@ -1,1 +1,2 @@
 PyGObject
+pexpect

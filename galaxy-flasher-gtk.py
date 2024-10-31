@@ -20,10 +20,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import platform
+import pexpect
 import re
 import sys
 import time
 import shared_utils
+import logging
 from flash_tool_plugins import load_plugins
 
 import gi
@@ -34,7 +36,7 @@ gi.require_version("Vte", "3.91")
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Vte  # noqa: E402
 
-version = "Alpha v0.5.2"
+version = "Alpha v0.6.0"
 year = shared_utils.get_current_year()
 copyright = f"© {year} ethical_haquer"
 config_dir = GLib.get_user_config_dir()
@@ -46,18 +48,20 @@ settings_file = os.path.join(app_config_dir, "settings.json")
 swd = os.path.dirname(os.path.realpath(__file__))
 machine = platform.machine()
 system = platform.system().lower()
+logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.last_output = ""
-        self.i = 1
         self.glib = GLib
         self.time = time
         self.shared_utils = shared_utils
         self.gtk = Gtk
         self.re = re
-        super().__init__(*args, **kwargs)
+        self.selected_files = {}
         # Add the CSS provider to the screen
         style_provider = Gtk.CssProvider()
         css = """
@@ -195,43 +199,72 @@ class MainWindow(Adw.ApplicationWindow):
                 )
         self.window_title = Adw.WindowTitle.new("Galaxy Flasher", f"{version}")
 
-        # Create toolbar_view
-        toolbar_view = Adw.ToolbarView.new()
-        self.props.content = toolbar_view
-
-        # Setup header
-        self.header_bar = Adw.HeaderBar()
-        toolbar_view.add_top_bar(self.header_bar)
-
-        # Create a toggle button for the command bar
-        self.command_button = Gtk.ToggleButton.new()
-        self.command_button.set_tooltip_text("Command")
-        self.command_button.set_icon_name("utilities-terminal-symbolic")
-
-        # Create command_entry
-        self.command_entry = Gtk.Entry.new()
-        self.command_entry.set_hexpand(True)
-        self.command_entry.set_icon_from_icon_name(0, "utilities-terminal-symbolic")
-        self.command_entry.set_placeholder_text("Run a command")
-        self.command_entry.connect(
-            "activate", lambda _, __: self.on_command_enter(), None
+        env = os.environ.copy()
+        env["TERM"] = "xterm-256color"
+        env["FORCE_COLOR"] = "3"
+        self.child = pexpect.spawn(
+            "/home/ethical_haquer/TheAirBlow.Thor.Shell", env=env, timeout=5,
         )
+        # self.child.logfile = sys.stdout.buffer
 
-        # Create command_bar
-        self.command_bar = Gtk.ActionBar.new()
-        self.command_bar.set_center_widget(self.command_entry)
-        self.command_bar.set_revealed(False)  # Hide the command bar initially
-        toolbar_view.add_top_bar(self.command_bar)
+        # Make the whole window draggable and right-clickable.
+        self.handle = Gtk.WindowHandle.new()
+        self.props.content = self.handle
 
-        # Connect the toggled signal to toggle_command_bar
-        self.command_button.connect("toggled", self.toggle_command_bar)
-        self.header_bar.pack_start(self.command_button)
+        # Create the flash button
+        self.flash_button = self.create_button(
+            "Flash!",
+            column=0,
+            row=0,
+            command=lambda _: self.select_files(),
+        )
+        self.flash_button.set_hexpand(True)
+        self.flash_button.set_vexpand(True)
+        self.flash_button.add_css_class("pill")
+        self.flash_button.add_css_class("suggested-action")
+
+        # Create a box to hold the flash button
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        box.set_hexpand(True)
+        box.set_vexpand(True)
+        box.set_halign(Gtk.Align.CENTER)
+        box.set_valign(Gtk.Align.CENTER)
+        box.append(self.flash_button)
+
+        # Create the flash page
+        self.flash_page = Adw.StatusPage.new()
+        self.flash_page.set_icon_name("com.ethicalhaquer.galaxyflasher")
+        self.flash_page.set_title("Galaxy Flasher")
+        self.flash_page.set_description(
+            "Connect a device in Download Mode, and then click the flash button to start."
+        )
+        self.flash_page.set_child(box)
+
+        # Create header bar
+        self.header_bar = Adw.HeaderBar()
+        self.header_bar.set_show_title(False)
+
+        # Create toolbar view
+        self.toolbar_view = Adw.ToolbarView.new()
+        self.toolbar_view.add_top_bar(self.header_bar)
+        self.toolbar_view.set_content(self.flash_page)
+
+        self.toast_overlay = Adw.ToastOverlay.new()
+        self.handle.set_child(self.toast_overlay)
+
+        # Create the stack
+        self.stack = Gtk.Stack.new()
+        # self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT)
+        self.toast_overlay.set_child(self.stack)
+        self.stack.add_named(self.toolbar_view, "flash")
 
         # Create about action
         about_action = Gio.SimpleAction.new("about", None)
         about_action.connect("activate", self.create_about_dialog)
         self.add_action(about_action)
 
+        # Preferences dialog layout
         self.preferences_dialog_layout = [
             {
                 "title": "General",
@@ -277,7 +310,7 @@ class MainWindow(Adw.ApplicationWindow):
                     {
                         "type": "switch",
                         "title": "Automatically select all partitions",
-                        "subtitle": "Instead of asking what partitions to flash, automatically select them all.",
+                        "subtitle": "Automatically select all partitions to flash.",
                         "function": self.on_switch_row_changed,
                         "function_args": ["$$switch_row", "$$active", "$row_setting"],
                         "setting": "auto_partitions",
@@ -290,8 +323,6 @@ class MainWindow(Adw.ApplicationWindow):
         # Create preferences action
         preferences_action = Gio.SimpleAction.new("preferences", None)
         preferences_action.connect("activate", self.create_preferences_dialog)
-
-        # Connect the signal to the handler
         self.add_action(preferences_action)
 
         # Create menu
@@ -299,22 +330,17 @@ class MainWindow(Adw.ApplicationWindow):
         menu.append("Preferences", "win.preferences")
         menu.append("About Galaxy Flasher", "win.about")
 
-        # Create popover
+        # Create popover with menu
         popover = Gtk.PopoverMenu()
         popover.set_menu_model(menu)
 
-        # Create hamburger
+        # Create hamburger menu button
         hamburger = Gtk.MenuButton()
         hamburger.set_popover(popover)
         hamburger.set_icon_name("open-menu-symbolic")
         self.header_bar.pack_end(hamburger)
 
-        # Create main grid
-        self.grid = Gtk.Grid()
-        toolbar_view.set_content(self.grid)
-        self.grid.set_column_spacing(10)
-        self.grid.set_row_spacing(10)
-
+        """
         # Define the stack to hold tabs
         self.stack = Adw.ViewStack()
 
@@ -358,7 +384,9 @@ class MainWindow(Adw.ApplicationWindow):
             grid.set_row_spacing(10)
             self.stack.add_titled(grid, tab, tab)
             setattr(self, f"{tab.lower()}_grid", grid)
+        """
 
+        """
         # Create flash-tool output box
         self.vte_term = Vte.Terminal()
         self.vte_term.spawn_async(
@@ -383,6 +411,7 @@ class MainWindow(Adw.ApplicationWindow):
         scrolled_window.set_halign(Gtk.Align.FILL)
         scrolled_window.set_valign(Gtk.Align.FILL)
         self.log_grid.attach(scrolled_window, 0, 0, 1, 1)
+        """
 
         # Set the style_manager
         self.style_manager = Adw.StyleManager.get_default()
@@ -395,32 +424,12 @@ class MainWindow(Adw.ApplicationWindow):
         # Detect whenever the theme changes.
         self.style_manager.connect("notify::dark", self.on_theme_changed)
 
-        # Create the main buttons.
-        buttons = self.ft_plugin.buttons
-
-        button_grid = Gtk.Grid(column_spacing=10)
-        self.set_padding(button_grid, (10, 10, 10, 10))
-
-        for column, btn in enumerate(buttons):
-            name = btn["name"]
-            text = btn["text"]
-            command = btn["command"]
-            button = self.create_button(
-                text,
-                column=column,
-                row=0,
-                grid=button_grid,
-                command=command,
-            )
-            button.set_hexpand(True)
-            button.set_halign(Gtk.Align.FILL)
-            setattr(self, name, button)
-
-        self.log_grid.attach(button_grid, column=0, row=1, width=1, height=1)
-
         # Initialise the main buttons
         self.ft_plugin.initialise_buttons(self)
 
+        self.ft_plugin.setup_flash_tool(self)
+
+        """
         # Create the Option Tab widgets.
         row = 0
         options_list = self.ft_plugin.options_list
@@ -454,38 +463,7 @@ class MainWindow(Adw.ApplicationWindow):
                 button.set_sensitive(False)
                 entry.set_sensitive(False)
             row += 1
-
-        # Create the terminal's right-click options.
-        term_popover = Gtk.Popover()
-
-        # This doesn't show an arrow, I'm not sure if we want one though.
-        # term_popover.set_has_arrow(True)
-        term_option_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        copy_button = Gtk.Button(label="Copy", css_classes=["mybutton"])
-        copy_button.connect(
-            "clicked",
-            lambda button: (
-                self.vte_term.copy_clipboard_format(1),
-                term_popover.set_visible(False),
-            ),
-        )
-        paste_button = Gtk.Button(label="Paste", css_classes=["mybutton"])
-        paste_button.connect(
-            "clicked",
-            lambda button: (
-                self.vte_term.paste_clipboard(),
-                term_popover.set_visible(False),
-            ),
-        )
-        term_option_box.append(copy_button)
-        term_option_box.append(paste_button)
-        term_popover.set_child(term_option_box)
-        self.vte_term.set_context_menu(term_popover)
-
-        # Scan the output whenever it changes
-        self.vte_term.connect(
-            "contents-changed", lambda *args: self.scan_output(*args, self.i)
-        )
+        """
 
         # Print out the ASCII text "Galaxy Flasher", created with figlet.
         print(
@@ -501,6 +479,247 @@ class MainWindow(Adw.ApplicationWindow):
         """
         )
 
+    def select_files(self):
+        # If the files page hasn't already been made.
+        if not self.stack.get_child_by_name("files"):
+            grid = Gtk.Grid.new()
+            grid.set_column_spacing(10)
+            grid.set_row_spacing(10)
+
+            button_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+            padding = (10, 10, 0, 0)
+            self.set_padding(button_box, padding)
+
+            row = 0
+            slots = ["BL", "AP", "CP", "CSC", "USERDATA"]
+
+            for slot in slots:
+                button = Gtk.Button(label=slot)
+                button.signal_id = button.connect(
+                    "clicked", lambda _, x=slot: self.open_file(x)
+                )
+                button.add_css_class("pill")
+                # button.add_css_class("circular")
+                button.set_hexpand(True)
+                button.set_halign(Gtk.Align.FILL)
+                button.set_valign(Gtk.Align.FILL)
+
+                setattr(self, f"{slot}_button", button)
+
+                button_row_box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
+                button_row_box.append(button)
+                button_box.append(button_row_box)
+
+                row += 1
+
+            nav_buttons = [
+                {
+                    "title": "Continue",
+                    "command": lambda _: self.check_files(),
+                },
+                {
+                    "title": "Cancel",
+                    "command": lambda _: self.cancel_flash("files"),
+                },
+            ]
+
+            self.add_page_to_stack(
+                content=button_box, name="files", nav_buttons=nav_buttons
+            )
+
+        self.stack.set_visible_child_name("files")
+        
+    def check_files(self):
+        files = []
+        paths = {}
+        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
+            slot_lowered = slot.lower()
+            # file_path = main.selected_files[slot_lowered]
+            if slot_lowered in self.selected_files:
+                file_path = self.selected_files[slot_lowered]
+                if file_path:
+                    file_name = os.path.basename(file_path)
+                    files.append(file_name)
+                    paths[slot] = os.path.dirname(file_path)
+        if len(paths) == 0:
+            print(self.strings["no_files_selected2"])
+            self.create_alert_dialog(
+                "Invalid files", self.strings["no_files_selected2"]
+            )
+        elif len(set(paths.values())) > 1:
+            print("The files NEED to be in the same dir...")
+            self.create_alert_dialog("Invalid files", self.strings["invalid_files"])
+        else:
+            self.ft_plugin.selected_files(self, files, paths)
+            
+    def select_device(self, devices):
+        def set_selected_device(btn, device):
+            if btn.get_active:
+                device_number = device
+
+        devices_page = self.stack.get_child_by_name("devices")
+
+        # If the files page has already been made.
+        if devices_page:
+            self.stack.remove(devices_page)
+
+        checkbutton_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        checkbutton_box.set_hexpand(True)
+        # checkbutton_box.set_vexpand(True)
+        checkbutton_box.set_halign(Gtk.Align.CENTER)
+        checkbutton_box.set_valign(Gtk.Align.START)
+
+        device_number = 1
+        group = None
+        row = 1
+
+        for i, device in enumerate(devices):
+            checkbutton = self.create_checkbutton(device, 0, row)
+            checkbutton.add_css_class("selection-mode")
+            checkbutton_box.append(checkbutton)
+            if i == 0:
+                group = checkbutton
+                checkbutton.set_active(True)
+            else:
+                checkbutton.set_group(group)
+            checkbutton.connect("toggled", set_selected_device, row)
+            row = row + 1
+
+        nav_buttons = [
+            {
+                "title": "Continue",
+                "command": lambda _: self.ft_plugin.selected_device(self, device_number, len(devices)),
+            },
+            {
+                "title": "Cancel",
+                "command": lambda _: self.cancel_flash("devices", num_devices=len(devices)),
+            },
+        ]
+
+        self.add_page_to_stack(
+            content=checkbutton_box, name="devices", nav_buttons=nav_buttons
+        )
+        self.stack.set_visible_child_name("devices")
+        
+    def select_partitions(self, partitions, function):
+        selected_partitions = []
+
+        def partition_toggled(button, row):
+            if button.get_active():
+                selected_partitions[row] = True
+            else:
+                selected_partitions[row] = False
+
+        partitions_page = self.stack.get_child_by_name("partitions")
+
+        # If the partitions page has already been made.
+        if partitions_page:
+            self.stack.remove(partitions_page)
+
+        checkbutton_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        checkbutton_box.set_hexpand(True)
+        # checkbutton_box.set_vexpand(True)
+        checkbutton_box.set_halign(Gtk.Align.CENTER)
+        checkbutton_box.set_valign(Gtk.Align.START)
+
+        row = 0
+
+        for i, partition in enumerate(partitions):
+            checkbutton = self.create_checkbutton(partition, 0, row)
+            checkbutton.add_css_class("selection-mode")
+            checkbutton_box.append(checkbutton)
+            checkbutton.connect("toggled", partition_toggled, row)
+            selected_partitions.append(False)
+            row += 1
+
+        nav_buttons = [
+            {
+                "title": "Continue",
+                "command": lambda _: function(self, selected_partitions),
+            },
+            {
+                "title": "Cancel",
+                "command": lambda _: function(self, selected_partitions),
+            },
+        ]
+
+        self.add_page_to_stack(
+            content=checkbutton_box, name="partitions", nav_buttons=nav_buttons
+        )
+        self.stack.set_visible_child_name("partitions")
+
+    def cancel_flash(self, page, num_devices=None):
+        if page == "devices":
+            self.ft_plugin.selected_device(self, None, num_devices)
+        self.stack.set_visible_child_full("flash", Gtk.StackTransitionType.SLIDE_RIGHT)
+
+    def on_no_devices_found(self):
+        message = "No Samsung devices were found!"
+        print(message)
+        toast = Adw.Toast.new(message)
+        toast.set_timeout(5)
+        self.toast_overlay.add_toast(toast)
+
+    def on_verify_flash(self):
+        pass
+
+    def on_flash(self):
+        print("Would show you a progress bar.")
+        self.ft_plugin.flash(self)
+
+    def add_page_to_stack(self, content, name, nav_buttons):
+        # Create a box to hold the navigation buttons
+        navigation_button_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=10
+        )
+        navigation_button_box.set_hexpand(True)
+        navigation_button_box.set_vexpand(True)
+        navigation_button_box.set_halign(Gtk.Align.CENTER)
+        navigation_button_box.set_valign(Gtk.Align.START)
+        padding = (0, 0, 10, 0)
+        self.set_padding(navigation_button_box, padding)
+
+        # Create the navigation buttons.
+        for button_desc in nav_buttons:
+            title = button_desc["title"]
+            command = button_desc["command"]
+            button = self.create_button(
+                title,
+                column=0,
+                row=0,
+                command=command,
+            )
+            button.set_hexpand(True)
+            button.set_vexpand(True)
+            button.add_css_class("pill")
+            navigation_button_box.append(button)
+            # button.add_css_class("suggested-action")
+
+        main_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        main_box.append(content)
+        main_box.append(navigation_button_box)
+
+        # Create an adw.clamp to limit the button box size
+        clamp = Adw.Clamp.new()
+        clamp.set_child(main_box)
+        clamp.set_maximum_size(800)
+
+        # Create header bar
+        header_bar = Adw.HeaderBar()
+        header_bar.set_show_title(False)
+
+        # Create toolbar view
+        toolbar_view = Adw.ToolbarView.new()
+        toolbar_view.add_top_bar(header_bar)
+        toolbar_view.set_content(clamp)
+
+        # Create the page
+        self.stack.add_named(toolbar_view, name)
+
+    def remove_ansi_escape_sequences(self, string):
+        cleaned_string = self.shared_utils.remove_ansi_escape_sequences(string)
+        return cleaned_string
+
     def on_width_breakpoint_applied(self, breakpoint):
         self.header_bar.set_title_widget(self.window_title)
 
@@ -513,9 +732,6 @@ class MainWindow(Adw.ApplicationWindow):
             self.command_entry.grab_focus()
         self.command_bar.set_revealed(active)
 
-    def thor_select_partitions(self, files, base_dir, auto):
-        self.ft_plugin.select_partitions(self, files, base_dir, auto)
-
     def create_window(self, title):
         grid = Gtk.Grid()
         window = Gtk.Window()
@@ -527,7 +743,6 @@ class MainWindow(Adw.ApplicationWindow):
 
     def scan_output(self, vte, i):
         # print(f"contents changed: {i}")
-        self.i += 1
         strings_to_commands = self.ft_plugin.strings_to_commands
         # This is a pretty bad way to do this.
         # 10000 should be replaced with the actual value, But it works.
@@ -707,10 +922,6 @@ class MainWindow(Adw.ApplicationWindow):
             GLib.main_context_default().iteration(True)
         return result
 
-    # TODO: This could be improved.
-    def select_device(self, function=None):
-        self.ft_plugin.select_device(self, function=None)
-
     # TODO: Display the partitions that are to be flashed.
     def verify_flash(self, n, partitions, auto):
         def callback(dialog, result):
@@ -778,7 +989,7 @@ class MainWindow(Adw.ApplicationWindow):
         foreground.parse(terminal_foreground)
         background = Gdk.RGBA()
         background.parse(terminal_background)
-        self.vte_term.set_colors(foreground, background, None)
+        # self.vte_term.set_colors(foreground, background, None)
 
     def connect_device(self):
         self.send_cmd("connect")
@@ -826,11 +1037,145 @@ class MainWindow(Adw.ApplicationWindow):
         def file_dialog_callback(obj, result):
             try:
                 file = obj.open_finish(result)
+                """
+                    # Create a horizontal box for the close button
+                    close_box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
+                    icon = Gtk.Image.new_from_icon_name("window-close")
+                    shortened_file_path = self.shared_utils.shorten_string(file_path, 20)
+                    test_label = Gtk.Label.new(shortened_file_path)
+                    
+                    close_box.append(test_label)
+                    close_box.append(icon)
+                    """
+                """
                 if file:
                     file_path = file.get_path()
+                    file_name = file.get_basename()
                     print(f"Selected file: {file_path}")
-                    entry = getattr(self, f"{partition}_entry")
-                    entry.set_text(file_path)
+
+                    button = getattr(self, f"{partition}_button")
+                    
+                    existing_close_button = button.get_next_sibling()
+                    button_row_box = button.get_parent()
+
+                    # Create button content for the close button
+                    button_content = Adw.ButtonContent.new()
+                    button_content.set_can_shrink(True)
+                    button_content.set_icon_name("window-close")
+                    button_content.set_label(file_name)
+
+                    if existing_close_button:
+                        # Update the existing close button if it exists
+                        close_button = button_row_box.get_last_child()
+                        close_button.set_child(button_content)
+                    else:
+                        # Create a new close button if it doesn't exist
+                        close_button = Gtk.Button.new()
+                        close_button.set_hexpand(True)
+                        close_button.set_halign(Gtk.Align.FILL)
+                        close_button.set_valign(Gtk.Align.FILL)
+                        close_button.add_css_class("pill")
+                        close_button.add_css_class("destructive-action")
+                        close_button.set_child(button_content)
+                        close_button.signal_id = close_button.connect("clicked", lambda button, x=partition: self.remove_file(button, x))
+
+                        button_row_box.remove(button)
+                        button_row_box.append(button)
+                        button_row_box.append(close_button)
+
+                """
+                # Looks good.
+                """
+                if file:
+                    file_path = file.get_path()
+                    file_name = file.get_basename()
+                    print(f"Selected file: {file_path}")
+
+                    button = getattr(self, f"{partition}_button")
+                    
+                    selected_file_button = button.get_next_sibling()
+                    button_row_box = button.get_parent()
+
+                    # Create button content for the close button
+                    button_content = Adw.ButtonContent.new()
+                    button_content.set_can_shrink(True)
+                    button_content.set_icon_name("window-close")
+                    button_content.set_label(file_name)
+
+                    if selected_file_button:
+                        # Update the existing close button if it exists
+                        close_button = button_row_box.get_last_child()
+                        close_button.set_child(button_content)
+                    else:
+                        file_button_box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
+                        close_button = Gtk.Button.new_from_icon_name("window-close")
+                        close_button.add_css_class("circular")
+                        close_button.add_css_class("destructive-action")
+                        close_button.signal_id = close_button.connect("clicked", lambda button=selected_file_button, x=partition: self.remove_file(button, x))
+                        file_label = Gtk.Label.new(file_name)
+                        file_button_box.append(close_button)
+                        file_button_box.append(file_label)
+                        # Create a new close button if it doesn't exist
+                        selected_file_button = Gtk.Button.new()
+                        #selected_file_button.set_hexpand(True)
+                        selected_file_button.set_halign(Gtk.Align.FILL)
+                        #selected_file_button.set_valign(Gtk.Align.FILL)
+                        selected_file_button.add_css_class("pill")
+                        selected_file_button.set_can_shrink(True)
+                        selected_file_button.signal_id = selected_file_button.connect("clicked", lambda btn: close_button.emit("clicked"))
+                        selected_file_button.set_child(file_button_box)
+
+                        button_row_box.append(selected_file_button)
+                        """
+
+                if file:
+                    file_path = file.get_path()
+                    file_name = file.get_basename()
+                    print(f"Selected file: {file_path}")
+                    
+                    partition_lowered = partition.lower()
+                    self.selected_files[partition_lowered] = file_path
+                    # print(self.selected_files)
+
+                    button = getattr(self, f"{partition}_button")
+
+                    selected_file_button = button.get_next_sibling()
+                    button_row_box = button.get_parent()
+
+                    if selected_file_button:
+                        # Update the existing close button if it exists
+                        selected_file_button = (
+                            button_row_box.get_first_child().get_next_sibling()
+                        )
+                        # close_button = button_row_box.get_last_child()
+                        selected_file_button.set_label(file_name)
+                    else:
+                        selected_file_button = Gtk.Button.new_with_label(file_name)
+                        # selected_file_button.set_hexpand(True)
+                        selected_file_button.set_halign(Gtk.Align.FILL)
+                        # selected_file_button.set_valign(Gtk.Align.FILL)
+                        selected_file_button.add_css_class("pill")
+                        # selected_file_button.add_css_class("circular")
+                        selected_file_button.set_can_shrink(True)
+
+                        close_button = Gtk.Button.new_from_icon_name("window-close")
+                        close_button.set_halign(Gtk.Align.CENTER)
+                        close_button.set_valign(Gtk.Align.CENTER)
+                        # close_button.set_hexpand(True)
+                        # close_button.set_vexpand(True)
+                        close_button.add_css_class("circular")
+                        # close_button.add_css_class("pill")
+                        close_button.add_css_class("destructive-action")
+                        close_button.signal_id = close_button.connect(
+                            "clicked",
+                            lambda button=selected_file_button, x=partition: self.remove_file(
+                                button, x
+                            ),
+                        )
+
+                        button_row_box.append(selected_file_button)
+                        button_row_box.append(close_button)
+
             except GLib.Error as e:
                 # If the user cancelled, pass.
                 if e.code == 2:
@@ -848,6 +1193,21 @@ class MainWindow(Adw.ApplicationWindow):
         filter_list.append(odin_filter)
         file_dialog.set_filters(filter_list)
         file_dialog.open(self, None, file_dialog_callback)
+
+    def remove_file(self, close_button, partition):
+        partition_lowered = partition.lower()
+        self.selected_files.pop(partition_lowered)
+        # print(self.selected_files)
+        print(f"Removing {partition} file")
+        button_row_box = close_button.get_parent()
+        close_button = button_row_box.get_last_child()
+        file_button = close_button.get_prev_sibling()
+        button_row_box.remove(file_button)
+        button_row_box.remove(close_button)
+        """
+        button_row_box = close_button.get_parent()
+        button_row_box.remove(close_button)
+        """
 
     def create_label(
         self,
@@ -869,12 +1229,21 @@ class MainWindow(Adw.ApplicationWindow):
         return label
 
     def create_button(
-        self, label, column, row, grid, command, padding=(0, 0, 0, 0), width=1, height=1
+        self,
+        label,
+        column,
+        row,
+        command,
+        grid=None,
+        padding=(0, 0, 0, 0),
+        width=1,
+        height=1,
     ):
         button = Gtk.Button(label=label)
         self.set_padding(button, padding)
         button.signal_id = button.connect("clicked", command)
-        grid.attach(button, column, row, width, height)
+        if grid:
+            grid.attach(button, column, row, width, height)
         return button
 
     # Given a widget, prints it's widget tree.
@@ -1748,7 +2117,7 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         label,
         column,
         row,
-        grid,
+        grid=None,
         padding=(0, 0, 0, 0),
         align=Gtk.Align.START,
         width=1,
@@ -1757,7 +2126,8 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         check_button = Gtk.CheckButton(label=label)
         self.set_padding(check_button, padding)
         check_button.set_halign(align)
-        grid.attach(check_button, column, row, width, height)
+        if grid:
+            grid.attach(check_button, column, row, width, height)
         return check_button
 
     def create_radiobuttons(
@@ -1852,7 +2222,7 @@ class GalaxyFlasherGtk(Adw.Application):
 
     def on_activate(self, app):
         self.win = MainWindow(application=app)
-        self.win.set_default_size(950, 400)
+        self.win.set_default_size(600, 600)
         self.win.present()
 
 

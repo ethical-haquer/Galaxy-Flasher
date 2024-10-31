@@ -1,12 +1,6 @@
 # flash_tool_plugins/thor.py
 from flash_tool_plugins import FlashToolPlugin
 import os
-import re
-import logging
-import pexpect
-
-logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
-logger = logging.getLogger(__name__)
 
 
 class Thor(FlashToolPlugin):
@@ -177,26 +171,14 @@ class Thor(FlashToolPlugin):
         print(f"This is a test of the {self.name} plugin.")
 
     def setup_flash_tool(self, main):
-        logger.info("setup_flash_tool is running")
         main.child.expect("shell>")
         main.set_widget_state(main.flash_button, state=True)
 
-    def selected_files(self, main, files, paths):
-        logger.info("selected_files is running")
-        self.files = files
-        self.paths = paths
-        print(self.paths)
-        self.connect(main)
-
-    def connect(self, main):
-        logger.info("connect is running")
+    def flash(self, main):
+        # main.child.expect("shell>")
         main.child.sendline("connect")
         result = main.child.expect(
-            [
-                "Cancel operation",
-                "No Samsung devices were found!",
-                "Already connected to a device!",
-            ]
+            ["Cancel operation", "No Samsung devices were found!"]
         )
 
         # If at least one device is detected.
@@ -210,11 +192,10 @@ class Thor(FlashToolPlugin):
                 # print(f"line: '{line}'")
                 # print(f"repr line: {repr(line)}")
                 if line == "Choose a device to connect to:":
-                    # print("Found top of device list.")
+                    print("Found top of device list.")
                     break
                 devices.append(line)
-            # print("devices: ", devices)
-            logger.debug(f"{devices=}")
+            print("devices: ", devices)
             # For testing.
             # devices = ["device 1", "device 2"]
             num_devices = len(devices)
@@ -234,9 +215,6 @@ class Thor(FlashToolPlugin):
             # print("No Samsung devices were found!\nOutput:")
             # print(output)
             main.on_no_devices_found()
-        # If no devices were found.
-        elif result == 2:
-            print("Already connected to a device!")
         else:
             output = main.remove_ansi_escape_sequences(
                 main.child.before.decode("utf-8")
@@ -245,7 +223,6 @@ class Thor(FlashToolPlugin):
             print(output)
 
     def selected_device(self, main, device, num_devices):
-        logger.info("selected_device is running")
         print(device)
         if device == None:
             times_down = num_devices
@@ -257,26 +234,23 @@ class Thor(FlashToolPlugin):
             # Send "Down Arrow"
             print("Sending down arrow.")
             main.child.send("\x1b[B")
-        logger.debug('selected_device: Sending "Enter".')
+        # Send "Enter"
+        print("Sending enter.")
         main.child.send("\n")
-        result = main.child.expect_exact(
+        result = main.child.expect(
             [
                 "Successfully connected to the device!",
                 "Device disconnected?",
                 "Cancelled by user",
-                "Device or resource busy (16)",
             ]
         )
         if result == 0:
             print("Succesfully connected to the device!")
-            # TODO: Flash the device.
-            self.start_odin_session(main)
+            main.select_files()
         elif result == 1:
             print("Device disconnected?")
         elif result == 2:
             print("Canceled by user.")
-        elif result == 3:
-            print("Failed to claim interface: Device or resource busy (16).")
         else:
             output = main.remove_ansi_escape_sequences(
                 main.child.before.decode("utf-8")
@@ -288,396 +262,44 @@ class Thor(FlashToolPlugin):
         # main.child.interact()     # Give control of the child to the user.
 
     def initialise_buttons(self, main):
-        logger.info("initialise_buttons is running")
         main.set_widget_state(
             main.flash_button,
             state=False,
         )
-
-    def flash(self, main):
-        logger.info("flash is running")
-        auto = main.settings.get("auto_partitions", False)
-        base_dir = list(self.paths.values())[0]
-        self.select_partitions(self.files, base_dir, auto)
-        # self.start_odin_session(main)
-
-    def start_odin_session(self, main):
-        logger.info("start_odin_session is running")
-        # main.child.expect("shell>")
-        main.child.sendline("begin odin")
-        result = main.child.expect_exact(
-            [
-                "Successfully began an Odin session!",
-                "Failed to bulk read: Connection timed out (110)",
-            ],
-            timeout=10,
+        """
+        main.set_widget_state(
+            main.connect_button,
+            main.start_odin_button,
+            main.flash_button,
+            state=False,
         )
-        if result == 0:
-            print("Successfully began an Odin session!")
-            # TODO: Flash it!
-            base_dir = list(self.paths.values())[0]
-            auto = main.settings.get("auto_partitions", False)
-            self.select_partitions(main, base_dir, auto)
-            #self.select_partitions_2(main, self.files, base_dir, auto)
-        elif result == 1:
-            print("Failed to bulk read: Connection timed out (110)")
-
-            def callback(dialog, result):
-                response_id = dialog.choose_finish(result)
-                if response_id == "cancel":
-                    print("Do whatever cancel should do.")
-                elif response_id == "continue":
-                    disconnected = self.disconnect(main)
-                    if disconnected:
-                        print("Reconnecting...")
-                        self.connect(main)
-                    else:
-                        print("Would not reconnect.")
-
-            responses = [
-                {"id": "continue", "label": "Continue", "appearance": "0"},
-            ]
-            main.create_alert_dialog(
-                "Failed to start an Odin Session",
-                "Try re-entering Download Mode on the device, and then click 'Continue'.",
-                responses,
-                callback,
-                "retry",
-            )
-            # print(main.child.before)
-            # main.child.interact()     # Give control of the child to the user.
-        else:
-            output = main.remove_ansi_escape_sequences(
-                main.child.before.decode("utf-8")
-            )
-            print("Failed to start an odin session:")
-            print(output)
-
-    # Returns True if able to disconnect, False otherwise.
-    def disconnect(self, main):
-        logger.info("disconnect is running")
-        main.child.sendline("disconnect")
-        result = main.child.expect_exact(
-            [
-                "Successfully disconnected the device!",
-            ],
-            timeout=10,
-        )
-        if result == 0:
-            print("Successfully disconnected the device!")
-            return True
-        else:
-            output = main.remove_ansi_escape_sequences(
-                main.child.before.decode("utf-8")
-            )
-            print("Failed to disconnect the device:")
-            print(output)
-            return False
-
-    def cycle(self, main):
-        logger.info("cycle is running")
-        files = self.files
-        try:
-            result = main.child.expect_exact(
-                [
-                    "(Press <space> to select, <enter> to accept)",
-                    "You chose to flash ",
-                ],
-                timeout=10,
-            )
-            if result == 0:
-                logger.debug("cycle: Found end of partitions.")
-                output = main.child.before.decode("utf-8")
-                cleaned_output = main.remove_ansi_escape_sequences(output)
-                output_lines = cleaned_output.splitlines()
-                file = None
-                buffer = None
-                partitions = []
-                for line in reversed(output_lines):
-                    line = line.strip()
-                    if line.endswith(":"):
-                        break
-                    elif line.startswith("> [ ]") or line.startswith("[ ]"):
-                        partitions.insert(0, line)
-                file = self.get_file(cleaned_output)
-                logger.debug(f'cycle: FILE: "{file}"')
-                logger.debug(f"cycle: FILES: {files}")
-                logger.debug(f"cycle: PARTITIONS: {partitions}")
-                if file == self.last_file:
-                    logger.error("cycle: file = last_file.\n\n\n")
-                    print(main.child.before)
-                    main.child.interact()
-                if not file:
-                    logger.error("cycle: file = None")
-                    print(output_lines)
-                    print("\n\n\n")
-                    print(main.child.before)
-                    main.child.interact()
-                self.last_file = file
-                if file in files:
-                    logger.debug(f"cycle: File was selected: '{file}'")
-                    if self.auto:
-                        selected_partitions = [True] * len(partitions)
-                        self.send_selected_partitions(main, selected_partitions)
-                    else:
-                        # Have the user select the partitions to flash.
-                        main.select_partitions(
-                            partitions, self.send_selected_partitions
-                        )
-                else:
-                    logger.info(f"cycle: File wasn't selected, skipping: '{file}'")
-                    logger.debug('cycle: SENDING: "Enter"')
-                    main.child.send("\n")
-                    self.expect_output(main, ["(Press <space> to select, <enter> to accept)"], timeout=1)
-                    self.cycle(main)
-            elif result == 1:
-                print("Time to verify flash!")
-                self.verify_flash(main)
-        except pexpect.EOF:
-            logger.error("cycle: Unexpected EOF from the child process.")
-        except pexpect.TIMEOUT:
-            logger.error("cycle: Timeout waiting for output.")
-            output = main.child.before.decode("utf-8")
-            cleaned_output = main.remove_ansi_escape_sequences(output)
-            print(cleaned_output)
-            main.child.interact()  # Give control of the child to the user.
-
-    def send_selected_partitions(self, main, selected_partitions):
-        logger.info("send_selected_partitions is running")
-        if selected_partitions == None:
-            logger.debug('send_selected_partitions: Canceling...')
-        else:
-            n_partitions = len(selected_partitions)
-            for i, partition in enumerate(selected_partitions):
-                if partition:
-                    logger.debug('send_selected_partitions: Sending "Space".')
-                    main.child.send("\x20")
-                    self.expect_output(main, ["(Press <space> to select, <enter> to accept)"], timeout=1)
-                # If it's the last partition displayed,
-                # we don't need to send a down arrow.
-                # i+1 because i starts at 0.
-                if not i+1 == n_partitions:
-                    logger.debug('send_selected_partitions: Sending "Down Arrow".')
-                    main.child.send("\x1b[B")
-                    self.expect_output(main, ["(Press <space> to select, <enter> to accept)", "this is just a test."], timeout=1)
-        logger.debug('send_selected_partitions: Sending "Enter".')
-        main.child.send("\n")
-        self.expect_output(main, ["(Press <space> to select, <enter> to accept)", "bro, this isn't gonna happen."], timeout=1)
-        self.cycle(main)
-
-    def select_partitions(self, main, base_dir, auto):
-        logger.info("select_partitions is running")
-        self.last_file = None
-        self.auto = auto
-        main.child.sendline(f"flashTar {base_dir}")
-        self.cycle(main)
-        
-    # THIS was the problem. 
-    def expect_output(self, main, expected_end_output, timeout=1):
-        logger.info("expect_output is running")
-        try:
-            result = main.child.expect_exact(
-                expected_end_output,
-                timeout=timeout
-            )
-            return result
-        except pexpect.EOF:
-            logger.error("expect_output: Received EOF.")
-        except pexpect.TIMEOUT:
-            logger.error(f"expect_output: Timed-out.\nexpected_end_output: {expected_end_output}")
-            output = main.child.before.decode("utf-8")
-            cleaned_output = main.remove_ansi_escape_sequences(output)
-            print(cleaned_output)
-            main.child.interact()  # Give control of the child to the user.
-
-    def verify_flash(self, main):
-        logger.info("verify_flash is running")
-        output = main.child.before.decode("utf-8")
-        cleaned_output = main.remove_ansi_escape_sequences(output)
-        print(cleaned_output)
-        main.child.interact()  # Give control of the child to the user.
-
-    def get_file(self, text):
-        logger.info("get_file is running")
-        # Find the last occurrence of ":"
-        colon_index = text.rfind(":")
-        # If no colon is found or it's the first character, return False.
-        if colon_index == -1 or colon_index == 0:
-            return None
-        # Extract the substring before the colon.
-        substring = text[:colon_index].strip()
-        # Find the start phrase
-        start_phrase = "Choose what partitions to flash from"
-        start_index = substring.find(start_phrase)
-        # If the start index is found, extract everything after it.
-        if start_index != -1:
-            file = substring[start_index + len(start_phrase):].strip()
-        else:
-            # If the end phrase is not found, take the whole substring.
-            file = substring
-        return file
-
-    # Function that was used extensively for testing. Has been superceded by the above code. (cycle, send_selected_partitions)
-    """
-    def select_partitions_2(self, main, files, base_dir, auto):
-        self.last_file = None
-        run = 0
-
-        def send_selected_partitions(selected_partitions):
-            print(f"selected_partitions: {selected_partitions}")
-            n_partitions = len(selected_partitions)
-            for i, partition in enumerate(selected_partitions):
-                if partition:
-                    print('SENDING: "Space"')
-                    main.child.send("\x20")  # Send space to select
-                    # self.time.sleep(0.05)
-                    self.expect_output(main, ["(Press <space> to select, <enter> to accept)"], timeout=1)
-                if i < n_partitions - 1:  # Only send down arrow if not the last one
-                    print('SENDING: "Down Arrow"')
-                    main.child.send("\x1b[B")  # Send down arrow
-                    # self.time.sleep(0.05)
-                    self.expect_output(main, ["(Press <space> to select, <enter> to accept)"], timeout=1)
-
-        def display_partitions(partitions, file):
-            self.prev_file = file
-            selected_partitions = [False] * len(partitions)
-
-            def partition_toggled(button, row):
-                selected_partitions[row] = button.get_active()
-
-            def return_selected_partitions(cancel=False):
-                if not cancel:
-                    send_selected_partitions(selected_partitions)
-                print('SENDING: "Enter"')
-                main.child.send("\n")  # Finalize selection
-                # self.time.sleep(1)
-                result = self.expect_output(main, ["(Press <space> to select, <enter> to accept)", "You chose to flash"], timeout=5)
-                if result == 0:
-                    #return self.glib.SOURCE_CONTINUE
-                    self.glib.idle_add(select)
-                elif result == 1:
-                    print("Time to verify flash!")
-                    self.verify_flash(main)
-
-            def callback(dialog, result):
-                response_id = dialog.choose_finish(result)
-                if response_id == "ok":
-                    return_selected_partitions()
-                elif response_id == "cancel":
-                    return_selected_partitions(cancel=True)
-
-            grid = self.gtk.Grid.new()
-            box = self.gtk.Box.new(self.gtk.Orientation.VERTICAL, 10)
-            box.append(grid)
-
-            responses = [{"id": "ok", "label": "OK", "appearance": "0"}]
-            dialog = main.create_alert_dialog(
-                "Select Partitions",
-                f"Select what partitions to flash from:/n{file}",
-                responses,
-                callback,
-                extra_child=box,
-            )
-
-            for row, partition in enumerate(partitions):
-                btn = main.create_checkbutton(
-                    partition, 0, row, grid, padding=(5, 5, 0, 0), width=2
-                )
-                btn.connect(
-                    "toggled", lambda _, btn=btn, row=row: partition_toggled(btn, row)
-                )
-
-        def select():
-            nonlocal run
-            run += 1
-            print(f"RUN {run}")
-
-            if run == 1:
-                command = f"flashTar {base_dir}"
-                print(f'RUNNING: "{command}"')
-                main.child.sendline(command)  # Send command to child
-            try:
-                # Expect the output from the child process
-                result = main.child.expect_exact(
-                    [
-                        "(Press <space> to select, <enter> to accept)",
-                        "You chose to flash ",
-                    ],
-                    timeout=10,
-                )
-
-                if result == 0:  # Found the end of partitions
-                    print("Found end of partitions.")
-                    # output_lines = main.child.before.decode("utf-8").splitlines()
-                    output = main.child.before.decode("utf-8")
-                    cleaned_output = main.remove_ansi_escape_sequences(output)
-                    output_lines = cleaned_output.splitlines()
-                    file = None
-                    buffer = None
-                    partitions = []
-                    for line in reversed(output_lines):
-                        line = line.strip()
-                        if line.endswith(":"):
-                            break
-                        elif line.startswith("> [ ]") or line.startswith("[ ]"):
-                            partitions.insert(0, line)
-                    file = self.get_file(cleaned_output)
-                    print(f'FILE: "{file}"')
-                    print(f"FILES: {files}")
-                    print(f"PARTITIONS: {partitions}")
-                    if file == self.last_file:
-                        print("ERROR: last_file == file.\n\n\n\n\n\n\n")
-                        print(main.child.before)
-                        main.child.interact()  # Give control of the child to the user.
-                    if not file:
-                        print("ERROR: file = None")
-                        print(output_lines)
-                        print("\n\n\n\n")
-                        print(main.child.before)
-                        main.child.interact()  # Give control of the child to the user.
-                    self.last_file = file
-                    if file in files:
-                        print("File was selected.")
-                        if auto:
-                            print("Automatically selecting all partitions.")
-                            send_selected_partitions([True] * len(partitions))
-                            print('SENDING: "Enter"')
-                            main.child.send("\n")
-                            # self.time.sleep(0.3)
-                            self.expect_output(main, ["(Press <space> to select, <enter> to accept)"], timeout=1)
-                            return self.glib.SOURCE_CONTINUE
-                        else:
-                            display_partitions(partitions, file)
-                    else:
-                        print("File wasn't selected.")
-                        print('SENDING: "Enter"')
-                        main.child.send("\n")
-                        # self.time.sleep(0.3)
-                        result = self.expect_output(main, ["(Press <space> to select, <enter> to accept)", "You chose to flash "], timeout=5)
-                        if result == 0:
-                            return self.glib.SOURCE_CONTINUE
-                        elif result == 1:
-                            print("Time to verify flash!")
-                            self.verify_flash() 
-                elif result == 1:
-                    print("Time to verify flash!")
-                    self.verify_flash(main)
-            except pexpect.EOF:
-                print("Unexpected EOF from the child process.")
-                return self.glib.SOURCE_REMOVE
-            except pexpect.TIMEOUT:
-                print("Timeout waiting for output.")
-                output = main.child.before.decode("utf-8")
-                cleaned_output = main.remove_ansi_escape_sequences(output)
-                print(cleaned_output)
-                main.child.interact()  # Give control of the child to the user.
-                return self.glib.SOURCE_REMOVE
-
-        self.glib.idle_add(select)
         """
 
-    # Original function from v0.5.1
     """
+    def flash(self, main):
+        auto = main.settings.get("auto_partitions", False)
+        files = []
+        paths = {}
+        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
+            entry = getattr(main, f"{slot}_entry")
+            if entry.get_text():
+                file_path = entry.get_text()
+                file = os.path.basename(file_path)
+                files.append(file)
+                paths[slot] = os.path.dirname(entry.get_text())
+        if len(paths) == 0:
+            print(main.strings["no_files_selected2"])
+            main.create_alert_dialog(
+                "Invalid files", main.strings["no_files_selected2"]
+            )
+        elif len(set(paths.values())) > 1:
+            print("The files NEED to be in the same dir...")
+            main.create_alert_dialog("Invalid files", main.strings["invalid_files"])
+        else:
+            base_dir = list(paths.values())[0]
+            main.thor_select_partitions(files, base_dir, auto)
+        """
+
     def select_partitions(self, main, files, base_dir, auto):
         main.retry_partition = False
         run = 0
@@ -848,7 +470,7 @@ class Thor(FlashToolPlugin):
                         return self.glib.SOURCE_CONTINUE
                 elif output[0].startswith("You chose to flash"):
                     print("Verifying flash.")
-                    n_partitions = self.re.search(r"(\\d+) partitions", output[0])
+                    n_partitions = self.re.search(r"(\d+) partitions", output[0])
                     partition_list = []
                     for line in output:
                         if line.startswith("Are you absol"):
@@ -861,4 +483,3 @@ class Thor(FlashToolPlugin):
                     return self.glib.SOURCE_REMOVE
 
         self.glib.idle_add(select)
-"""

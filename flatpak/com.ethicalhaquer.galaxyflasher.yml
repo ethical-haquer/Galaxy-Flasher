@@ -17,6 +17,7 @@ modules:
     build-commands:
       - pip install -r requirements.txt
       - cp -r locales /app/locales/
+      - cp -r flash_tool_plugins /app/flash_tool_plugins/
       - cp -r odin4-wrapper.sh /app/odin4-wrapper.sh
       - install -D usb.ids /app/usb.ids
       - install -D galaxy-flasher-gtk.py /app/galaxy-flasher-gtk
@@ -39,11 +40,3 @@ modules:
         path: requirements.txt
       - type: dir
         path: include
-  - name: vte
-    sources:
-      - type: git
-        url: https://gitlab.gnome.org/GNOME/vte.git/
-    buildsystem: meson
-    config-opts:
-      - -Dgtk3=false
-      - -Dgtk4=true

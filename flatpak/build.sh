@@ -5,7 +5,7 @@ if ! command -v flatpak-builder &> /dev/null; then
 fi
 # Create include dir.
 mkdir include
-cp -r ../locales ../odin4-wrapper.sh ../usb.ids ../icons/com.ethicalhaquer.galaxyflasher.svg include
+cp -r ../locales ../flash_tool_plugins ../odin4-wrapper.sh ../usb.ids ../icons/com.ethicalhaquer.galaxyflasher.svg include
 # Build it.
 flatpak-builder --user --install --force-clean build com.ethicalhaquer.galaxyflasher.yml
 rm -r include
