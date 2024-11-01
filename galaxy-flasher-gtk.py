@@ -601,7 +601,7 @@ class MainWindow(Adw.ApplicationWindow):
         )
         self.stack.set_visible_child_name("devices")
         
-    def select_partitions(self, partitions, function):
+    def select_partitions(self, partitions, function, function_files):
         selected_partitions = []
 
         def partition_toggled(button, row):
@@ -635,11 +635,11 @@ class MainWindow(Adw.ApplicationWindow):
         nav_buttons = [
             {
                 "title": "Continue",
-                "command": lambda _: function(self, selected_partitions),
+                "command": lambda _: function(self, selected_partitions, function_files),
             },
             {
                 "title": "Cancel",
-                "command": lambda _: function(self, selected_partitions),
+                "command": lambda _: function(self, selected_partitions, function_files),
             },
         ]
 
@@ -660,8 +660,73 @@ class MainWindow(Adw.ApplicationWindow):
         toast.set_timeout(5)
         self.toast_overlay.add_toast(toast)
 
-    def on_verify_flash(self):
-        pass
+    def verify_flash(self, auto, num_partitions, function):
+        logger.info("verify_flash is running")
+
+        verify_flash_page = self.stack.get_child_by_name("verify")
+
+        # If the partitions page has already been made.
+        if verify_flash_page:
+            self.stack.remove(verify_flash_page)
+
+        label_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        label_box.set_hexpand(True)
+        # checkbutton_box.set_vexpand(True)
+        label_box.set_halign(Gtk.Align.CENTER)
+        label_box.set_valign(Gtk.Align.START)
+
+        row = 0
+        
+        main_label = Gtk.Label.new()
+        main_label.set_label("Verify Flash")
+        
+        secondary_label = Gtk.Label.new()
+        noun = "The computer" if auto else "You"
+        secondary_label.set_label(f"{noun} selected {num_partitions} partitions in total. Are you absolutely sure you want to flash them?")
+        
+        label_box.append(main_label)
+        label_box.append(secondary_label)
+
+        nav_buttons = [
+            {
+                "title": "Yes",
+                "command": lambda _: function(self, True),
+            },
+            {
+                "title": "No",
+                "command": lambda _: function(self, False),
+            },
+        ]
+
+        self.add_page_to_stack(
+            content=label_box, name="verify", nav_buttons=nav_buttons
+        )
+        self.stack.set_visible_child_name("verify")
+
+    # Original verify_flash.
+    """
+    # TODO: Display the partitions that are to be flashed.
+    def verify_flash(self, n, partitions, auto):
+        def callback(dialog, result):
+            response_id = dialog.choose_finish(result)
+            if response_id == "no":
+                self.send_cmd("n")
+            elif response_id == "yes":
+                self.send_cmd("y")
+
+        noun = "The computer" if auto else "You"
+        responses = [
+            {"id": "yes", "label": "Yes", "appearance": "0"},
+            {"id": "no", "label": "No", "appearance": "0"},
+        ]
+        self.create_alert_dialog(
+            "Verify flash",
+            f"{noun} selected {n} partitions to flash.\nAre you absolutely sure you want to flash them?",
+            responses,
+            callback,
+            "no",
+        )
+    """
 
     def on_flash(self):
         print("Would show you a progress bar.")
@@ -921,28 +986,6 @@ class MainWindow(Adw.ApplicationWindow):
         while not result:
             GLib.main_context_default().iteration(True)
         return result
-
-    # TODO: Display the partitions that are to be flashed.
-    def verify_flash(self, n, partitions, auto):
-        def callback(dialog, result):
-            response_id = dialog.choose_finish(result)
-            if response_id == "no":
-                self.send_cmd("n")
-            elif response_id == "yes":
-                self.send_cmd("y")
-
-        noun = "The computer" if auto else "You"
-        responses = [
-            {"id": "yes", "label": "Yes", "appearance": "0"},
-            {"id": "no", "label": "No", "appearance": "0"},
-        ]
-        self.create_alert_dialog(
-            "Verify flash",
-            f"{noun} selected {n} partitions to flash.\nAre you absolutely sure you want to flash them?",
-            responses,
-            callback,
-            "no",
-        )
 
     def set_setting(self, setting, value):
         if setting == "theme":

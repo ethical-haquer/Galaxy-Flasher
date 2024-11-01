@@ -285,7 +285,7 @@ class Thor(FlashToolPlugin):
             print(output)
         # main.child.terminate()
         # print(main.child.before)   # Print the result of the ls command.
-        # main.child.interact()     # Give control of the child to the user.
+        # main.child.interact()
 
     def initialise_buttons(self, main):
         logger.info("initialise_buttons is running")
@@ -317,7 +317,7 @@ class Thor(FlashToolPlugin):
             # TODO: Flash it!
             base_dir = list(self.paths.values())[0]
             auto = main.settings.get("auto_partitions", False)
-            self.select_partitions(main, base_dir, auto)
+            self.select_partitions(main, self.files, base_dir, auto)
             #self.select_partitions_2(main, self.files, base_dir, auto)
         elif result == 1:
             print("Failed to bulk read: Connection timed out (110)")
@@ -345,7 +345,7 @@ class Thor(FlashToolPlugin):
                 "retry",
             )
             # print(main.child.before)
-            # main.child.interact()     # Give control of the child to the user.
+            # main.child.interact()
         else:
             output = main.remove_ansi_escape_sequences(
                 main.child.before.decode("utf-8")
@@ -374,14 +374,13 @@ class Thor(FlashToolPlugin):
             print(output)
             return False
 
-    def cycle(self, main):
+    def cycle(self, main, files):
         logger.info("cycle is running")
-        files = self.files
         try:
             result = main.child.expect_exact(
                 [
                     "(Press <space> to select, <enter> to accept)",
-                    "You chose to flash ",
+                    "sure you want to flash those?",
                 ],
                 timeout=10,
             )
@@ -418,18 +417,18 @@ class Thor(FlashToolPlugin):
                     logger.debug(f"cycle: File was selected: '{file}'")
                     if self.auto:
                         selected_partitions = [True] * len(partitions)
-                        self.send_selected_partitions(main, selected_partitions)
+                        self.send_selected_partitions(main, selected_partitions, files)
                     else:
                         # Have the user select the partitions to flash.
                         main.select_partitions(
-                            partitions, self.send_selected_partitions
+                            partitions, self.send_selected_partitions, files
                         )
                 else:
                     logger.info(f"cycle: File wasn't selected, skipping: '{file}'")
-                    logger.debug('cycle: SENDING: "Enter"')
+                    logger.debug('cycle: Sending "Enter".')
                     main.child.send("\n")
                     self.expect_output(main, ["(Press <space> to select, <enter> to accept)"], timeout=1)
-                    self.cycle(main)
+                    self.cycle(main, files)
             elif result == 1:
                 print("Time to verify flash!")
                 self.verify_flash(main)
@@ -440,9 +439,9 @@ class Thor(FlashToolPlugin):
             output = main.child.before.decode("utf-8")
             cleaned_output = main.remove_ansi_escape_sequences(output)
             print(cleaned_output)
-            main.child.interact()  # Give control of the child to the user.
+            main.child.interact()
 
-    def send_selected_partitions(self, main, selected_partitions):
+    def send_selected_partitions(self, main, selected_partitions, files):
         logger.info("send_selected_partitions is running")
         if selected_partitions == None:
             logger.debug('send_selected_partitions: Canceling...')
@@ -463,14 +462,14 @@ class Thor(FlashToolPlugin):
         logger.debug('send_selected_partitions: Sending "Enter".')
         main.child.send("\n")
         self.expect_output(main, ["(Press <space> to select, <enter> to accept)", "bro, this isn't gonna happen."], timeout=1)
-        self.cycle(main)
+        self.cycle(main, files)
 
-    def select_partitions(self, main, base_dir, auto):
+    def select_partitions(self, main, files, base_dir, auto):
         logger.info("select_partitions is running")
         self.last_file = None
         self.auto = auto
         main.child.sendline(f"flashTar {base_dir}")
-        self.cycle(main)
+        self.cycle(main, files)
         
     # THIS was the problem. 
     def expect_output(self, main, expected_end_output, timeout=1):
@@ -484,18 +483,79 @@ class Thor(FlashToolPlugin):
         except pexpect.EOF:
             logger.error("expect_output: Received EOF.")
         except pexpect.TIMEOUT:
-            logger.error(f"expect_output: Timed-out.\nexpected_end_output: {expected_end_output}")
+            logger.error(f"expect_output: Timed-out.\nexpected_end_output: {expected_end_output}\n\n\n")
             output = main.child.before.decode("utf-8")
             cleaned_output = main.remove_ansi_escape_sequences(output)
             print(cleaned_output)
-            main.child.interact()  # Give control of the child to the user.
+            main.child.interact()
+            
+    def get_num_partitions(self, text):
+        logger.info(f"get_num_partitions is running, {text=}")
+        match = re.search(r'(\d+) partitions in total:', text)
+        if match:
+            return int(match.group(1))
+        else:
+            logger.error("get_num_partitions: Match not found.")
+            return None
 
+    # WIP
     def verify_flash(self, main):
         logger.info("verify_flash is running")
         output = main.child.before.decode("utf-8")
         cleaned_output = main.remove_ansi_escape_sequences(output)
-        print(cleaned_output)
-        main.child.interact()  # Give control of the child to the user.
+        num_partitions = self.get_num_partitions(cleaned_output)
+        if num_partitions:
+            main.verify_flash(self.auto, num_partitions, self.on_verified_flash)
+        else:
+            logger.error(f"verify_flash: {num_partitions=}, {repr(cleaned_output)}\n\n\n")
+            print(cleaned_output)
+            main.child.interact()
+            
+    def on_verified_flash(self, main, continue_flashing):
+        logger.info("on_verified_flash is running")
+        if continue_flashing:
+            logger.debug('on_verified_flash: Sending "y".')
+            main.child.send("y")
+            logger.debug('on_verified_flash: Sending "Enter".')
+            main.child.send("\n")
+            result = main.child.expect_exact(
+                [
+                    "shell>",
+                    pexpect.TIMEOUT,
+                    pexpect.EOF,
+                ],
+                timeout=600,
+            )
+            if result == 0:
+                logger.debug('on_verified_flash: Running "end".')
+                main.child.sendline("end")
+                result = main.child.expect_exact(
+                    [
+                        "Successfully ended an Odin session!",
+                        pexpect.TIMEOUT,
+                        pexpect.EOF,
+                    ],
+                    timeout=30,
+                )
+                if result == 0:
+                    logger.info('on_verified_flash: Successfully ended an Odin session!')
+                elif result == 1:
+                    logger.error('on_verified_flash: Timeout.')
+                elif result == 2:
+                    logger.error('on_verified_flash: EOF.')
+            elif result == 1:
+                logger.error('on_verified_flash: Timeout.')
+            elif result == 2:
+                logger.error('on_verified_flash: EOF.')
+            main.child.interact()
+        else:
+            # TODO: Cancel flash.
+            logger.debug(f"verified_flash: Canceling the flash.")
+            logger.debug('verified_flash: Sending "n".')
+            main.child.send("n")
+            logger.debug('verified_flash: Sending "Enter".')
+            main.child.send("\n")
+            main.child.interact()
 
     def get_file(self, text):
         logger.info("get_file is running")
@@ -517,7 +577,7 @@ class Thor(FlashToolPlugin):
             file = substring
         return file
 
-    # Function that was used extensively for testing. Has been superceded by the above code. (cycle, send_selected_partitions)
+    # Function that was used extensively for testing. Has been superceded by the above code. (cycle, send_selected_partitions, etc.)
     """
     def select_partitions_2(self, main, files, base_dir, auto):
         self.last_file = None
@@ -628,13 +688,13 @@ class Thor(FlashToolPlugin):
                     if file == self.last_file:
                         print("ERROR: last_file == file.\n\n\n\n\n\n\n")
                         print(main.child.before)
-                        main.child.interact()  # Give control of the child to the user.
+                        main.child.interact()
                     if not file:
                         print("ERROR: file = None")
                         print(output_lines)
                         print("\n\n\n\n")
                         print(main.child.before)
-                        main.child.interact()  # Give control of the child to the user.
+                        main.child.interact()
                     self.last_file = file
                     if file in files:
                         print("File was selected.")
@@ -670,7 +730,7 @@ class Thor(FlashToolPlugin):
                 output = main.child.before.decode("utf-8")
                 cleaned_output = main.remove_ansi_escape_sequences(output)
                 print(cleaned_output)
-                main.child.interact()  # Give control of the child to the user.
+                main.child.interact()
                 return self.glib.SOURCE_REMOVE
 
         self.glib.idle_add(select)
