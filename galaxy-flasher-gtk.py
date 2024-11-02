@@ -203,7 +203,9 @@ class MainWindow(Adw.ApplicationWindow):
         env["TERM"] = "xterm-256color"
         env["FORCE_COLOR"] = "3"
         self.child = pexpect.spawn(
-            "/home/ethical_haquer/TheAirBlow.Thor.Shell", env=env, timeout=5,
+            "/home/ethical_haquer/TheAirBlow.Thor.Shell",
+            env=env,
+            timeout=5,
         )
         # self.child.logfile = sys.stdout.buffer
 
@@ -480,6 +482,7 @@ class MainWindow(Adw.ApplicationWindow):
         )
 
     def select_files(self):
+        logger.debug("select_files is running")
         # If the files page hasn't already been made.
         if not self.stack.get_child_by_name("files"):
             grid = Gtk.Grid.new()
@@ -528,8 +531,9 @@ class MainWindow(Adw.ApplicationWindow):
             )
 
         self.stack.set_visible_child_name("files")
-        
+
     def check_files(self):
+        logger.debug("check_files is running")
         files = []
         paths = {}
         for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
@@ -551,8 +555,10 @@ class MainWindow(Adw.ApplicationWindow):
             self.create_alert_dialog("Invalid files", self.strings["invalid_files"])
         else:
             self.ft_plugin.selected_files(self, files, paths)
-            
+
     def select_device(self, devices):
+        logger.debug("select_device is running")
+
         def set_selected_device(btn, device):
             if btn.get_active:
                 device_number = device
@@ -588,11 +594,15 @@ class MainWindow(Adw.ApplicationWindow):
         nav_buttons = [
             {
                 "title": "Continue",
-                "command": lambda _: self.ft_plugin.selected_device(self, device_number, len(devices)),
+                "command": lambda _: self.ft_plugin.selected_device(
+                    self, device_number, len(devices)
+                ),
             },
             {
                 "title": "Cancel",
-                "command": lambda _: self.cancel_flash("devices", num_devices=len(devices)),
+                "command": lambda _: self.cancel_flash(
+                    "devices", num_devices=len(devices)
+                ),
             },
         ]
 
@@ -600,8 +610,9 @@ class MainWindow(Adw.ApplicationWindow):
             content=checkbutton_box, name="devices", nav_buttons=nav_buttons
         )
         self.stack.set_visible_child_name("devices")
-        
+
     def select_partitions(self, partitions, function, function_files):
+        logger.debug("select_partitions is running")
         selected_partitions = []
 
         def partition_toggled(button, row):
@@ -635,11 +646,15 @@ class MainWindow(Adw.ApplicationWindow):
         nav_buttons = [
             {
                 "title": "Continue",
-                "command": lambda _: function(self, selected_partitions, function_files),
+                "command": lambda _: function(
+                    self, selected_partitions, function_files
+                ),
             },
             {
                 "title": "Cancel",
-                "command": lambda _: function(self, selected_partitions, function_files),
+                "command": lambda _: function(
+                    self, selected_partitions, function_files
+                ),
             },
         ]
 
@@ -649,11 +664,13 @@ class MainWindow(Adw.ApplicationWindow):
         self.stack.set_visible_child_name("partitions")
 
     def cancel_flash(self, page, num_devices=None):
+        logger.debug("cancel_flash is running")
         if page == "devices":
             self.ft_plugin.selected_device(self, None, num_devices)
         self.stack.set_visible_child_full("flash", Gtk.StackTransitionType.SLIDE_RIGHT)
 
     def on_no_devices_found(self):
+        logger.debug("on_no_devices_found is running")
         message = "No Samsung devices were found!"
         print(message)
         toast = Adw.Toast.new(message)
@@ -661,7 +678,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.toast_overlay.add_toast(toast)
 
     def verify_flash(self, auto, num_partitions, function):
-        logger.info("verify_flash is running")
+        logger.debug("verify_flash is running")
 
         verify_flash_page = self.stack.get_child_by_name("verify")
 
@@ -676,14 +693,16 @@ class MainWindow(Adw.ApplicationWindow):
         label_box.set_valign(Gtk.Align.START)
 
         row = 0
-        
+
         main_label = Gtk.Label.new()
         main_label.set_label("Verify Flash")
-        
+
         secondary_label = Gtk.Label.new()
         noun = "The computer" if auto else "You"
-        secondary_label.set_label(f"{noun} selected {num_partitions} partitions in total. Are you absolutely sure you want to flash them?")
-        
+        secondary_label.set_label(
+            f"{noun} selected {num_partitions} partitions in total. Are you absolutely sure you want to flash them?"
+        )
+
         label_box.append(main_label)
         label_box.append(secondary_label)
 
@@ -729,10 +748,12 @@ class MainWindow(Adw.ApplicationWindow):
     """
 
     def on_flash(self):
+        logger.debug("on_flash is running")
         print("Would show you a progress bar.")
         self.ft_plugin.flash(self)
 
     def add_page_to_stack(self, content, name, nav_buttons):
+        logger.debug("add_page_to_stack is running")
         # Create a box to hold the navigation buttons
         navigation_button_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=10
@@ -782,22 +803,27 @@ class MainWindow(Adw.ApplicationWindow):
         self.stack.add_named(toolbar_view, name)
 
     def remove_ansi_escape_sequences(self, string):
+        logger.debug("remove_ansi_escape_sequences is running")
         cleaned_string = self.shared_utils.remove_ansi_escape_sequences(string)
         return cleaned_string
 
     def on_width_breakpoint_applied(self, breakpoint):
+        logger.debug("on_width_breakpoint_applied is running")
         self.header_bar.set_title_widget(self.window_title)
 
     def on_width_breakpoint_unapplied(self, breakpoint):
+        logger.debug("on_width_breakpoint_unapplied is running")
         self.header_bar.set_title_widget(self.view_switcher)
 
     def toggle_command_bar(self, button):
+        logger.debug("toggle_command_bar is running")
         active = button.get_active()
         if active:
             self.command_entry.grab_focus()
         self.command_bar.set_revealed(active)
 
     def create_window(self, title):
+        logger.debug("create_window is running")
         grid = Gtk.Grid()
         window = Gtk.Window()
         window.set_modal(True)
@@ -806,7 +832,10 @@ class MainWindow(Adw.ApplicationWindow):
         window.set_transient_for(self)
         return window, grid
 
+    # Unused code.
+    """
     def scan_output(self, vte, i):
+        logger.debug("scan_output is running")
         # print(f"contents changed: {i}")
         strings_to_commands = self.ft_plugin.strings_to_commands
         # This is a pretty bad way to do this.
@@ -829,6 +858,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.last_output = latest_output
 
     def check_output(self, vte, command, result, start, end, wait, add_enter, timeout):
+        logger.debug("check_output is running")
         # This is a pretty bad way to do this.
         # 10000 should be replaced with the actual value, But it works.
         num_cols = vte.get_column_count()
@@ -867,15 +897,6 @@ class MainWindow(Adw.ApplicationWindow):
                 lines = current_output.splitlines()
                 new_lines = []
                 start_index = -1
-                """
-                trimmed_start = start[:num_cols]
-                print(f"trimmed_start: {trimmed_start}")
-                # Find the last occurence of trimmed_start.
-                for i in range(len(lines) - 1, -1, -1):
-                    if trimmed_start in lines[i]:
-                        start_index = i
-                        break
-                    """
                 words = start.split()  # split the start string into a list of words
                 shortened_start = ""  # initialize an empty string
                 for word in words:
@@ -955,7 +976,6 @@ class MainWindow(Adw.ApplicationWindow):
         add_enter=True,
         timeout=2,
     ):
-        """
         The command and start args are optional, but if the command arg is not
         specified the start arg has to be.
         If the start arg is not specified start is set to the command.
@@ -971,7 +991,6 @@ class MainWindow(Adw.ApplicationWindow):
         It returns None if the command finished with no output.
         It returns "Timeout" if the command doesn't finish within the number of
         seconds specified by the optional timeout arg, which by default is 2.
-        """
         result = []
         self.check_output(
             self.vte_term,
@@ -986,6 +1005,7 @@ class MainWindow(Adw.ApplicationWindow):
         while not result:
             GLib.main_context_default().iteration(True)
         return result
+        """
 
     def set_setting(self, setting, value):
         if setting == "theme":
@@ -1175,7 +1195,7 @@ class MainWindow(Adw.ApplicationWindow):
                     file_path = file.get_path()
                     file_name = file.get_basename()
                     print(f"Selected file: {file_path}")
-                    
+
                     partition_lowered = partition.lower()
                     self.selected_files[partition_lowered] = file_path
                     # print(self.selected_files)
