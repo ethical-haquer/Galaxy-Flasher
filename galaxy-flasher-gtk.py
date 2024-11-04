@@ -32,9 +32,9 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-gi.require_version("Vte", "3.91")
+#gi.require_version("Vte", "3.91")
 
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Vte  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
 version = "Alpha v0.6.0"
 year = shared_utils.get_current_year()
@@ -62,20 +62,6 @@ class MainWindow(Adw.ApplicationWindow):
         self.gtk = Gtk
         self.re = re
         self.selected_files = {}
-        # Add the CSS provider to the screen
-        style_provider = Gtk.CssProvider()
-        css = """
-            .mybutton:not(:hover) {
-                background-color: @popover-background-color;
-            }
-
-        """
-        style_provider.load_from_data(css.encode())
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(),
-            style_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
         # Get the system language.
         self.lang = shared_utils.get_system_lang()
         # Load strings.
@@ -214,16 +200,16 @@ class MainWindow(Adw.ApplicationWindow):
         self.props.content = self.handle
 
         # Create the flash button
-        self.flash_button = self.create_button(
-            "Flash!",
+        self.start_button = self.create_button(
+            "Start",
             column=0,
             row=0,
-            command=lambda _: self.select_files(),
+            command=lambda _: self.display_files(),
         )
-        self.flash_button.set_hexpand(True)
-        self.flash_button.set_vexpand(True)
-        self.flash_button.add_css_class("pill")
-        self.flash_button.add_css_class("suggested-action")
+        self.start_button.set_hexpand(True)
+        self.start_button.set_vexpand(True)
+        self.start_button.add_css_class("pill")
+        self.start_button.add_css_class("suggested-action")
 
         # Create a box to hold the flash button
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
@@ -231,14 +217,14 @@ class MainWindow(Adw.ApplicationWindow):
         box.set_vexpand(True)
         box.set_halign(Gtk.Align.CENTER)
         box.set_valign(Gtk.Align.CENTER)
-        box.append(self.flash_button)
+        box.append(self.start_button)
 
         # Create the flash page
         self.flash_page = Adw.StatusPage.new()
         self.flash_page.set_icon_name("com.ethicalhaquer.galaxyflasher")
         self.flash_page.set_title("Galaxy Flasher")
         self.flash_page.set_description(
-            "Connect a device in Download Mode, and then click the flash button to start."
+            "Connect a device in Download Mode, and then click the button to start."
         )
         self.flash_page.set_child(box)
 
@@ -295,15 +281,6 @@ class MainWindow(Adw.ApplicationWindow):
                             {"name": "Dark", "value": "dark"},
                         ],
                     },
-                    {
-                        "type": "switch",
-                        "title": "Keep Log dark",
-                        "subtitle": "Keep the Log Tab dark, regardless of the theme.",
-                        "function": self.on_dark_log_switch_changed,
-                        "function_args": ["$$switch_row", "$$active", "$row_setting"],
-                        "setting": "keep_log_dark",
-                        "default_value": False,
-                    },
                 ],
             },
             {
@@ -342,89 +319,18 @@ class MainWindow(Adw.ApplicationWindow):
         hamburger.set_icon_name("open-menu-symbolic")
         self.header_bar.pack_end(hamburger)
 
-        """
-        # Define the stack to hold tabs
-        self.stack = Adw.ViewStack()
-
-        # Create view_switcher
-        self.view_switcher = Adw.ViewSwitcher()
-        self.view_switcher.set_stack(self.stack)
-        self.view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
-
-        # Set view_switcher as the title widget for header_bar
-        self.header_bar.set_title_widget(self.view_switcher)
-
-        # Create view_switcher_bar
-        self.view_switcher_bar = Adw.ViewSwitcherBar()
-        self.view_switcher_bar.set_stack(self.stack)
-
-        # Add view_switcher_bar to the toolbar_view
-        toolbar_view.add_bottom_bar(self.view_switcher_bar)
-
-        # Attach stack to grid
-        self.grid.attach(self.stack, 0, 0, 1, 7)
-
-        # Create breakpoint
-        condition = Adw.BreakpointCondition.new_length(1, 700, Adw.LengthUnit.SP)
-        self.breakpoint = Adw.Breakpoint.new(condition)
-        self.breakpoint.connect("apply", self.on_width_breakpoint_applied)
-        self.breakpoint.connect("unapply", self.on_width_breakpoint_unapplied)
-
-        # Attach setters to breakpoint
-        self.breakpoint.add_setter(self.view_switcher_bar, "reveal", True)
-
-        # Add breakpoint
-        self.add_breakpoint(self.breakpoint)
-
-        # Specify what tabs to display
-        tabs = self.ft_plugin.tabs
-
-        # Create tabs
-        for tab in tabs:
-            grid = Gtk.Grid()
-            grid.set_column_spacing(10)
-            grid.set_row_spacing(10)
-            self.stack.add_titled(grid, tab, tab)
-            setattr(self, f"{tab.lower()}_grid", grid)
-        """
-
-        """
-        # Create flash-tool output box
-        self.vte_term = Vte.Terminal()
-        self.vte_term.spawn_async(
-            Vte.PtyFlags.DEFAULT,  # Pty Flags
-            swd,  # Working directory
-            flashtool_exec,  # Command/BIN (argv)
-            None,  # Environmental Variables (env)
-            GLib.SpawnFlags.DEFAULT,  # Spawn Flags
-            None,
-            None,  # Child Setup
-            -1,  # Timeout (-1 for indefinitely)
-            None,  # Cancellable
-            None,  # Callback
-            None,  # User Data
-        )
-
-        # Create scrolled_window
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_child(self.vte_term)
-        scrolled_window.set_hexpand(True)
-        scrolled_window.set_vexpand(True)
-        scrolled_window.set_halign(Gtk.Align.FILL)
-        scrolled_window.set_valign(Gtk.Align.FILL)
-        self.log_grid.attach(scrolled_window, 0, 0, 1, 1)
-        """
-
         # Set the style_manager
         self.style_manager = Adw.StyleManager.get_default()
 
         # Set the theme
         theme = self.settings.get("theme") or "system"
         self.set_theme(theme)
+        """
         self.on_theme_changed(self.style_manager, None)
 
         # Detect whenever the theme changes.
         self.style_manager.connect("notify::dark", self.on_theme_changed)
+        """
 
         # Initialise the main buttons
         self.ft_plugin.initialise_buttons(self)
@@ -481,8 +387,8 @@ class MainWindow(Adw.ApplicationWindow):
         """
         )
 
-    def select_files(self):
-        logger.debug("select_files is running")
+    def display_files(self):
+        logger.debug("display_files is running")
         # If the files page hasn't already been made.
         if not self.stack.get_child_by_name("files"):
             grid = Gtk.Grid.new()
@@ -556,8 +462,8 @@ class MainWindow(Adw.ApplicationWindow):
         else:
             self.ft_plugin.selected_files(self, files, paths)
 
-    def select_device(self, devices):
-        logger.debug("select_device is running")
+    def display_devices(self, devices):
+        logger.debug("display_devices is running")
 
         def set_selected_device(btn, device):
             if btn.get_active:
@@ -611,8 +517,8 @@ class MainWindow(Adw.ApplicationWindow):
         )
         self.stack.set_visible_child_name("devices")
 
-    def select_partitions(self, partitions, function, function_files):
-        logger.debug("select_partitions is running")
+    def display_partitions(self, file, partitions, function):
+        logger.debug("display_partitions is running")
         selected_partitions = []
 
         def partition_toggled(button, row):
@@ -626,6 +532,11 @@ class MainWindow(Adw.ApplicationWindow):
         # If the partitions page has already been made.
         if partitions_page:
             self.stack.remove(partitions_page)
+            
+        main_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        main_box.set_hexpand(True)
+        #main_box.set_halign(Gtk.Align.CENTER)
+        main_box.set_valign(Gtk.Align.START)
 
         checkbutton_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
         checkbutton_box.set_hexpand(True)
@@ -633,33 +544,39 @@ class MainWindow(Adw.ApplicationWindow):
         checkbutton_box.set_halign(Gtk.Align.CENTER)
         checkbutton_box.set_valign(Gtk.Align.START)
 
-        row = 0
+        label = Gtk.Label.new()
+        label.set_label(f"Select what partitions to flash from {file}")
+        label.set_ellipsize(Pango.EllipsizeMode.END)
+        
+        main_box.append(label)
+        main_box.append(checkbutton_box)
 
         for i, partition in enumerate(partitions):
-            checkbutton = self.create_checkbutton(partition, 0, row)
+            checkbutton = self.create_checkbutton(partition)
+            #checkbutton.set_halign(Gtk.Align.CENTER)
             checkbutton.add_css_class("selection-mode")
             checkbutton_box.append(checkbutton)
-            checkbutton.connect("toggled", partition_toggled, row)
+            checkbutton.connect("toggled", partition_toggled, i)
             selected_partitions.append(False)
-            row += 1
+            #row += 1
 
         nav_buttons = [
             {
                 "title": "Continue",
                 "command": lambda _: function(
-                    self, selected_partitions, function_files
+                    self, selected_partitions
                 ),
             },
             {
                 "title": "Cancel",
                 "command": lambda _: function(
-                    self, selected_partitions, function_files
+                    self, selected_partitions
                 ),
             },
         ]
 
         self.add_page_to_stack(
-            content=checkbutton_box, name="partitions", nav_buttons=nav_buttons
+            content=main_box, name="partitions", nav_buttons=nav_buttons
         )
         self.stack.set_visible_child_name("partitions")
 
@@ -677,8 +594,8 @@ class MainWindow(Adw.ApplicationWindow):
         toast.set_timeout(5)
         self.toast_overlay.add_toast(toast)
 
-    def verify_flash(self, auto, num_partitions, function):
-        logger.debug("verify_flash is running")
+    def display_verify_flash(self, auto, num_partitions, function):
+        logger.debug("display_verify_flash is running")
 
         verify_flash_page = self.stack.get_child_by_name("verify")
 
@@ -807,6 +724,11 @@ class MainWindow(Adw.ApplicationWindow):
         cleaned_string = self.shared_utils.remove_ansi_escape_sequences(string)
         return cleaned_string
 
+    def remove_newlines(self, string):
+        logger.debug("remove_newlines is running")
+        cleaned_string = self.shared_utils.remove_newlines(string)
+        return cleaned_string
+
     def on_width_breakpoint_applied(self, breakpoint):
         logger.debug("on_width_breakpoint_applied is running")
         self.header_bar.set_title_widget(self.window_title)
@@ -815,198 +737,6 @@ class MainWindow(Adw.ApplicationWindow):
         logger.debug("on_width_breakpoint_unapplied is running")
         self.header_bar.set_title_widget(self.view_switcher)
 
-    def toggle_command_bar(self, button):
-        logger.debug("toggle_command_bar is running")
-        active = button.get_active()
-        if active:
-            self.command_entry.grab_focus()
-        self.command_bar.set_revealed(active)
-
-    def create_window(self, title):
-        logger.debug("create_window is running")
-        grid = Gtk.Grid()
-        window = Gtk.Window()
-        window.set_modal(True)
-        window.set_title(title)
-        window.set_child(grid)
-        window.set_transient_for(self)
-        return window, grid
-
-    # Unused code.
-    """
-    def scan_output(self, vte, i):
-        logger.debug("scan_output is running")
-        # print(f"contents changed: {i}")
-        strings_to_commands = self.ft_plugin.strings_to_commands
-        # This is a pretty bad way to do this.
-        # 10000 should be replaced with the actual value, But it works.
-        num_cols = vte.get_column_count()
-        term_text = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, num_cols)[0]
-        prompt = self.prompt.strip()
-        parts = term_text.strip().rsplit(prompt)
-        for part in reversed(parts):
-            latest_output = part.strip()
-            if latest_output:
-                break
-        else:
-            latest_output = ""
-        if latest_output != self.last_output:
-            for string, commands in strings_to_commands.items():
-                if string in latest_output and string not in self.last_output:
-                    for command in commands:
-                        command()
-            self.last_output = latest_output
-
-    def check_output(self, vte, command, result, start, end, wait, add_enter, timeout):
-        logger.debug("check_output is running")
-        # This is a pretty bad way to do this.
-        # 10000 should be replaced with the actual value, But it works.
-        num_cols = vte.get_column_count()
-        old_output = vte.get_text_range_format(Vte.Format(1), 0, 0, 10000, num_cols)[0]
-        old_output = shared_utils.remove_blank_lines(old_output)
-        if command:
-            self.send_cmd(command, add_enter)
-
-        cycles = 0
-        start_time = time.time()
-        if start:
-            start = start.strip()
-        # If start isn't specified, use the command as start.
-        else:
-            if command:
-                start = self.prompt + command
-            else:
-                print(
-                    "get_output requires that if the start arg isn't"
-                    "specified, the command arg must be."
-                )
-        if end:
-            end = end.strip()
-
-        def check():
-            nonlocal cycles
-            # This is a pretty bad way to do this.
-            # 10000 should be replaced with the actual value, But it works.
-            num_cols = vte.get_column_count()
-            current_output = vte.get_text_range_format(
-                Vte.Format(1), 0, 0, 10000, num_cols
-            )[0]
-            current_output = shared_utils.remove_blank_lines(current_output)
-            # If the output has changed or wait is False.
-            if current_output != old_output or wait is False:
-                lines = current_output.splitlines()
-                new_lines = []
-                start_index = -1
-                words = start.split()  # split the start string into a list of words
-                shortened_start = ""  # initialize an empty string
-                for word in words:
-                    if (
-                        len(shortened_start) + len(word) + 1 <= num_cols
-                    ):  # check if adding the word fits in num_cols space
-                        shortened_start += word + " "
-                    else:
-                        break
-
-                shortened_start = shortened_start.strip()  # remove the trailing space
-
-                print(f"shortened_start: {shortened_start}")
-
-                for i in range(len(lines) - 1, -1, -1):
-                    if shortened_start in lines[i]:
-                        start_index = i
-                        break
-                    # start_match = re.search(trimmed_start, lines[i])
-                    # if start_match:
-                # Get all the lines after start and up to end, if it's
-                # found, otherwise get everything after start.
-                if start_index != -1:
-                    new_lines = lines[start_index + 1 :]
-                end_index = None
-                if end:
-                    words = end.split()  # split the start string into a list of words
-                    shortened_end = ""  # initialize an empty string
-                    for word in words:
-                        if (
-                            len(shortened_end) + len(word) + 1 <= num_cols
-                        ):  # check if adding the word fits in num_cols space
-                            shortened_end += word + " "
-                        else:
-                            break
-
-                    shortened_end = shortened_end.strip()  # remove the trailing space
-
-                    print(f"shortened_end: {shortened_end}")
-                    for i, line in enumerate(new_lines):
-                        line = line.strip()
-                        if shortened_end in line:
-                            end_index = i
-                            break
-                # If end was found or was None, return the result,
-                # otherwise continue.
-                if end_index is not None or end is None:
-                    if end is not None:
-                        new_lines = new_lines[:end_index]
-                    cleaned_new_output = "\n".join(new_lines)
-                    # Check if cleaned_new_output is empty or contains only whitespace.
-                    if cleaned_new_output.strip():
-                        new_lines = cleaned_new_output.split("\n")
-                        for line in new_lines:
-                            line = line.strip()
-                            result.append(line)
-                        # print(f'Output: {result}')
-                    else:
-                        result.append(None)
-                        # print("The command finished with no output.")
-                    return GLib.SOURCE_REMOVE
-            if time.time() - start_time > timeout:
-                result.append("Timeout")
-                # print("Timeout reached!")
-                return GLib.SOURCE_REMOVE
-            cycles += 1
-            return GLib.SOURCE_CONTINUE
-
-        GLib.idle_add(check)
-
-    def get_output(
-        self,
-        command=None,
-        start=None,
-        end=">>",
-        wait=True,
-        add_enter=True,
-        timeout=2,
-    ):
-        The command and start args are optional, but if the command arg is not
-        specified the start arg has to be.
-        If the start arg is not specified start is set to the command.
-        If a command is given, it runs the command.
-        The optional add_enter arg determines whether a "\n" is appended to
-        the command, if a command was specified. By default it is True.
-        It returns the output after start, up to the line matching the optional
-        end arg, which by default is ">>".
-        If end is specified as None, all of the new output will be returned.
-        By default, it won't check for start anything until the output changes.
-        If you don't want it to wait for the output to change,
-        set the optional wait arg to False.
-        It returns None if the command finished with no output.
-        It returns "Timeout" if the command doesn't finish within the number of
-        seconds specified by the optional timeout arg, which by default is 2.
-        result = []
-        self.check_output(
-            self.vte_term,
-            command,
-            result,
-            start,
-            end,
-            wait,
-            add_enter,
-            timeout,
-        )
-        while not result:
-            GLib.main_context_default().iteration(True)
-        return result
-        """
-
     def set_setting(self, setting, value):
         if setting == "theme":
             self.set_theme(value)
@@ -1014,7 +744,6 @@ class MainWindow(Adw.ApplicationWindow):
         print(f"{setting} set to: '{value}'")
         shared_utils.save_settings(self.settings, settings_file)
 
-    # TODO: There has to be a better way to handle the terminal's colors...
     def set_theme(self, theme):
         if theme == "system":
             color_scheme = Adw.ColorScheme.PREFER_LIGHT
@@ -1030,71 +759,9 @@ class MainWindow(Adw.ApplicationWindow):
             return
         self.style_manager.set_color_scheme(color_scheme)
 
-    def on_dark_log_switch_changed(self, switch, state, setting):
-        active = switch.get_active()
-        self.set_setting(setting, active)
-        self.on_theme_changed(self.style_manager, None)
-
-    def on_theme_changed(self, style_manager, gparam):
-        dark = style_manager.props.dark
-        if dark:
-            terminal_foreground = "#ffffff"
-            terminal_background = "#242424"
-        else:
-            if self.settings.get("keep_log_dark"):
-                terminal_foreground = "#ffffff"
-                terminal_background = "#242424"
-            else:
-                terminal_foreground = "#000000"
-                terminal_background = "#fafafa"
-
-        foreground = Gdk.RGBA()
-        foreground.parse(terminal_foreground)
-        background = Gdk.RGBA()
-        background.parse(terminal_background)
-        # self.vte_term.set_colors(foreground, background, None)
-
-    def connect_device(self):
-        self.send_cmd("connect")
-
-    def start_odin_session(self):
-        if self.flashtool == "thor":
-            self.send_cmd("begin odin")
-        elif self.flashtool == "pythor":
-            self.send_cmd("begin")
-
-    def end_odin(self):
-        self.send_cmd("end")
-
-    def on_command_enter(self):
-        text = self.command_entry.get_text()
-        self.command_entry.set_text("")
-        self.send_cmd_entry(text)
-
     def set_widget_state(self, *args, state=True):
         for widget in args:
             widget.set_sensitive(state)
-
-    def send_cmd(self, cmd, add_enter=True):
-        if add_enter:
-            cmd = cmd + "\n"
-        self.vte_term.feed_child(cmd.encode("utf-8"))
-
-    # Like send_cmd, but checks for "special" commands that have a function.
-    # As the name suggests, it is used for the command entry,
-    # but it can also be used by buttons, such as the connect button.
-    def send_cmd_entry(self, cmd):
-        cmd = cmd.strip() + "\n"
-        special = False
-        if self.flashtool == "thor":
-            if cmd == "connect\n":
-                special = True
-                self.ft_plugin.select_device()
-            if cmd == "flashTar\n":
-                special = True
-                self.ft_plugin.flash(self)
-        if not special:
-            self.vte_term.feed_child(cmd.encode("utf-8"))
 
     def open_file(self, partition):
         def file_dialog_callback(obj, result):
@@ -2178,9 +1845,9 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
     def create_checkbutton(
         self,
         label,
-        column,
-        row,
         grid=None,
+        column=0,
+        row=0,
         padding=(0, 0, 0, 0),
         align=Gtk.Align.START,
         width=1,

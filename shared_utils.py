@@ -118,6 +118,7 @@ def remove_blank_lines(string):
     new_string = "\n".join(filtered_lines)
     return new_string
 
+
 def remove_ansi_escape_sequences(string):
     """Remove ANSI escape sequences from a string.
 
@@ -127,9 +128,14 @@ def remove_ansi_escape_sequences(string):
     Returns:
         str: The input string with ANSI escape sequences removed.
     """
-    #pattern = re.compile(r'\x1B\[\d+(;\d+){0,2}m')
-    pattern = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    cleaned_string = pattern.sub('', string)
+    # pattern = re.compile(r'\x1B\[\d+(;\d+){0,2}m')
+    pattern = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    cleaned_string = pattern.sub("", string)
+    return cleaned_string
+
+
+def remove_newlines(string):
+    cleaned_string = " ".join(string.split())
     return cleaned_string
 
 

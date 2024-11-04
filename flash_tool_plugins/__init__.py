@@ -32,18 +32,8 @@ class FlashToolPlugin(ABC):
         pass
 
     @abstractmethod
-    def flash(self):
-        """Flash a device."""
-        pass
-
-    @abstractmethod
     def select_partitions(self):
         """Prompt the user to select partitions to flash."""
-        pass
-    
-    @abstractmethod
-    def flash(self):
-        """Flash."""
         pass
 
     def __init_subclass__(cls, **kwargs):
