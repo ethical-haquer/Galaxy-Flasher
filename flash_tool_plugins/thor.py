@@ -310,7 +310,7 @@ class Thor(FlashToolPlugin):
                     main.child.interact()
                 self.last_file = file
                 if file in self.selected_files:
-                    logger.debug(f"cycle: File was selected: '{file=}'")
+                    logger.debug(f"cycle: File was selected: {file=}")
                     if self.auto:
                         selected_partitions = [True] * len(partitions)
                         self.send_selected_partitions(main, selected_partitions)
@@ -320,7 +320,7 @@ class Thor(FlashToolPlugin):
                             file, partitions, self.send_selected_partitions
                         )
                 else:
-                    logger.info(f"cycle: File wasn't selected, skipping: '{file=}'")
+                    logger.info(f"cycle: File wasn't selected, skipping: {file=}")
                     logger.debug('cycle: Sending "Enter".')
                     main.child.send("\n")
                     self.expect_output(

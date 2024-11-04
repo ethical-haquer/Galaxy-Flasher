@@ -76,11 +76,11 @@ class MainWindow(Adw.ApplicationWindow):
         try:
             plugins = load_plugins(self)
             if not plugins:
-                print("No flash-tool plugins found.")
+                logger.error("__init__: No flash-tool plugins found.")
                 return
 
             for plugin in plugins:
-                print(f"Available flash-tool plugin: {plugin.name}")
+                logger.info(f"__init__: Available flash-tool plugin: {plugin.name}")
                 flash_tool_options.append(
                     {"name": plugin.displayed_name, "value": plugin.name}
                 )
@@ -91,17 +91,17 @@ class MainWindow(Adw.ApplicationWindow):
                     self.ft_plugin = plugin
                     break
             else:
-                print(f"Plugin {plugin_name} not found")
+                logger.error(f"__init__: Plugin {plugin_name} not found")
 
         except Exception as e:
-            print(f"Error: {e}")
+            logger.error(f"__init__: Error: {e}")
         self.ft_plugin.test()
         # Check if the app is running as a flatpak.
         self.is_flatpak = shared_utils.get_is_flatpak()
         # If the system isn't linux.
         if system != "linux":
             self.prompt = "never going to happen :)"
-            print("Currently, Galaxy Flasher only supports Linux.")
+            logger.error("__init__: Currently, Galaxy Flasher only supports Linux.")
             self.connect(
                 "show",
                 lambda _: self.create_alert_dialog(
@@ -325,12 +325,6 @@ class MainWindow(Adw.ApplicationWindow):
         # Set the theme
         theme = self.settings.get("theme") or "system"
         self.set_theme(theme)
-        """
-        self.on_theme_changed(self.style_manager, None)
-
-        # Detect whenever the theme changes.
-        self.style_manager.connect("notify::dark", self.on_theme_changed)
-        """
 
         # Initialise the main buttons
         self.ft_plugin.initialise_buttons(self)
@@ -408,6 +402,7 @@ class MainWindow(Adw.ApplicationWindow):
                     "clicked", lambda _, x=slot: self.open_file(x)
                 )
                 button.add_css_class("pill")
+                button.set_can_shrink(True)
                 # button.add_css_class("circular")
                 button.set_hexpand(True)
                 button.set_halign(Gtk.Align.FILL)
@@ -452,12 +447,12 @@ class MainWindow(Adw.ApplicationWindow):
                     files.append(file_name)
                     paths[slot] = os.path.dirname(file_path)
         if len(paths) == 0:
-            print(self.strings["no_files_selected2"])
+            logger.info(f'check_files: {self.strings["no_files_selected2"]}')
             self.create_alert_dialog(
                 "Invalid files", self.strings["no_files_selected2"]
             )
         elif len(set(paths.values())) > 1:
-            print("The files NEED to be in the same dir...")
+            logger.info("check_files: The files NEED to be in the same dir...")
             self.create_alert_dialog("Invalid files", self.strings["invalid_files"])
         else:
             self.ft_plugin.selected_files(self, files, paths)
@@ -471,7 +466,6 @@ class MainWindow(Adw.ApplicationWindow):
 
         devices_page = self.stack.get_child_by_name("devices")
 
-        # If the files page has already been made.
         if devices_page:
             self.stack.remove(devices_page)
 
@@ -529,7 +523,6 @@ class MainWindow(Adw.ApplicationWindow):
 
         partitions_page = self.stack.get_child_by_name("partitions")
 
-        # If the partitions page has already been made.
         if partitions_page:
             self.stack.remove(partitions_page)
             
@@ -589,7 +582,7 @@ class MainWindow(Adw.ApplicationWindow):
     def on_no_devices_found(self):
         logger.debug("on_no_devices_found is running")
         message = "No Samsung devices were found!"
-        print(message)
+        logger.info(f"on_no_devices_found: {message}")
         toast = Adw.Toast.new(message)
         toast.set_timeout(5)
         self.toast_overlay.add_toast(toast)
@@ -666,7 +659,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_flash(self):
         logger.debug("on_flash is running")
-        print("Would show you a progress bar.")
+        logger.info("on_flash: Would show you a progress bar.")
         self.ft_plugin.flash(self)
 
     def add_page_to_stack(self, content, name, nav_buttons):
@@ -738,13 +731,15 @@ class MainWindow(Adw.ApplicationWindow):
         self.header_bar.set_title_widget(self.view_switcher)
 
     def set_setting(self, setting, value):
+        logger.debug("set_setting is running")
         if setting == "theme":
             self.set_theme(value)
         self.settings[setting] = value
-        print(f"{setting} set to: '{value}'")
+        logger.info(f"set_setting: {setting} set to: '{value}'")
         shared_utils.save_settings(self.settings, settings_file)
 
     def set_theme(self, theme):
+        logger.debug("set_theme is running")
         if theme == "system":
             color_scheme = Adw.ColorScheme.PREFER_LIGHT
         elif theme == "light":
@@ -752,141 +747,41 @@ class MainWindow(Adw.ApplicationWindow):
         elif theme == "dark":
             color_scheme = Adw.ColorScheme.FORCE_DARK
         else:
-            print(
-                "Error in set_theme function: theme argument can be either "
+            logger.error(
+                "set_theme: The theme argument can be either "
                 f'"system", "light", or "dark". Not "{theme}".'
             )
             return
         self.style_manager.set_color_scheme(color_scheme)
 
     def set_widget_state(self, *args, state=True):
+        logger.debug("set_widget_state is running")
         for widget in args:
             widget.set_sensitive(state)
 
-    def open_file(self, partition):
+    def open_file(self, file_type):
+        logger.debug("open_file is running")
         def file_dialog_callback(obj, result):
             try:
                 file = obj.open_finish(result)
-                """
-                    # Create a horizontal box for the close button
-                    close_box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
-                    icon = Gtk.Image.new_from_icon_name("window-close")
-                    shortened_file_path = self.shared_utils.shorten_string(file_path, 20)
-                    test_label = Gtk.Label.new(shortened_file_path)
-                    
-                    close_box.append(test_label)
-                    close_box.append(icon)
-                    """
-                """
                 if file:
                     file_path = file.get_path()
                     file_name = file.get_basename()
-                    print(f"Selected file: {file_path}")
+                    logger.info(f"open_file: Selected file: {file_path}")
 
-                    button = getattr(self, f"{partition}_button")
-                    
-                    existing_close_button = button.get_next_sibling()
-                    button_row_box = button.get_parent()
+                    file_type_lowered = file_type.lower()
+                    self.selected_files[file_type_lowered] = file_path
+                    file_button = getattr(self, f"{file_type}_button")
+                    button_label = file_button.get_label()
+                    button_row_box = file_button.get_parent()
 
-                    # Create button content for the close button
-                    button_content = Adw.ButtonContent.new()
-                    button_content.set_can_shrink(True)
-                    button_content.set_icon_name("window-close")
-                    button_content.set_label(file_name)
-
-                    if existing_close_button:
-                        # Update the existing close button if it exists
-                        close_button = button_row_box.get_last_child()
-                        close_button.set_child(button_content)
+                    # if ":" in button_label:
+                    if button_label != file_type:
+                        new_label = f'{file_type}: "{file_name}"'
+                        file_button.set_label(new_label)
                     else:
-                        # Create a new close button if it doesn't exist
-                        close_button = Gtk.Button.new()
-                        close_button.set_hexpand(True)
-                        close_button.set_halign(Gtk.Align.FILL)
-                        close_button.set_valign(Gtk.Align.FILL)
-                        close_button.add_css_class("pill")
-                        close_button.add_css_class("destructive-action")
-                        close_button.set_child(button_content)
-                        close_button.signal_id = close_button.connect("clicked", lambda button, x=partition: self.remove_file(button, x))
-
-                        button_row_box.remove(button)
-                        button_row_box.append(button)
-                        button_row_box.append(close_button)
-
-                """
-                # Looks good.
-                """
-                if file:
-                    file_path = file.get_path()
-                    file_name = file.get_basename()
-                    print(f"Selected file: {file_path}")
-
-                    button = getattr(self, f"{partition}_button")
-                    
-                    selected_file_button = button.get_next_sibling()
-                    button_row_box = button.get_parent()
-
-                    # Create button content for the close button
-                    button_content = Adw.ButtonContent.new()
-                    button_content.set_can_shrink(True)
-                    button_content.set_icon_name("window-close")
-                    button_content.set_label(file_name)
-
-                    if selected_file_button:
-                        # Update the existing close button if it exists
-                        close_button = button_row_box.get_last_child()
-                        close_button.set_child(button_content)
-                    else:
-                        file_button_box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
-                        close_button = Gtk.Button.new_from_icon_name("window-close")
-                        close_button.add_css_class("circular")
-                        close_button.add_css_class("destructive-action")
-                        close_button.signal_id = close_button.connect("clicked", lambda button=selected_file_button, x=partition: self.remove_file(button, x))
-                        file_label = Gtk.Label.new(file_name)
-                        file_button_box.append(close_button)
-                        file_button_box.append(file_label)
-                        # Create a new close button if it doesn't exist
-                        selected_file_button = Gtk.Button.new()
-                        #selected_file_button.set_hexpand(True)
-                        selected_file_button.set_halign(Gtk.Align.FILL)
-                        #selected_file_button.set_valign(Gtk.Align.FILL)
-                        selected_file_button.add_css_class("pill")
-                        selected_file_button.set_can_shrink(True)
-                        selected_file_button.signal_id = selected_file_button.connect("clicked", lambda btn: close_button.emit("clicked"))
-                        selected_file_button.set_child(file_button_box)
-
-                        button_row_box.append(selected_file_button)
-                        """
-
-                if file:
-                    file_path = file.get_path()
-                    file_name = file.get_basename()
-                    print(f"Selected file: {file_path}")
-
-                    partition_lowered = partition.lower()
-                    self.selected_files[partition_lowered] = file_path
-                    # print(self.selected_files)
-
-                    button = getattr(self, f"{partition}_button")
-
-                    selected_file_button = button.get_next_sibling()
-                    button_row_box = button.get_parent()
-
-                    if selected_file_button:
-                        # Update the existing close button if it exists
-                        selected_file_button = (
-                            button_row_box.get_first_child().get_next_sibling()
-                        )
-                        # close_button = button_row_box.get_last_child()
-                        selected_file_button.set_label(file_name)
-                    else:
-                        selected_file_button = Gtk.Button.new_with_label(file_name)
-                        # selected_file_button.set_hexpand(True)
-                        selected_file_button.set_halign(Gtk.Align.FILL)
-                        # selected_file_button.set_valign(Gtk.Align.FILL)
-                        selected_file_button.add_css_class("pill")
-                        # selected_file_button.add_css_class("circular")
-                        selected_file_button.set_can_shrink(True)
+                        new_label = f'{button_label}: "{file_name}"'
+                        file_button.set_label(new_label)
 
                         close_button = Gtk.Button.new_from_icon_name("window-close")
                         close_button.set_halign(Gtk.Align.CENTER)
@@ -898,12 +793,10 @@ class MainWindow(Adw.ApplicationWindow):
                         close_button.add_css_class("destructive-action")
                         close_button.signal_id = close_button.connect(
                             "clicked",
-                            lambda button=selected_file_button, x=partition: self.remove_file(
-                                button, x
+                            lambda button=file_button, file_type=file_type: self.remove_file(
+                                button, file_type
                             ),
                         )
-
-                        button_row_box.append(selected_file_button)
                         button_row_box.append(close_button)
 
             except GLib.Error as e:
@@ -911,9 +804,9 @@ class MainWindow(Adw.ApplicationWindow):
                 if e.code == 2:
                     pass
                 else:
-                    print(f"Error: {e}")
+                    logger.error(f"open_file: {e}")
 
-        file_dialog = Gtk.FileDialog(title=f"Select a {partition} file")
+        file_dialog = Gtk.FileDialog(title=f"Select a {file_type} file")
         odin_filter = Gtk.FileFilter()
         odin_filter.set_name("Odin files")
         odin_filter.add_mime_type("application/x-tar")
@@ -924,20 +817,18 @@ class MainWindow(Adw.ApplicationWindow):
         file_dialog.set_filters(filter_list)
         file_dialog.open(self, None, file_dialog_callback)
 
-    def remove_file(self, close_button, partition):
-        partition_lowered = partition.lower()
-        self.selected_files.pop(partition_lowered)
-        # print(self.selected_files)
-        print(f"Removing {partition} file")
+    def remove_file(self, close_button, file_type):
+        logger.debug("remove_file is running")
+        file_type_lowered = file_type.lower()
+        self.selected_files.pop(file_type_lowered)
+        logger.info(f"remove_file: Removing {file_type} file")
         button_row_box = close_button.get_parent()
         close_button = button_row_box.get_last_child()
-        file_button = close_button.get_prev_sibling()
-        button_row_box.remove(file_button)
+        file_button = button_row_box.get_first_child()
         button_row_box.remove(close_button)
-        """
-        button_row_box = close_button.get_parent()
-        button_row_box.remove(close_button)
-        """
+        button_label = file_button.get_label()
+        #file_type = button_label.split(': ', 1)[0]
+        file_button.set_label(file_type)
 
     def create_label(
         self,
@@ -951,6 +842,7 @@ class MainWindow(Adw.ApplicationWindow):
         width=1,
         height=1,
     ):
+        logger.debug("create_label is running")
         label = Gtk.Label()
         self.set_padding(label, padding)
         label.set_markup(f'<span font_desc="{font[0]} {font[1]}">{text}</span>')
@@ -969,6 +861,7 @@ class MainWindow(Adw.ApplicationWindow):
         width=1,
         height=1,
     ):
+        logger.debug("create_button is running")
         button = Gtk.Button(label=label)
         self.set_padding(button, padding)
         button.signal_id = button.connect("clicked", command)
@@ -980,6 +873,7 @@ class MainWindow(Adw.ApplicationWindow):
     def print_widget_tree(
         self, widget, indent_str: str = "", top_level: bool = True
     ) -> None:
+        logger.debug("print_widget_tree is running")
         if top_level:
             print(f"{indent_str}{widget.__class__.__name__}")
 
@@ -1012,6 +906,7 @@ class MainWindow(Adw.ApplicationWindow):
         function_args: list = None,
         commands: list = None,
     ) -> Adw.SwitchRow:
+        logger.debug("create_switch_row is running")
         """
         Creates a new Adw.SwitchRow instance.
 
@@ -1099,6 +994,7 @@ class MainWindow(Adw.ApplicationWindow):
         Returns:
             Adw.ComboRow: The created combo row.
         """
+        logger.debug("create_combo_row is running")
         combo_row = Adw.ComboRow()
         setattr(self, name, combo_row)
         if title:
@@ -1152,6 +1048,7 @@ class MainWindow(Adw.ApplicationWindow):
         Returns:
             Adw.ExpanderRow: The created expander row.
         """
+        logger.debug("create_expander_row is running")
         expander_row = Adw.ExpanderRow()
         setattr(self, name, expander_row)
         if title:
@@ -1169,6 +1066,7 @@ class MainWindow(Adw.ApplicationWindow):
         text: str,
         expander_row: Adw.ExpanderRow,
     ) -> None:
+        logger.debug("add_custom_expander_row_label is running")
         expander_row.added_label = Gtk.Label(label=text)
 
         label_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
@@ -1185,6 +1083,7 @@ class MainWindow(Adw.ApplicationWindow):
     def create_action_row(
         self, name, title, subtitle, prefixes, suffixes, activatable_widget
     ):
+        logger.debug("create_action_row is running")
         action_row = Adw.ActionRow.new()
         setattr(self, name, action_row)
         if title:
@@ -1201,257 +1100,6 @@ class MainWindow(Adw.ApplicationWindow):
             action_row.set_activatable_widget(activatable_widget)
 
         return action_row
-
-    def create_preferences(self, main_preferences_list: list, grid: Gtk.Grid) -> None:
-        # TODO: Good in-code documentation takes up too much space, is hard to maintain, and is hard to read.
-        # I need to look into alternative solutions.
-        """
-        Creates a preferences page based on the provided main_preferences_list.
-
-        This function creates an Adw.PreferencesPage and populates it with sections and settings
-        based off the items in main_preferences_list. Each section is represented by an Adw.PreferencesGroup,
-        and each row is represented by a row within the group. The type of row depends on the type
-        specified in the row dictionary, which can be "switch", "combo", or "expander".
-
-        Parameters:
-            main_preferences_list (list): A list of dictionaries, where each dictionary represents a section
-            of the preferences page. Each section dictionary should contain:
-                - "title" (str): The title of the section.
-                - "section_sensitive" (bool, optional): Refer to the description of the sensitive arg below.
-                - "section_signal" (str, optional): Refer to the description of the signal arg below.
-                - "section_function" (function, optional): Refer to the description of the function arg below.
-                - "section_function_args" (list, optional): Refer to the description of the function_args argument below.
-                NOTE: If a row-specific option is specified, it overides a section-wide option.
-                - "section_commands" (list, optional):
-                - "rows" (list): A list of dictionaries, where each dictionary represents a row in the section.
-                    Each row dictionary can contain:
-                    - "type" (str): The type of row, which can be "switch", "combo", or "expander".
-                    - "title" (str): The title of the row.
-                    - "subtitle" (str, optional): The subtitle of the row. Only applies to switch rows.
-                    - "active" (bool, optional): Whether the row is active. Only applies to switch rows.
-                    - "sensitive" (bool, optional): Whether the row is sensitive.
-                    - "signal" (str, optional): The signal to connect the function to. Only applies to switch rows.
-                    - "function" (function, optional): A function to be executed when the row is interacted with.
-                    - "function_args" (list, optional): A list of args to pass to the function. Oftentimes, you want to
-                    pass a variable to the function that is set in this function, say row_setting. Or maybe you want to
-                    pass a variable that is set in the function that creates the row, like switch_row in create_switch_row.
-                    You can do this by taking the variable you want to pass to the function, making it a string, and then
-                    adding a "$" to the beggining of it. For example, row_setting becomes "$row_setting". You can do
-                    the same with variables that should be set in the function that creates the individual
-                    row (create_switch_row, create_combo_row, and create_expander_row), just add two "$"s instead of one.
-                    For, example, switch_row would become "$$switch_row" in command_args.
-                    - "commands" (list, optional): A list of commands to execute after creating the row. The format is:
-                    [(example_command, ["example_string", "$example_variable", example_variable])]
-                    Strings starting with "$" are converted to variables defined in create_{type}_switch at run-time.
-                    - "setting" (str): The name of the setting associated with the row.
-
-            grid (Gtk.Grid): The grid to which the preferences page should be attached.
-
-        Returns:
-            None
-        """
-        preferences_page = Adw.PreferencesPage.new()
-        preferences_page.set_hexpand(True)
-        for section in main_preferences_list:
-            preferences_group = Adw.PreferencesGroup.new()
-            preferences_page.add(preferences_group)
-            group_title = section.get("title")
-            section_sensitive = section.get("section_sensitive")
-            section_signal = section.get("section_signal")
-            section_function = section.get("section_function")
-            section_function_args = section.get("section_function_args")
-            section_commands = section.get("section_commands")
-            rows = section.get("rows")
-            if group_title:
-                preferences_group.set_title(group_title)
-            for row in rows:
-                row_type = row.get("type")
-                row_title = row.get("title")
-                row_subtitle = row.get("subtitle")
-                row_sensitive = row.get("sensitive")
-                row_signal = row.get("signal")
-                row_function = row.get("function")
-                row_function_args = row.get("function_args")
-                row_commands = row.get("commands")
-                row_setting = row.get("setting")
-                if not row_type:
-                    print(
-                        'Error in create_preferences: The "type" arg must be specified.'
-                    )
-                    break
-                if not row_setting:
-                    print(
-                        'Error in create_preferences: The "setting" arg must be specified.'
-                    )
-                    break
-                if row_type == "switch":
-                    name = f"{row_setting}_switch_row"
-                    default_value = row.get("default_value", False)
-                    active = self.settings.get(row_setting, default_value)
-                elif row_type == "combo":
-                    options = row.get("options")
-                    default_value = next(
-                        (
-                            option["value"]
-                            for option in options
-                            if option["value"] == self.settings.get(row_setting)
-                        ),
-                        options[0]["value"],
-                    )
-                    value_name_list = Gtk.StringList.new()
-                    value_list = [option["value"] for option in options]
-                    for option in options:
-                        value_name_list.append(option["name"])
-                    name = f"{row_setting}_combo_row"
-                    model = value_name_list
-                    selected = value_list.index(default_value)
-                if row_type == "switch" or row_type == "combo":
-                    if row_sensitive is not None:
-                        sensitive = row_sensitive
-                    else:
-                        sensitive = section_sensitive
-                    if row_signal is not None:
-                        signal = row_signal
-                    else:
-                        signal = section_signal
-                    if row_function:
-                        function = row_function
-                    elif section_function:
-                        function = section_function
-                    else:
-                        if row_type == "switch":
-                            function = self.on_switch_row_changed
-                        elif row_type == "combo":
-                            function = self.on_combo_row_changed
-                    args = None
-                    if row_function_args is not None:
-                        args = row_function_args
-                    else:
-                        args = section_function_args
-                    if args:
-                        function_args = []
-                        for arg in args:
-                            if arg.startswith("$") and len(arg) > 1 and arg[1] != "$":
-                                function_args.append(locals()[arg[1:]])
-                            else:
-                                function_args.append(arg)
-                    else:
-                        function_args = None
-                    if row_commands is not None:
-                        commands = row_commands
-                    else:
-                        commands = section_commands
-                if row_type == "switch":
-                    switch_row = self.create_switch_row(
-                        name,
-                        row_title,
-                        row_subtitle,
-                        active,
-                        sensitive,
-                        signal,
-                        function,
-                        function_args,
-                        commands,
-                    )
-                    preferences_group.add(switch_row)
-                elif row_type == "combo":
-                    combo_row = self.create_combo_row(
-                        name,
-                        row_title,
-                        row_subtitle,
-                        model,
-                        selected,
-                        function,
-                        function_args,
-                    )
-                    preferences_group.add(combo_row)
-                elif row_type == "expander":
-                    options = row["options"]
-                    default_value = next(
-                        (
-                            option["value"]
-                            for option in options
-                            if option["value"] == self.settings.get(row_setting)
-                        ),
-                        options[0]["value"],
-                    )
-                    value_name_list = [option["name"] for option in options]
-                    value_list = [option["value"] for option in options]
-                    current_value_name = "Not set"
-                    radio_group = None
-                    rows = []
-                    for i, option in enumerate(options):
-                        name = option.get("name")
-                        value = option.get("value")
-                        action_row = Adw.ActionRow(title=name)
-                        flashtool_file = self.settings.get(f"{value}_file", None)
-                        if flashtool_file:
-                            action_row.set_subtitle(flashtool_file)
-                        setattr(self, f"{value}_action_row", action_row)
-                        check_button = Gtk.CheckButton()
-                        setattr(action_row, "check_button", check_button)
-                        check_button.set_group(radio_group)
-                        if value == default_value and self.settings.get(
-                            f"{value}_file", None
-                        ):
-                            check_button.set_active(True)
-                            current_value_name = name
-                        setattr(self, f"{row_setting}_expander_row", None)
-                        check_button.connect(
-                            "toggled",
-                            lambda _, action_row=action_row, check_button=check_button, setting=row_setting, value=value: self.on_action_row_checkbutton_clicked(
-                                action_row, check_button, setting, value
-                            ),
-                        )
-                        radio_group = check_button
-                        action_row.add_prefix(check_button)
-                        button_box = Gtk.Box(spacing=0)
-                        file_chooser_button = Gtk.Button()
-                        info_button = Gtk.Button()
-                        self.set_padding(file_chooser_button, [0, 0, 10, 10])
-                        self.set_padding(info_button, [0, 0, 10, 10])
-                        file_chooser_button_content = Adw.ButtonContent(
-                            label="", icon_name="document-open-symbolic"
-                        )
-                        info_button_content = Adw.ButtonContent(
-                            label="", icon_name="help-about-symbolic"
-                        )
-                        file_chooser_button.set_child(file_chooser_button_content)
-                        info_button.set_child(info_button_content)
-                        file_chooser_button.set_has_frame(False)
-                        info_button.set_has_frame(False)
-                        file_chooser_button.connect(
-                            "clicked",
-                            lambda _, action_row=action_row, setting=row_setting, name=name, value=value: self.on_action_row_file_button_clicked(
-                                action_row, setting, name, value
-                            ),
-                        )
-                        info_button.connect(
-                            "clicked",
-                            lambda _, action_row=action_row, setting=row_setting, name=name, value=value: self.on_info_button_clicked(
-                                action_row, setting, name, value
-                            ),
-                        )
-                        button_box.append(file_chooser_button)
-                        button_box.append(info_button)
-                        action_row.add_suffix(button_box)
-                        if self.settings.get(f"{value}_file", None):
-                            action_row.set_activatable_widget(check_button)
-                        else:
-                            action_row.set_activatable_widget(file_chooser_button)
-                        rows.append(action_row)
-                    name = f"{row_setting}_expander_row"
-                    expander_row = self.create_expander_row(
-                        name, row_title, row_subtitle, rows
-                    )
-                    self.add_custom_expander_row_label(current_value_name, expander_row)
-                    expander_row.added_label.set_label(current_value_name)
-                    preferences_group.add(expander_row)
-                else:
-                    print(
-                        f'Error in create_preferences: "{row_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
-                    )
-        grid.attach(preferences_page, 0, 0, 1, 1)
 
     def create_preferences_dialog(self, *_):
         """
@@ -1499,6 +1147,7 @@ class MainWindow(Adw.ApplicationWindow):
         Returns:
             None
         """
+        logger.debug("create_preferences_dialog is running")
         main_preferences_list = self.preferences_dialog_layout
         preferences_dialog = Adw.PreferencesDialog.new()
         preferences_page = Adw.PreferencesPage.new()
@@ -1527,13 +1176,13 @@ class MainWindow(Adw.ApplicationWindow):
                 row_commands = row.get("commands")
                 row_setting = row.get("setting")
                 if not row_type:
-                    print(
-                        'Error in create_preferences: The "type" arg must be specified.'
+                    logger.error(
+                        'create_preferences_dialog: The "type" arg must be specified.'
                     )
                     break
                 if not row_setting:
-                    print(
-                        'Error in create_preferences: The "setting" arg must be specified.'
+                    logger.error(
+                        'create_preferences_dialog: The "setting" arg must be specified.'
                     )
                     break
                 if row_type == "switch":
@@ -1700,20 +1349,22 @@ class MainWindow(Adw.ApplicationWindow):
                     expander_row.added_label.set_label(current_value_name)
                     preferences_group.add(expander_row)
                 else:
-                    print(
-                        f'Error in create_preferences: "{row_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
+                    logger.error(
+                        f'create_preferences_dialog: "{row_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
                     )
         preferences_dialog.present(self)
 
     def on_action_row_checkbutton_clicked(
         self, action_row, check_button, setting, value
     ):
+        logger.debug("on_action_row_checkbutton_clicked is running")
         if check_button.get_active():
             expander_row = getattr(self, f"{setting}_expander_row")
             expander_row.added_label.set_label(action_row.get_title())
             self.set_setting(setting, value)
 
     def on_action_row_file_button_clicked(self, action_row, setting, name, value):
+        logger.debug("on_action_row_file_button_clicked is running")
         if setting == "flash_tool":
             name = "Pythor" if value == "pythor" else name
 
@@ -1722,7 +1373,7 @@ class MainWindow(Adw.ApplicationWindow):
                     file = obj.open_finish(result)
                     if file:
                         file_path = file.get_path()
-                        print(f"Selected {name} executable: {file_path}")
+                        logger.info(f"on_action_row_file_button_clicked: Selected {name} executable: {file_path}")
                         self.set_setting(f"{value}_file", file_path)
                         action_row.set_activatable_widget(action_row.check_button)
                         action_row.set_subtitle(file_path)
@@ -1733,7 +1384,7 @@ class MainWindow(Adw.ApplicationWindow):
                     if e.code == 2:
                         pass
                     else:
-                        print(f"Error: {e}")
+                        logger.error(f"on_action_row_file_button_clicked: {e}")
 
             file_dialog = Gtk.FileDialog(
                 title=f'Select {"an" if value == "odin4" else "a"} {name} executable'
@@ -1754,6 +1405,7 @@ class MainWindow(Adw.ApplicationWindow):
             file_dialog.open(self, None, file_dialog_callback)
 
     def on_info_button_clicked(self, action_row, setting, name, value):
+        logger.debug("on_info_button_clicked is running")
         name = "Pythor" if value == "pythor" else name
         name = "About " + name
         if value == "thor":
@@ -1795,10 +1447,12 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         dialog.present(self)
 
     def on_switch_row_changed(self, switch, state, setting):
+        logger.debug("on_switch_row_changed is running")
         value = switch.get_active()
         self.set_setting(setting, value)
 
     def on_combo_row_changed(self, combo_row, value_list, setting):
+        logger.debug("on_combo_row_changed is running")
         new_value_index = combo_row.get_selected()
         new_value = value_list[new_value_index]
         self.set_setting(setting, new_value)
@@ -1812,6 +1466,7 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         default_response="NULL",
         extra_child=None,
     ):
+        logger.debug("create_alert_dialog is running")
         alert_dialog = Adw.AlertDialog.new(title, text)
         if responses:
             for response in responses:
@@ -1828,12 +1483,14 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         alert_dialog.choose(self, None, callback)
 
     def change_button_command(self, button, new_command):
+        logger.debug("change_button_command is running")
         button.disconnect(button.signal_id)
         button.signal_id = button.connect("clicked", new_command)
 
     def create_entry(
         self, column, row, grid, padding=(0, 0, 0, 0), width=1, height=1, expand=False
     ):
+        logger.debug("create_entry is running")
         entry = Gtk.Entry()
         self.set_padding(entry, padding)
         if expand:
@@ -1853,6 +1510,7 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         width=1,
         height=1,
     ):
+        logger.debug("create_checkbutton is running")
         check_button = Gtk.CheckButton(label=label)
         self.set_padding(check_button, padding)
         check_button.set_halign(align)
@@ -1873,6 +1531,7 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         radio_padding=(0, 0, 0, 0),
         font=("monospace", 11),
     ):
+        logger.debug("create_radiobuttons is running")
         current_value = self.settings.get(setting, default_value)
         # Create the label
         self.create_label(name, grid, column, row, padding, font)
@@ -1899,6 +1558,7 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
     def create_toggle_switch(
         self, label, column, row, grid, width=1, height=1, padding=(10, 0, 0, 0)
     ):
+        logger.debug("create_toggle_switch is running")
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         toggle_switch = Gtk.Switch()
         toggle_label = Gtk.Label(label=label)
@@ -1910,12 +1570,14 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
         return toggle_switch
 
     def set_padding(self, widget, padding):
+        logger.debug("set_padding is running")
         widget.set_margin_start(padding[0])
         widget.set_margin_end(padding[1])
         widget.set_margin_top(padding[2])
         widget.set_margin_bottom(padding[3])
 
     def create_about_dialog(self, *_):
+        logger.debug("create_about_dialog is running")
         about_dialog = Adw.AboutDialog.new()
         about_dialog.set_application_name("Galaxy Flasher")
         about_dialog.set_developer_name("ethical_haquer")
