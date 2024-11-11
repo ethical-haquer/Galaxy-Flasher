@@ -1,5 +1,5 @@
 <div align="center">
-<img src="./icons/com.ethicalhaquer.galaxyflasher.svg?raw=true" width="256" height="256" alt="Galaxy Flasher icon.">
+<img src="./assets/com.ethicalhaquer.galaxyflasher.svg?raw=true" width="256" height="256" alt="Galaxy Flasher icon.">
 </div>
 <div align="center">
 
@@ -28,7 +28,7 @@ A GUI for Samsung flash-tools.
   Pit Tab:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-pit-tab-dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-pit-tab-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-pit-tab-light.png">
     <img src="images/galaxy-flasher-pit-tab-dark.png" alt="Screenshot of the Pit Tab">
   </picture>
