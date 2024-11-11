@@ -430,6 +430,7 @@ class Thor(FlashToolPlugin):
     def get_progress_and_wait_for_end(self, main):
         flashed_components = []
         logger.debug("get_progress_and_wait_for_end is running")
+        main.display_flash_progress()
 
         def check_for_output(main):
             while True:
@@ -450,13 +451,15 @@ class Thor(FlashToolPlugin):
                             logger.info(
                                 f"get_progress_and_wait_for_end: Flashed {component}"
                             )
+                            self.glib.idle_add(main.update_flash_progress, f"Flashed {component}")
+                            # main.update_flash_progress(f"Flashed {component}")
                             flashed_components.append(component)
                     time.sleep(
                         0.2
                     )
                 elif result == 1:
                     logger.info(f"get_progress_and_wait_for_end: {flashed_components=}")
-                    self.end_odin_session(main)
+                    self.end_odin_session(main, go_to_done_page=True)
                     break
                 elif result == 2:
                     logger.error("get_progress_and_wait_for_end: Timeout.")
@@ -467,9 +470,10 @@ class Thor(FlashToolPlugin):
 
         check_for_output(main)
 
-    def end_odin_session(self, main):
+    def end_odin_session(self, main, go_to_done_page=False):
         logger.debug("end_odin_session is running")
         logger.debug('end_odin_session: Running "end".')
+        self.glib.idle_add(main.update_flash_progress, 'Running "end"')
         main.child.sendline("end")
         result = main.child.expect_exact(
             [
@@ -481,6 +485,8 @@ class Thor(FlashToolPlugin):
         )
         if result == 0:
             logger.info("end_odin_session: Successfully ended an Odin session!")
+            if go_to_done_page:
+                main.display_done_flashing()
         elif result == 1:
             logger.error("end_odin_session: Timeout.")
         elif result == 2:

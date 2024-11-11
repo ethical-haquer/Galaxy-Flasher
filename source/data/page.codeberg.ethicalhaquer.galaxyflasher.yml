@@ -1,4 +1,4 @@
-app-id: com.ethicalhaquer.galaxyflasher
+app-id: page.codeberg.ethicalhaquer.galaxyflasher
 runtime: org.gnome.Platform
 runtime-version: '47'
 sdk: org.gnome.Sdk
@@ -23,8 +23,8 @@ modules:
       - install -D galaxy-flasher-gtk.py /app/galaxy-flasher-gtk
       - install -D shared_utils.py /app/shared_utils.py
       - install -D entry.sh /app/bin/entry
-      - install -D com.ethicalhaquer.galaxyflasher.svg /app/share/icons/hicolor/scalable/apps/com.ethicalhaquer.galaxyflasher.svg
-      - install -D galaxy-flasher.desktop /app/share/applications/com.ethicalhaquer.galaxyflasher.desktop
+      - install -D page.codeberg.ethicalhaquer.galaxyflasher.svg /app/share/icons/hicolor/scalable/apps/page.codeberg.ethicalhaquer.galaxyflasher.svg
+      - install -D page.codeberg.ethicalhaquer.galaxyflasher.desktop /app/share/applications/page.codeberg.ethicalhaquer.galaxyflasher.desktop
     sources:
       - type: file
         path: ../usb.ids
@@ -33,7 +33,7 @@ modules:
       - type: file
         path: ../shared_utils.py
       - type: file
-        path: galaxy-flasher.desktop
+        path: page.codeberg.ethicalhaquer.galaxyflasher.desktop
       - type: file
         path: entry.sh
       - type: file

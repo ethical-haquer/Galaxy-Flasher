@@ -163,7 +163,7 @@ cython_debug/
 thor_gui_old.py
 /.idea
 /Thor
-.flatpak-builder
+/source/data/.flatpak-builder
 usb.ids
 settings.json
 /flash-tools
@@ -171,6 +171,7 @@ other-thor-flashes.py
 /release
 test.py
 /flash_tool_plugins/__pycache__/
+/source/data/build
 
 galaxy-flasher-gtk.py.bk
 flash_tool_plugins/wannabe.py
