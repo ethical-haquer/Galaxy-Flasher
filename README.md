@@ -72,19 +72,18 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
-- Setting options through the Options Tab is buggy.
+- The Flash Successful Page shows an "image not found" icon.
 
 ## TODO
 
-- Improve the Options Tab for Thor
+- Re-implement support for Odin4.
 - Display the partitions to be flashed in the Verify Flash Window
-- Use an Adw.Dialog for the Select Partitions Window
-- Hide Thor-specific settings if the current flash-tool is not Thor
-- Publish Galaxy Flasher on FlatHub
+- Update the docs for v0.6.0
+- Make Galaxy Flasher easier to install
 
 ## Supported platforms
 
@@ -96,8 +95,7 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably un
 ## Supported flash-tools
 
 - Thor
-- Odin4
-- PyThor (in development)
+- ~Odin4~ (needs to be re-implemented)
 
 ## Installation and Usage
 
