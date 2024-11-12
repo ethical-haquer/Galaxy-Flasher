@@ -1,11 +1,6 @@
 <div align="center">
 <img src="./assets/page.codeberg.ethicalhaquer.galaxyflasher.svg?raw=true" width="256" height="256" alt="Galaxy Flasher icon.">
 </div>
-<div align="center">
-
-Have any ideas for the icon? Let me know on [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues/21), [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher/issues/21), or [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/page-4#post-89701721).
-
-</div>
 <h1 align="center">Galaxy Flasher</h1>
 <div align="center">
 
@@ -105,10 +100,10 @@ For how to install and use Galaxy Flasher, refer to the [Galaxy Flasher document
 
 Here are some ways you can help me improve/finish Thor GUI:
 + Galaxy Flasher needs a logo! If you would be interested in making one, please open a new issue.
-+ Find and report bugs. If you find an issue that isn't listed as a [known bug](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#tabs), and isn't listed [here](https://github.com/ethical-haquer/Galaxy-Flasher/issues), please let me know!
-+ ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://github.com/ethical-haquer/Galaxy-Flasher/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
++ Find and report bugs. If you find an issue that isn't listed as a [known bug](https://codeberg.org/ethical_haquer/Galaxy-Flasher#known-bugs), and isn't listed [here](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues), please let me know!
++ ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/separate-gui/source/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
-+ Suggest an improvement by opening up a [feature request](https://github.com/ethical-haquer/Galaxy-Flasher/issues/new/choose)!
++ Suggest an improvement by opening up a [feature request](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues/new/choose)!
 
 ## Credits
 
@@ -118,7 +113,7 @@ Here are some ways you can help me improve/finish Thor GUI:
 
 [Not_Rich@XDA](https://xdaforums.com/m/not_rich.8463826/) for continuing to test out new versions and suggest improvements.
 
-[ethical_haquer](https://github.com/ethical-haquer) for Galaxy Flasher.
+[ethical_haquer](https://codeberg.org/ethical_haquer/) for Galaxy Flasher.
 
 ## License
 
