@@ -22,7 +22,7 @@ modules:
       - install -D usb.ids /app/usb.ids
       - install -D galaxy-flasher-gtk.py /app/galaxy-flasher-gtk
       - install -D shared_utils.py /app/shared_utils.py
-      - install -D entry.sh /app/bin/entry
+      - install -D galaxy-flasher.sh /app/bin/galaxy-flasher
       - install -D resources.gresource /app/share/resources/resources.gresource
       - install -D page.codeberg.ethicalhaquer.galaxyflasher.svg /app/share/icons/hicolor/scalable/apps/page.codeberg.ethicalhaquer.galaxyflasher.svg
       - install -D page.codeberg.ethicalhaquer.galaxyflasher.desktop /app/share/applications/page.codeberg.ethicalhaquer.galaxyflasher.desktop
@@ -34,9 +34,7 @@ modules:
       - type: file
         path: ../shared_utils.py
       - type: file
-        path: page.codeberg.ethicalhaquer.galaxyflasher.desktop
-      - type: file
-        path: entry.sh
+        path: galaxy-flasher.sh
       - type: file
         path: requirements.txt
       - type: dir

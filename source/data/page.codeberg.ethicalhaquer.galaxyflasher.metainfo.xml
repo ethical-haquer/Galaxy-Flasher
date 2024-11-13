@@ -35,6 +35,6 @@
   </categories>
   
   <provides>
-    <binary>entry.sh</binary>
+    <binary>galaxy-flasher.sh</binary>
   </provides>
 </component>

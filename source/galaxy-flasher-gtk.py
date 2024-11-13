@@ -46,8 +46,6 @@ if not os.path.exists(app_config_dir):
     os.makedirs(app_config_dir)
 settings_file = os.path.join(app_config_dir, "settings.json")
 swd = os.path.dirname(os.path.realpath(__file__))
-machine = platform.machine()
-system = platform.system().lower()
 logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -62,6 +60,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.gtk = Gtk
         self.re = re
         self.selected_files = {}
+        self.child = None
         # Get the system language.
         self.lang = shared_utils.get_system_lang()
         # Load strings.
@@ -105,102 +104,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.ft_plugin.test()
         # Check if the app is running as a flatpak.
         self.is_flatpak = shared_utils.get_is_flatpak()
-        # If the system isn't linux.
-        if system != "linux":
-            self.prompt = "never going to happen :)"
-            logger.error("__init__: Currently, Galaxy Flasher only supports Linux.")
-            self.connect(
-                "show",
-                lambda _: self.create_alert_dialog(
-                    "Unsupported OS",
-                    "Currently, Galaxy Flasher only supports Linux.\nIf you think this is incorrect, please open an issue on GitHub, or let me know on XDA.",
-                ),
-            )
-            flashtool_exec = [
-                "echo",
-                f"{system} is currently not supported by Galaxy Flasher.\nIf you think this is incorrect, please open an issue on GitHub, or let me know on XDA.",
-            ]
-        # If the system is Linux.
-        else:
-            # Set the flash-tool path.
-            self.odin4_wrapper_file = f"{swd}/odin4-wrapper.sh"
-            self.flashtool_file = self.settings.get(f"{self.flashtool}_file", None)
-            self.prompt = self.ft_plugin.prompt
-
-            if self.flashtool_file:
-                if os.path.isfile(self.flashtool_file):
-                    if self.flashtool == "odin4":
-                        if os.path.isfile(self.odin4_wrapper_file):
-                            if self.is_flatpak:
-                                # Works when the file-system isn't host.
-                                """
-                                flashtool_exec = [
-                                    "flatpak-spawn",
-                                    "--host",
-                                    "--env=TERM=xterm-256color",
-                                    #f"--directory={swd}/app",
-                                    self.odin4_wrapper_file,
-                                    self.flashtool_file,
-                                ]
-                                """
-                                # Works when the filesystem is host.
-                                """
-                                flashtool_exec = [
-                                    "flatpak-spawn",
-                                    "--env=TERM=xterm-256color",
-                                    self.odin4_wrapper_file,
-                                    self.flashtool_file,
-                                ]
-                                """
-                                # Also works when the filesystem is host.
-                                flashtool_exec = [
-                                    self.odin4_wrapper_file,
-                                    self.flashtool_file,
-                                ]
-                            else:
-                                flashtool_exec = [
-                                    self.odin4_wrapper_file,
-                                    self.flashtool_file,
-                                ]
-                    else:
-                        flashtool_exec = [
-                            self.flashtool_file,
-                        ]
-                else:
-                    flashtool_exec = [
-                        "echo",
-                        f'The {self.flashtool} executable you chose:\n"{self.flashtool_file}",\nwas not found. Please select a new executable by going to:\n"Settings - General - Flash Tool".',
-                    ]
-                    self.connect(
-                        "show",
-                        lambda _: self.create_alert_dialog(
-                            "File not found",
-                            f'The {self.flashtool} executable you chose:\n"{self.flashtool_file}",\nwas not found. Please select a new executable by going to: "Settings - General - Flash Tool".',
-                        ),
-                    )
-            else:
-                flashtool_exec = [
-                    "echo",
-                    'Welcome to Galaxy Flasher!\nPlease select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
-                ]
-                self.connect(
-                    "show",
-                    lambda _: self.create_alert_dialog(
-                        "Welcome to Galaxy Flasher!",
-                        'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
-                    ),
-                )
         self.window_title = Adw.WindowTitle.new("Galaxy Flasher", f"{version}")
-
-        env = os.environ.copy()
-        env["TERM"] = "xterm-256color"
-        env["FORCE_COLOR"] = "3"
-        self.child = pexpect.spawn(
-            "/home/ethical_haquer/TheAirBlow.Thor.Shell",
-            env=env,
-            timeout=5,
-        )
-        # self.child.logfile = sys.stdout.buffer
 
         # Make the whole window draggable and right-clickable.
         self.handle = Gtk.WindowHandle.new()
@@ -217,6 +121,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.start_button.set_vexpand(True)
         self.start_button.add_css_class("pill")
         self.start_button.add_css_class("suggested-action")
+        self.set_widget_state(self.start_button, state=False)
 
         # Create a box to hold the flash button
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
@@ -258,6 +163,9 @@ class MainWindow(Adw.ApplicationWindow):
         about_action = Gio.SimpleAction.new("about", None)
         about_action.connect("activate", self.create_about_dialog)
         self.add_action(about_action)
+        
+        # Check if the OS is supported by Galaxy Flasher.
+        self.verify_supported_os()
 
         # Preferences dialog layout
         self.preferences_dialog_layout = [
@@ -333,11 +241,6 @@ class MainWindow(Adw.ApplicationWindow):
         theme = self.settings.get("theme") or "system"
         self.set_theme(theme)
 
-        # Initialise the main buttons
-        self.ft_plugin.initialise_buttons(self)
-
-        self.ft_plugin.setup_flash_tool(self)
-
         """
         # Create the Option Tab widgets.
         row = 0
@@ -387,6 +290,70 @@ class MainWindow(Adw.ApplicationWindow):
                           {version}
         """
         )
+        
+    def verify_supported_os(self):
+        logger.debug("verify_supported_os is running")
+        machine = platform.machine()
+        system = platform.system().lower()
+        if system != "linux":
+            logger.error("verify_supported_os: Currently, Galaxy Flasher only supports Linux.")
+            self.connect(
+                "show",
+                lambda _: self.create_alert_dialog(
+                    "Unsupported OS",
+                    "Currently, Galaxy Flasher only supports Linux.\nIf you think this is incorrect, please open an issue on GitHub, or let me know on XDA.",
+                ),
+            )
+        # If the system is Linux.
+        else:
+            self.setup_flash_tool()
+        
+    def setup_flash_tool(self):
+        logger.debug("setup_flash_tool is running")
+        # Set the flash-tool paths.
+        self.odin4_wrapper_file = f"{swd}/odin4-wrapper.sh"
+        self.flashtool_file = self.settings.get(f"{self.flashtool}_file", None)
+        if self.flashtool_file:
+            if os.path.isfile(self.flashtool_file):
+                if self.flashtool == "odin4":
+                    if os.path.isfile(self.odin4_wrapper_file):
+                        flashtool_exec = [
+                            self.odin4_wrapper_file,
+                            self.flashtool_file,
+                        ]
+                    else:
+                        logger.error(f'setup_flash_tool: The Odin4 wrapper was not found at "{odin4_wrapper_file}".')
+                else:
+                    flashtool_exec = [
+                        self.flashtool_file,
+                    ]
+                env = os.environ.copy()
+                env["TERM"] = "xterm-256color"
+                env["FORCE_COLOR"] = "3"
+                self.child = pexpect.spawn(
+                    flashtool_exec,
+                    env=env,
+                    timeout=5,
+                )
+                # self.child.logfile = sys.stdout.buffer
+                self.ft_plugin.setup_flash_tool(self)
+            else:
+                logger.error(f'setup_flash_tool: The {self.flashtool} executable was not found at "{self.flashtool_file}".')
+                self.connect(
+                    "show",
+                    lambda _: self.create_alert_dialog(
+                        "File not found",
+                        f'The {self.flashtool} executable you chose:\n"{self.flashtool_file}",\nwas not found. Please select a new executable by going to: "Settings - General - Flash Tool".',
+                    ),
+                )
+        else:
+            self.connect(
+                "show",
+                lambda _: self.create_alert_dialog(
+                    "Welcome to Galaxy Flasher!",
+                    'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
+                ),
+            )
 
     def display_files(self):
         logger.debug("display_files is running")

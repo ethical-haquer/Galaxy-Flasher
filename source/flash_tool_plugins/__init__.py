@@ -27,11 +27,6 @@ class FlashToolPlugin(ABC):
         pass
 
     @abstractmethod
-    def initialise_buttons(self):
-        """Initialise buttons."""
-        pass
-
-    @abstractmethod
     def select_partitions(self):
         """Prompt the user to select partitions to flash."""
         pass

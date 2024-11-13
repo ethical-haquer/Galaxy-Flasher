@@ -81,6 +81,15 @@ class Thor(FlashToolPlugin):
         main.child.expect("shell>")
         main.set_widget_state(main.start_button, state=True)
 
+    """
+    def initialise_buttons(self, main):
+        logger.debug("initialise_buttons is running")
+        main.set_widget_state(
+            main.start_button,
+            state=False,
+        )
+    """
+
     def on_selected_files(self, main, selected_files, paths):
         logger.debug("selected_files is running")
         self.selected_files = selected_files
@@ -178,13 +187,6 @@ class Thor(FlashToolPlugin):
             )
             logger.error(f"selected_device: Failed to connect:\n{output=}")
 
-    def initialise_buttons(self, main):
-        logger.debug("initialise_buttons is running")
-        main.set_widget_state(
-            main.start_button,
-            state=False,
-        )
-
     """
     def flash(self, main):
         logger.debug("flash is running")
@@ -250,7 +252,7 @@ class Thor(FlashToolPlugin):
             )
 
     # Returns True if able to disconnect, False otherwise.
-    def disconnect(self, main):
+    def disconnect(self, main, go_to_done_page=False):
         logger.debug("disconnect is running")
         main.child.sendline("disconnect")
         result = main.child.expect_exact(
@@ -459,7 +461,17 @@ class Thor(FlashToolPlugin):
                     )
                 elif result == 1:
                     logger.info(f"get_progress_and_wait_for_end: {flashed_components=}")
-                    self.end_odin_session(main, go_to_done_page=True)
+                    self.glib.idle_add(main.update_flash_progress, 'Ending Odin Session...')
+                    ended = self.end_odin_session(main, go_to_done_page=True)
+                    if ended:
+                        self.glib.idle_add(main.update_flash_progress, 'Disconnecting the device...')
+                        disconnected = self.disconnect(main, go_to_done_page=True)
+                        if disconnected:
+                            main.display_done_flashing()
+                        else:
+                            logger.error("get_progress_and_wait_for_end: Failed to disconnect the device!")
+                    else:
+                        logger.error("get_progress_and_wait_for_end: Failed to end the Odin session!")
                     break
                 elif result == 2:
                     logger.error("get_progress_and_wait_for_end: Timeout.")
@@ -470,10 +482,10 @@ class Thor(FlashToolPlugin):
 
         check_for_output(main)
 
+    # Returns True if able to end, False otherwise.
     def end_odin_session(self, main, go_to_done_page=False):
         logger.debug("end_odin_session is running")
         logger.debug('end_odin_session: Running "end".')
-        self.glib.idle_add(main.update_flash_progress, 'Running "end"')
         main.child.sendline("end")
         result = main.child.expect_exact(
             [
@@ -485,12 +497,17 @@ class Thor(FlashToolPlugin):
         )
         if result == 0:
             logger.info("end_odin_session: Successfully ended an Odin session!")
+            return True
+            """
             if go_to_done_page:
                 main.display_done_flashing()
+            """
         elif result == 1:
             logger.error("end_odin_session: Timeout.")
+            return False
         elif result == 2:
             logger.error("end_odin_session: EOF.")
+            return False
 
     def on_verified_flash(self, main, continue_flashing):
         logger.debug("on_verified_flash is running")
@@ -538,3 +555,4 @@ class Thor(FlashToolPlugin):
             # If the end phrase is not found, take the whole substring.
             file = substring
         return file
+
