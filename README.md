@@ -71,14 +71,15 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 ## Known Bugs
 
-TODO: Add known bugs.
+- You can only do one consecutive flash, you have to restart the app before you do another.
 
 ## TODO
 
+- Disconnect the device after a successful flash.
 - Re-implement support for Odin4.
-- Display the partitions to be flashed in the Verify Flash Window
-- Update the docs for v0.6.0
-- Make Galaxy Flasher easier to install
+- Display the partitions to be flashed in the Verify Flash Window.
+- Update the docs for v0.6.0.
+- Make Galaxy Flasher easier to install.
 
 ## Supported platforms
 

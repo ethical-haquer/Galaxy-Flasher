@@ -462,7 +462,7 @@ class MainWindow(Adw.ApplicationWindow):
             logger.info("check_files: The files NEED to be in the same dir...")
             self.create_alert_dialog("Invalid files", self.strings["invalid_files"])
         else:
-            self.ft_plugin.selected_files(self, files, paths)
+            self.ft_plugin.on_selected_files(self, files, paths)
 
     def display_devices(self, devices):
         logger.debug("display_devices is running")

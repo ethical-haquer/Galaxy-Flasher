@@ -81,7 +81,7 @@ class Thor(FlashToolPlugin):
         main.child.expect("shell>")
         main.set_widget_state(main.start_button, state=True)
 
-    def selected_files(self, main, selected_files, paths):
+    def on_selected_files(self, main, selected_files, paths):
         logger.debug("selected_files is running")
         self.selected_files = selected_files
         self.paths = paths

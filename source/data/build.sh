@@ -11,3 +11,4 @@ cp -r ../locales ../flash_tool_plugins ../odin4-wrapper.sh ../usb.ids ./icons/pa
 # Build it.
 flatpak-builder --user --install --force-clean build page.codeberg.ethicalhaquer.galaxyflasher.yml
 rm -r include
+rm resources.gresource
