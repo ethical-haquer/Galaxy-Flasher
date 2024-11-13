@@ -67,7 +67,7 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bugs. A list of missing features and know bugs in the **soon-to-be Alpha v0.6.0 release** can be found below.
 
 ## Known Bugs
 
