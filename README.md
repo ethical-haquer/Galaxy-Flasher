@@ -6,7 +6,7 @@
 
 A GUI for Samsung flash-tools.
 
-[Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher) | [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/)
+[Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/)
 
 </div>
 <details>
@@ -77,6 +77,7 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 - Disconnect the device after a successful flash.
 - Re-implement support for Odin4.
+- Add a CONTRIBUTING.md file.
 - Display the partitions to be flashed in the Verify Flash Window.
 - Update the docs for v0.6.0.
 - Make Galaxy Flasher easier to install.
@@ -99,8 +100,7 @@ For how to install and use Galaxy Flasher, refer to the [Galaxy Flasher document
 
 ## How you can help
 
-Here are some ways you can help me improve/finish Thor GUI:
-+ Galaxy Flasher needs a logo! If you would be interested in making one, please open a new issue.
+Here are some ways you can help me improve/finish Galaxy Flasher:
 + Find and report bugs. If you find an issue that isn't listed as a [known bug](https://codeberg.org/ethical_haquer/Galaxy-Flasher#known-bugs), and isn't listed [here](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues), please let me know!
 + ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/separate-gui/source/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
