@@ -71,7 +71,7 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 ## Known Bugs
 
-- The Flash Successful Page shows an "image not found" icon.
+TODO: Add known bugs.
 
 ## TODO
 

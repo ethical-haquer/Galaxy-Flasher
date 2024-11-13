@@ -62,10 +62,6 @@ class MainWindow(Adw.ApplicationWindow):
         self.gtk = Gtk
         self.re = re
         self.selected_files = {}
-        # Load resources.gresource file.
-        #resource = Gio.resource_load(os.path.join(swd, 'resources.gresource'))
-        # '@PKGDATA_DIR@'
-        #Gio.Resource._register(resource)
         # Get the system language.
         self.lang = shared_utils.get_system_lang()
         # Load strings.
@@ -75,16 +71,13 @@ class MainWindow(Adw.ApplicationWindow):
         # Load settings
         self.settings = shared_utils.load_settings(settings_file)
         self.flashtool = self.settings.get("flash_tool", "thor")
-        
-        display = self.get_display()
-        icon_theme = Gtk.IconTheme.get_for_display(display)
-        icon_path = f"{swd}/icons/scalable/actions"
-        print(icon_path)
-        icon_theme.add_search_path(icon_path)
-        print(icon_theme.has_icon("checkmark-symbolic"))
-        print(icon_theme.has_icon("page.codeberg.ethicalhaquer.galaxyflasher"))
+        # Load resources.gresource file.
+        resource = Gio.resource_load(os.path.join(f"{swd}/share/resources/", 'resources.gresource'))
+        Gio.Resource._register(resource)
+        icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
+        print(f'icon theme has "checkmark-symbolic" icon: {icon_theme.has_icon("checkmark-symbolic")}')
+        print(f'icon theme has "page.codeberg.ethicalhaquer.galaxyflasher" icon: {icon_theme.has_icon("page.codeberg.ethicalhaquer.galaxyflasher")}')
         print(icon_theme.get_resource_path())
-        print(icon_theme.get_search_path())
         # Load plug-ins
         flash_tool_options = []
         try:
