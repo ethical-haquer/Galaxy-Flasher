@@ -71,11 +71,10 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 ## Known Bugs
 
-- You can only do one consecutive flash, you have to restart the app before you do another.
+- build-python.sh is broken.
 
 ## TODO
 
-- Disconnect the device after a successful flash.
 - Re-implement support for Odin4.
 - Add a CONTRIBUTING.md file.
 - Display the partitions to be flashed in the Verify Flash Window.
