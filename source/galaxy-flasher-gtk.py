@@ -105,7 +105,7 @@ class MainWindow(Adw.ApplicationWindow):
         about_action.connect("activate", self.create_about_dialog)
         self.add_action(about_action)
         
-        self.display_start()
+        self.display_start_page()
         
         # Check if the OS is supported by Galaxy Flasher.
         self.verify_supported_os()
@@ -308,8 +308,8 @@ class MainWindow(Adw.ApplicationWindow):
                 ),
             )
             
-    def display_start(self):
-        logger.debug("display_start is running")
+    def display_start_page(self):
+        logger.debug("display_start_page is running")
 
         start_page = self.stack.get_child_by_name("start")
 
