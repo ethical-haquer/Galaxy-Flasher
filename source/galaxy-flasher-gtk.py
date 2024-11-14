@@ -61,6 +61,9 @@ class MainWindow(Adw.ApplicationWindow):
         self.re = re
         self.selected_files = {}
         self.child = None
+        self.flash_tool_options = []
+        # Check if the app is running as a flatpak.
+        self.is_flatpak = shared_utils.get_is_flatpak()
         # Get the system language.
         self.lang = shared_utils.get_system_lang()
         # Load strings.
@@ -78,77 +81,15 @@ class MainWindow(Adw.ApplicationWindow):
         print(f'icon theme has "page.codeberg.ethicalhaquer.galaxyflasher" icon: {icon_theme.has_icon("page.codeberg.ethicalhaquer.galaxyflasher")}')
         print(icon_theme.get_resource_path())
         # Load plug-ins
-        flash_tool_options = []
-        try:
-            plugins = load_plugins(self)
-            if not plugins:
-                logger.error("__init__: No flash-tool plugins found.")
-                return
-
-            for plugin in plugins:
-                logger.info(f"__init__: Available flash-tool plugin: {plugin.name}")
-                flash_tool_options.append(
-                    {"name": plugin.displayed_name, "value": plugin.name}
-                )
-
-            plugin_name = self.flashtool
-            for plugin in plugins:
-                if plugin.__class__.__name__.lower() == plugin_name.lower():
-                    self.ft_plugin = plugin
-                    break
-            else:
-                logger.error(f"__init__: Plugin {plugin_name} not found")
-
-        except Exception as e:
-            logger.error(f"__init__: Error: {e}")
+        self.load_plugins()
         self.ft_plugin.test()
-        # Check if the app is running as a flatpak.
-        self.is_flatpak = shared_utils.get_is_flatpak()
         self.window_title = Adw.WindowTitle.new("Galaxy Flasher", f"{version}")
 
         # Make the whole window draggable and right-clickable.
         self.handle = Gtk.WindowHandle.new()
         self.props.content = self.handle
-
-        # Create the flash button
-        self.start_button = self.create_button(
-            "Start",
-            column=0,
-            row=0,
-            command=lambda _: self.display_files(),
-        )
-        self.start_button.set_hexpand(True)
-        self.start_button.set_vexpand(True)
-        self.start_button.add_css_class("pill")
-        self.start_button.add_css_class("suggested-action")
-        self.set_widget_state(self.start_button, state=False)
-
-        # Create a box to hold the flash button
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        box.set_hexpand(True)
-        box.set_vexpand(True)
-        box.set_halign(Gtk.Align.CENTER)
-        box.set_valign(Gtk.Align.CENTER)
-        box.append(self.start_button)
-
-        # Create the start page
-        self.start_page = Adw.StatusPage.new()
-        self.start_page.set_icon_name("page.codeberg.ethicalhaquer.galaxyflasher")
-        self.start_page.set_title("Galaxy Flasher")
-        self.start_page.set_description(
-            "Connect a device in Download Mode, and then click the button to start."
-        )
-        self.start_page.set_child(box)
-
-        # Create header bar
-        self.header_bar = Adw.HeaderBar()
-        self.header_bar.set_show_title(False)
-
-        # Create toolbar view
-        self.toolbar_view = Adw.ToolbarView.new()
-        self.toolbar_view.add_top_bar(self.header_bar)
-        self.toolbar_view.set_content(self.start_page)
-
+        
+        # Add a toast overlay.
         self.toast_overlay = Adw.ToastOverlay.new()
         self.handle.set_child(self.toast_overlay)
 
@@ -157,12 +98,14 @@ class MainWindow(Adw.ApplicationWindow):
         # self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT)
         self.toast_overlay.set_child(self.stack)
-        self.stack.add_named(self.toolbar_view, "start")
+        #self.stack.add_named(self.toolbar_view, "start")
 
         # Create about action
         about_action = Gio.SimpleAction.new("about", None)
         about_action.connect("activate", self.create_about_dialog)
         self.add_action(about_action)
+        
+        self.display_start()
         
         # Check if the OS is supported by Galaxy Flasher.
         self.verify_supported_os()
@@ -177,7 +120,7 @@ class MainWindow(Adw.ApplicationWindow):
                         "title": "Flash Tool",
                         "subtitle": "The flash-tool Galaxy Flasher should use.",
                         "setting": "flash_tool",
-                        "options": flash_tool_options,
+                        "options": self.flash_tool_options,
                     },
                 ],
             },
@@ -218,21 +161,6 @@ class MainWindow(Adw.ApplicationWindow):
         preferences_action = Gio.SimpleAction.new("preferences", None)
         preferences_action.connect("activate", self.create_preferences_dialog)
         self.add_action(preferences_action)
-
-        # Create menu
-        menu = Gio.Menu.new()
-        menu.append("Preferences", "win.preferences")
-        menu.append("About Galaxy Flasher", "win.about")
-
-        # Create popover with menu
-        popover = Gtk.PopoverMenu()
-        popover.set_menu_model(menu)
-
-        # Create hamburger menu button
-        hamburger = Gtk.MenuButton()
-        hamburger.set_popover(popover)
-        hamburger.set_icon_name("open-menu-symbolic")
-        self.header_bar.pack_end(hamburger)
 
         # Set the style_manager
         self.style_manager = Adw.StyleManager.get_default()
@@ -290,6 +218,31 @@ class MainWindow(Adw.ApplicationWindow):
                           {version}
         """
         )
+        
+    def load_plugins(self):
+        logger.debug("load_plugins is running")
+        try:
+            plugins = load_plugins(self)
+            if not plugins:
+                logger.error("load_plugins: No flash-tool plugins found.")
+                return
+
+            for plugin in plugins:
+                logger.info(f"load_plugins: Available flash-tool plugin: {plugin.name}")
+                self.flash_tool_options.append(
+                    {"name": plugin.displayed_name, "value": plugin.name}
+                )
+
+            plugin_name = self.flashtool
+            for plugin in plugins:
+                if plugin.__class__.__name__.lower() == plugin_name.lower():
+                    self.ft_plugin = plugin
+                    break
+            else:
+                logger.error(f"load_plugins: Plugin {plugin_name} not found")
+
+        except Exception as e:
+            logger.error(f"load_plugins: Error: {e}")
         
     def verify_supported_os(self):
         logger.debug("verify_supported_os is running")
@@ -354,6 +307,50 @@ class MainWindow(Adw.ApplicationWindow):
                     'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
                 ),
             )
+            
+    def display_start(self):
+        logger.debug("display_start is running")
+
+        start_page = self.stack.get_child_by_name("start")
+
+        if not start_page:
+            start_page = Adw.StatusPage.new()
+            start_page.set_icon_name("page.codeberg.ethicalhaquer.galaxyflasher")
+            start_page.set_title("Galaxy Flasher")
+            """
+            start_page.set_description(
+                "Connect a device in Download Mode, and then click the button to start."
+            )
+            """
+            
+            # Create menu
+            menu = Gio.Menu.new()
+            menu.append("Preferences", "win.preferences")
+            menu.append("About Galaxy Flasher", "win.about")
+
+            # Create popover with menu
+            popover = Gtk.PopoverMenu()
+            popover.set_menu_model(menu)
+
+            # Create hamburger menu button
+            hamburger = Gtk.MenuButton()
+            hamburger.set_popover(popover)
+            hamburger.set_icon_name("open-menu-symbolic")
+
+            nav_buttons = [
+                {
+                    "title": "Select Files",
+                    "command": lambda _: self.display_files(),
+                    "add_css_classes": ["suggested-action"],
+                },
+            ]
+
+            self.add_page_to_stack(
+                content=start_page, name="start", nav_buttons=nav_buttons, status_page=True
+            )
+            self.start_page.header_bar.pack_end(hamburger)
+            self.set_widget_state(self.start_page.button0, state=False)
+        self.stack.set_visible_child_name("start")
 
     def display_files(self):
         logger.debug("display_files is running")
@@ -393,6 +390,7 @@ class MainWindow(Adw.ApplicationWindow):
                 {
                     "title": "Continue",
                     "command": lambda _: self.check_files(),
+                    "add_css_classes": ["suggested-action"],
                 },
                 {
                     "title": "Cancel",
@@ -597,24 +595,25 @@ class MainWindow(Adw.ApplicationWindow):
 
         flash_progress_page = self.stack.get_child_by_name("progress")
 
-        if flash_progress_page:
-            self.stack.remove(flash_progress_page)
+        if not flash_progress_page:
+            status_page = Adw.StatusPage.new()
+            self.status_page = status_page
+            status_page.set_hexpand(True)
+            status_page.set_vexpand(True)
+            status_page.set_halign(Gtk.Align.FILL)
+            status_page.set_valign(Gtk.Align.FILL)
+            spinner = Adw.SpinnerPaintable.new()
+            spinner.set_widget(status_page)
+            status_page.set_paintable(spinner)
+            status_page.set_title("Flashing...")
+            status_page.set_description(" ")
 
-        status_page = Adw.StatusPage.new()
-        self.status_page = status_page
-        status_page.set_hexpand(True)
-        status_page.set_vexpand(True)
-        status_page.set_halign(Gtk.Align.FILL)
-        status_page.set_valign(Gtk.Align.FILL)
-        spinner = Adw.SpinnerPaintable.new()
-        spinner.set_widget(status_page)
-        status_page.set_paintable(spinner)
-        status_page.set_title("Flashing...")
-        status_page.set_description(" ")
-
-        self.add_page_to_stack(
-            content=status_page, name="progress"
-        )
+            self.add_page_to_stack(
+                content=status_page, name="progress"
+            )
+        else:
+            # Clear old description.
+            self.progress_page.content.set_description(" ")
         self.stack.set_visible_child_name("progress")
         
     def update_flash_progress(self, description):
@@ -625,28 +624,26 @@ class MainWindow(Adw.ApplicationWindow):
 
         done_flashing_page = self.stack.get_child_by_name("done")
 
-        if done_flashing_page:
-            self.stack.remove(done_flashing_page)
+        if not done_flashing_page:
+            done_flashing_page = Adw.StatusPage.new()
+            done_flashing_page.set_hexpand(True)
+            done_flashing_page.set_vexpand(True)
+            done_flashing_page.set_halign(Gtk.Align.FILL)
+            done_flashing_page.set_valign(Gtk.Align.FILL)
+            done_flashing_page.set_icon_name("checkmark-symbolic")
+            done_flashing_page.set_title("Flash Successful")
+            done_flashing_page.set_description("You can now unplug the device.")
 
-        done_flashing_page = Adw.StatusPage.new()
-        done_flashing_page.set_hexpand(True)
-        done_flashing_page.set_vexpand(True)
-        done_flashing_page.set_halign(Gtk.Align.FILL)
-        done_flashing_page.set_valign(Gtk.Align.FILL)
-        done_flashing_page.set_icon_name("checkmark-symbolic")
-        done_flashing_page.set_title("Flash Successful")
-        done_flashing_page.set_description("You can now unplug the device.")
+            nav_buttons = [
+                {
+                    "title": "Ok",
+                    "command": lambda _: self.stack.set_visible_child_full("start", Gtk.StackTransitionType.SLIDE_RIGHT),
+                },
+            ]
 
-        nav_buttons = [
-            {
-                "title": "Ok",
-                "command": lambda _: self.stack.set_visible_child_full("start", Gtk.StackTransitionType.SLIDE_RIGHT),
-            },
-        ]
-
-        self.add_page_to_stack(
-            content=done_flashing_page, name="done", nav_buttons=nav_buttons
-        )
+            self.add_page_to_stack(
+                content=done_flashing_page, name="done", nav_buttons=nav_buttons
+            )
         self.stack.set_visible_child_name("done")
 
     def cancel_flash(self, page, num_devices=None):
@@ -668,7 +665,7 @@ class MainWindow(Adw.ApplicationWindow):
         logger.info("on_flash: Would show you a progress bar.")
         self.ft_plugin.flash(self)
 
-    def add_page_to_stack(self, content, name, nav_buttons=None):
+    def add_page_to_stack(self, content, name, nav_buttons=None, status_page=False):
         logger.debug("add_page_to_stack is running")
         # Create a box to hold the navigation buttons
         navigation_button_box = Gtk.Box(
@@ -684,24 +681,6 @@ class MainWindow(Adw.ApplicationWindow):
         main_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
         main_box.append(content)
 
-        if nav_buttons:
-            # Create the navigation buttons.
-            for button_desc in nav_buttons:
-                title = button_desc["title"]
-                command = button_desc["command"]
-                button = self.create_button(
-                    title,
-                    column=0,
-                    row=0,
-                    command=command,
-                )
-                button.set_hexpand(True)
-                button.set_vexpand(True)
-                button.add_css_class("pill")
-                navigation_button_box.append(button)
-                # button.add_css_class("suggested-action")
-            main_box.append(navigation_button_box)
-
         # Create an adw.clamp to limit the button box size
         clamp = Adw.Clamp.new()
         clamp.set_child(main_box)
@@ -715,9 +694,40 @@ class MainWindow(Adw.ApplicationWindow):
         toolbar_view = Adw.ToolbarView.new()
         toolbar_view.add_top_bar(header_bar)
         toolbar_view.set_content(clamp)
+        
+        if nav_buttons:
+            # Create the navigation buttons.
+            for i, button_desc in enumerate(nav_buttons):
+                title = button_desc["title"]
+                command = button_desc["command"]
+                add_css_classes = button_desc.get("add_css_classes")
+                
+                button = self.create_button(
+                    title,
+                    column=0,
+                    row=0,
+                    command=command,
+                )
+                button.set_hexpand(True)
+                button.set_vexpand(True)
+                button.add_css_class("pill")
+                if add_css_classes:
+                    for css_class in add_css_classes:
+                        button.add_css_class(css_class)
+                navigation_button_box.append(button)
+                setattr(toolbar_view, f"button{i}", button)
+                # button.add_css_class("suggested-action")
+            if status_page:
+                content.set_child(navigation_button_box)
+            else:
+                main_box.append(navigation_button_box)
 
         # Create the page
         self.stack.add_named(toolbar_view, name)
+        setattr(self, f"{name}_page", toolbar_view)
+        setattr(toolbar_view, "button_box", navigation_button_box)
+        setattr(toolbar_view, "content", content)
+        setattr(toolbar_view, "header_bar", header_bar)
 
     def remove_ansi_escape_sequences(self, string):
         logger.debug("remove_ansi_escape_sequences is running")
@@ -1617,15 +1627,14 @@ title="https://github.com/justaCasualCoder/PyThor">PyThor's GitHub page</a>"""
 class GalaxyFlasherGtk(Adw.Application):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.connect("activate", self.on_activate)
 
-    def on_activate(self, app):
-        self.win = MainWindow(application=app)
-        self.win.set_default_size(600, 600)
-        self.win.present()
+    def do_activate(self):
+        window = MainWindow(application=self)
+        window.set_title("Galaxy Flasher")
+        window.set_default_size(600, 600)
+        window.present()
 
 
 if __name__ == "__main__":
     app = GalaxyFlasherGtk(application_id="page.codeberg.ethicalhaquer.galaxyflasher")
     app.run(sys.argv)
-    #return app.run(sys.argv)

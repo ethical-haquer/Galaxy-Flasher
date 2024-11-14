@@ -11,6 +11,8 @@ check_for_command() {
 # Check if the required commands are available
 check_for_command "flatpak"
 check_for_command "glib-compile-resources"
+check_for_command "appstreamcli"
+check_for_command "desktop-file-validate"
 check_for_command "flatpak-builder"
 
 echo "INFO: Installing org.gnome.Sdk//47 and org.gnome.Platform//47, if needed."
@@ -22,9 +24,12 @@ glib-compile-resources ./resources.gresource.xml --target=resources.gresource
 echo "INFO: Creating desktop file."
 appstreamcli make-desktop-file page.codeberg.ethicalhaquer.galaxyflasher.metainfo.xml page.codeberg.ethicalhaquer.galaxyflasher.desktop
 
+echo "INFO: Validating desktop file."
+desktop-file-validate page.codeberg.ethicalhaquer.galaxyflasher.desktop
+
 # Create include dir.
 mkdir include
-cp -r ../locales ../flash_tool_plugins ../odin4-wrapper.sh ../usb.ids ./icons/page.codeberg.ethicalhaquer.galaxyflasher.svg ./resources.gresource include
+cp -r ../locales ../flash_tool_plugins include
 
 echo "INFO: Building app."
 flatpak-builder --user --install --force-clean build page.codeberg.ethicalhaquer.galaxyflasher.yml

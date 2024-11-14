@@ -21,7 +21,6 @@ class Thor(FlashToolPlugin):
         self.re = main.re
         self.name = "thor"
         self.displayed_name = "Thor"
-        self.prompt = "shell> "
         self.tabs = ["Log", "Options", "Files"]
         self.buttons = [
             {
@@ -79,19 +78,10 @@ class Thor(FlashToolPlugin):
     def setup_flash_tool(self, main):
         logger.debug("setup_flash_tool is running")
         main.child.expect("shell>")
-        main.set_widget_state(main.start_button, state=True)
-
-    """
-    def initialise_buttons(self, main):
-        logger.debug("initialise_buttons is running")
-        main.set_widget_state(
-            main.start_button,
-            state=False,
-        )
-    """
+        main.set_widget_state(main.start_page.button0, state=True)
 
     def on_selected_files(self, main, selected_files, paths):
-        logger.debug("selected_files is running")
+        logger.debug("on_selected_files is running")
         self.selected_files = selected_files
         self.paths = paths
         self.connect(main)
@@ -187,15 +177,6 @@ class Thor(FlashToolPlugin):
             )
             logger.error(f"selected_device: Failed to connect:\n{output=}")
 
-    """
-    def flash(self, main):
-        logger.debug("flash is running")
-        auto = main.settings.get("auto_partitions", False)
-        base_dir = list(self.paths.values())[0]
-        self.select_partitions(base_dir, auto)
-        # self.start_odin_session(main)
-    """
-
     def start_odin_session(self, main):
         logger.debug("start_odin_session is running")
         # main.child.expect("shell>")
@@ -252,7 +233,7 @@ class Thor(FlashToolPlugin):
             )
 
     # Returns True if able to disconnect, False otherwise.
-    def disconnect(self, main, go_to_done_page=False):
+    def disconnect(self, main):
         logger.debug("disconnect is running")
         main.child.sendline("disconnect")
         result = main.child.expect_exact(
@@ -465,7 +446,7 @@ class Thor(FlashToolPlugin):
                     ended = self.end_odin_session(main, go_to_done_page=True)
                     if ended:
                         self.glib.idle_add(main.update_flash_progress, 'Disconnecting the device...')
-                        disconnected = self.disconnect(main, go_to_done_page=True)
+                        disconnected = self.disconnect(main)
                         if disconnected:
                             main.display_done_flashing()
                         else:
@@ -498,10 +479,6 @@ class Thor(FlashToolPlugin):
         if result == 0:
             logger.info("end_odin_session: Successfully ended an Odin session!")
             return True
-            """
-            if go_to_done_page:
-                main.display_done_flashing()
-            """
         elif result == 1:
             logger.error("end_odin_session: Timeout.")
             return False
@@ -516,19 +493,26 @@ class Thor(FlashToolPlugin):
             main.child.send("y")
             logger.debug('on_verified_flash: Sending "Enter".')
             main.child.send("\n")
-            # thread = threading.Thread(target=self.wait_for_done_flashing, args=(main,))
             thread = threading.Thread(
                 target=self.get_progress_and_wait_for_end, args=(main,)
             )
             thread.start()
         else:
-            # TODO: Cancel flash.
             logger.debug(f"verified_flash: Canceling the flash.")
             logger.debug('verified_flash: Sending "n".')
             main.child.send("n")
             logger.debug('verified_flash: Sending "Enter".')
             main.child.send("\n")
-            main.child.interact()
+            # TODO: Display a "Cancel Successful" page.
+            ended = self.end_odin_session(main, go_to_done_page=True)
+            if ended:
+                disconnected = self.disconnect(main)
+                if disconnected:
+                    main.display_done_flashing()
+                else:
+                    logger.error("on_verified_flash: Failed to disconnect the device!")
+            else:
+                logger.error("on_verified_flash: Failed to end the Odin session!")
 
     def clean_partition_name(self, string):
         logger.debug("clean_partition_name is running")

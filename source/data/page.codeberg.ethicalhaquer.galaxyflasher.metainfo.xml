@@ -27,7 +27,7 @@
     </screenshot>
   </screenshots>
   
-  <icon type="stock">galaxyflasher</icon>
+  <icon type="stock">page.codeberg.ethicalhaquer.galaxyflasher</icon>
   
   <categories>
     <category>Utility</category>
@@ -35,6 +35,6 @@
   </categories>
   
   <provides>
-    <binary>galaxy-flasher.sh</binary>
+    <binary>galaxy-flasher</binary>
   </provides>
 </component>
