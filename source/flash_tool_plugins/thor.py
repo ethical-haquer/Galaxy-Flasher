@@ -139,7 +139,7 @@ class Thor(FlashToolPlugin):
             # print("devices: ", devices)
             logger.debug(f"{devices=}")
             # For testing.
-            # devices = ["device 1", "device 2"]
+            devices = ["device 1", "device 2"]
             num_devices = len(devices)
             if num_devices == 1:
                 logger.info(
