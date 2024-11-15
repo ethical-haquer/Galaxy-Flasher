@@ -469,7 +469,7 @@ class MainWindow(Adw.ApplicationWindow):
                 "command": lambda _: self.ft_plugin.selected_device(
                     self, device_number, len(devices)
                 ),
-                "add-css-classes": ["suggested-action"],
+                "add_css_classes": ["suggested-action"],
             },
             {
                 "title": "Cancel",
@@ -532,7 +532,7 @@ class MainWindow(Adw.ApplicationWindow):
                 "command": lambda _: function(
                     self, selected_partitions
                 ),
-                "add-css-classes": ["suggested-action"],
+                "add_css_classes": ["suggested-action"],
             },
             {
                 "title": "Cancel",
@@ -640,7 +640,7 @@ class MainWindow(Adw.ApplicationWindow):
                 {
                     "title": "OK",
                     "command": lambda _: self.stack.set_visible_child_full("start", Gtk.StackTransitionType.SLIDE_RIGHT),
-                    "add-css-classes": ["suggested-action"],
+                    "add_css_classes": ["suggested-action"],
                 },
             ]
 
