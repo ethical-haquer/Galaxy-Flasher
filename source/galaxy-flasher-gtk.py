@@ -32,7 +32,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-#gi.require_version("Vte", "3.91")
+# gi.require_version("Vte", "3.91")
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
@@ -74,11 +74,17 @@ class MainWindow(Adw.ApplicationWindow):
         self.settings = shared_utils.load_settings(settings_file)
         self.flashtool = self.settings.get("flash_tool", "thor")
         # Load resources.gresource file.
-        resource = Gio.resource_load(os.path.join(f"{swd}/share/resources/", 'resources.gresource'))
+        resource = Gio.resource_load(
+            os.path.join(f"{swd}/share/resources/", "resources.gresource")
+        )
         Gio.Resource._register(resource)
         icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
-        print(f'icon theme has "checkmark-symbolic" icon: {icon_theme.has_icon("checkmark-symbolic")}')
-        print(f'icon theme has "page.codeberg.ethicalhaquer.galaxyflasher" icon: {icon_theme.has_icon("page.codeberg.ethicalhaquer.galaxyflasher")}')
+        print(
+            f'icon theme has "checkmark-symbolic" icon: {icon_theme.has_icon("checkmark-symbolic")}'
+        )
+        print(
+            f'icon theme has "page.codeberg.ethicalhaquer.galaxyflasher" icon: {icon_theme.has_icon("page.codeberg.ethicalhaquer.galaxyflasher")}'
+        )
         print(icon_theme.get_resource_path())
         # Load plug-ins
         self.load_plugins()
@@ -88,7 +94,7 @@ class MainWindow(Adw.ApplicationWindow):
         # Make the whole window draggable and right-clickable.
         self.handle = Gtk.WindowHandle.new()
         self.props.content = self.handle
-        
+
         # Add a toast overlay.
         self.toast_overlay = Adw.ToastOverlay.new()
         self.handle.set_child(self.toast_overlay)
@@ -98,15 +104,15 @@ class MainWindow(Adw.ApplicationWindow):
         # self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT)
         self.toast_overlay.set_child(self.stack)
-        #self.stack.add_named(self.toolbar_view, "start")
+        # self.stack.add_named(self.toolbar_view, "start")
 
         # Create about action
         about_action = Gio.SimpleAction.new("about", None)
         about_action.connect("activate", self.create_about_dialog)
         self.add_action(about_action)
-        
+
         self.display_start_page()
-        
+
         # Check if the OS is supported by Galaxy Flasher.
         self.verify_supported_os()
 
@@ -218,7 +224,7 @@ class MainWindow(Adw.ApplicationWindow):
                           {version}
         """
         )
-        
+
     def load_plugins(self):
         logger.debug("load_plugins is running")
         try:
@@ -243,13 +249,15 @@ class MainWindow(Adw.ApplicationWindow):
 
         except Exception as e:
             logger.error(f"load_plugins: Error: {e}")
-        
+
     def verify_supported_os(self):
         logger.debug("verify_supported_os is running")
         machine = platform.machine()
         system = platform.system().lower()
         if system != "linux":
-            logger.error("verify_supported_os: Currently, Galaxy Flasher only supports Linux.")
+            logger.error(
+                "verify_supported_os: Currently, Galaxy Flasher only supports Linux."
+            )
             self.connect(
                 "show",
                 lambda _: self.create_alert_dialog(
@@ -260,7 +268,7 @@ class MainWindow(Adw.ApplicationWindow):
         # If the system is Linux.
         else:
             self.setup_flash_tool()
-        
+
     def setup_flash_tool(self):
         logger.debug("setup_flash_tool is running")
         # Set the flash-tool paths.
@@ -270,12 +278,13 @@ class MainWindow(Adw.ApplicationWindow):
             if os.path.isfile(self.flashtool_file):
                 if self.flashtool == "odin4":
                     if os.path.isfile(self.odin4_wrapper_file):
-                        flashtool_exec = [
-                            self.odin4_wrapper_file,
-                            self.flashtool_file,
-                        ]
+                        flashtool_exec = (
+                            f"{self.odin4_wrapper_file} {self.flashtool_file}"
+                        )
                     else:
-                        logger.error(f'setup_flash_tool: The Odin4 wrapper was not found at "{odin4_wrapper_file}".')
+                        logger.error(
+                            f'setup_flash_tool: The Odin4 wrapper was not found at "{odin4_wrapper_file}".'
+                        )
                 else:
                     flashtool_exec = [
                         self.flashtool_file,
@@ -291,7 +300,9 @@ class MainWindow(Adw.ApplicationWindow):
                 # self.child.logfile = sys.stdout.buffer
                 self.ft_plugin.setup_flash_tool(self)
             else:
-                logger.error(f'setup_flash_tool: The {self.flashtool} executable was not found at "{self.flashtool_file}".')
+                logger.error(
+                    f'setup_flash_tool: The {self.flashtool} executable was not found at "{self.flashtool_file}".'
+                )
                 self.connect(
                     "show",
                     lambda _: self.create_alert_dialog(
@@ -307,7 +318,7 @@ class MainWindow(Adw.ApplicationWindow):
                     'Please select a flash-tool to use by going to:\n"Settings - General - Flash Tool".',
                 ),
             )
-            
+
     def display_start_page(self):
         logger.debug("display_start_page is running")
 
@@ -322,7 +333,7 @@ class MainWindow(Adw.ApplicationWindow):
                 "Connect a device in Download Mode, and then click the button to start."
             )
             """
-            
+
             # Create menu
             menu = Gio.Menu.new()
             menu.append("Preferences", "win.preferences")
@@ -346,7 +357,10 @@ class MainWindow(Adw.ApplicationWindow):
             ]
 
             self.add_page_to_stack(
-                content=start_page, name="start", nav_buttons=nav_buttons, status_page=True
+                content=start_page,
+                name="start",
+                nav_buttons=nav_buttons,
+                status_page=True,
             )
             self.start_page.header_bar.pack_end(hamburger)
             self.set_widget_state(self.start_page.button0, state=False)
@@ -404,8 +418,9 @@ class MainWindow(Adw.ApplicationWindow):
 
         self.stack.set_visible_child_name("files")
 
-    # TODO: This should really be in the Thor plugin.
     def check_files(self):
+        self.ft_plugin.check_files(self, self.selected_files)
+        """
         logger.debug("check_files is running")
         files = []
         paths = {}
@@ -428,6 +443,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.create_alert_dialog("Invalid files", self.strings["invalid_files"])
         else:
             self.ft_plugin.on_selected_files(self, files, paths)
+            """
 
     def display_devices(self, devices):
         logger.debug("display_devices is running")
@@ -498,10 +514,10 @@ class MainWindow(Adw.ApplicationWindow):
 
         if partitions_page:
             self.stack.remove(partitions_page)
-            
+
         main_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
         main_box.set_hexpand(True)
-        #main_box.set_halign(Gtk.Align.CENTER)
+        # main_box.set_halign(Gtk.Align.CENTER)
         main_box.set_valign(Gtk.Align.START)
 
         checkbutton_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
@@ -513,32 +529,28 @@ class MainWindow(Adw.ApplicationWindow):
         label = Gtk.Label.new()
         label.set_label(f"Select what partitions to flash from {file}")
         label.set_ellipsize(Pango.EllipsizeMode.END)
-        
+
         main_box.append(label)
         main_box.append(checkbutton_box)
 
         for i, partition in enumerate(partitions):
             checkbutton = self.create_checkbutton(partition)
-            #checkbutton.set_halign(Gtk.Align.CENTER)
+            # checkbutton.set_halign(Gtk.Align.CENTER)
             checkbutton.add_css_class("selection-mode")
             checkbutton_box.append(checkbutton)
             checkbutton.connect("toggled", partition_toggled, i)
             selected_partitions.append(False)
-            #row += 1
+            # row += 1
 
         nav_buttons = [
             {
                 "title": "Continue",
-                "command": lambda _: function(
-                    self, selected_partitions
-                ),
+                "command": lambda _: function(self, selected_partitions),
                 "add_css_classes": ["suggested-action"],
             },
             {
                 "title": "Cancel",
-                "command": lambda _: function(
-                    self, selected_partitions
-                ),
+                "command": lambda _: function(self, selected_partitions),
             },
         ]
 
@@ -591,7 +603,7 @@ class MainWindow(Adw.ApplicationWindow):
             content=label_box, name="verify", nav_buttons=nav_buttons
         )
         self.stack.set_visible_child_name("verify")
-        
+
     def display_flash_progress(self):
         logger.debug("display_flash_progress is running")
 
@@ -610,17 +622,15 @@ class MainWindow(Adw.ApplicationWindow):
             status_page.set_title("Flashing...")
             status_page.set_description(" ")
 
-            self.add_page_to_stack(
-                content=status_page, name="progress"
-            )
+            self.add_page_to_stack(content=status_page, name="progress")
         else:
             # Clear old description.
             self.progress_page.content.set_description(" ")
         self.stack.set_visible_child_name("progress")
-        
+
     def update_flash_progress(self, description):
         self.status_page.set_description(description)
-        
+
     def display_done_flashing(self):
         logger.debug("display_done_flashing is running")
 
@@ -639,7 +649,9 @@ class MainWindow(Adw.ApplicationWindow):
             nav_buttons = [
                 {
                     "title": "OK",
-                    "command": lambda _: self.stack.set_visible_child_full("start", Gtk.StackTransitionType.SLIDE_RIGHT),
+                    "command": lambda _: self.stack.set_visible_child_full(
+                        "start", Gtk.StackTransitionType.SLIDE_RIGHT
+                    ),
                     "add_css_classes": ["suggested-action"],
                 },
             ]
@@ -680,7 +692,7 @@ class MainWindow(Adw.ApplicationWindow):
         navigation_button_box.set_valign(Gtk.Align.START)
         padding = (0, 0, 10, 0)
         self.set_padding(navigation_button_box, padding)
-        
+
         main_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
         main_box.append(content)
 
@@ -697,14 +709,14 @@ class MainWindow(Adw.ApplicationWindow):
         toolbar_view = Adw.ToolbarView.new()
         toolbar_view.add_top_bar(header_bar)
         toolbar_view.set_content(clamp)
-        
+
         if nav_buttons:
             # Create the navigation buttons.
             for i, button_desc in enumerate(nav_buttons):
                 title = button_desc["title"]
                 command = button_desc["command"]
                 add_css_classes = button_desc.get("add_css_classes")
-                
+
                 button = self.create_button(
                     title,
                     column=0,
@@ -781,6 +793,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def open_file(self, file_type):
         logger.debug("open_file is running")
+
         def file_dialog_callback(obj, result):
             try:
                 file = obj.open_finish(result)
@@ -790,7 +803,9 @@ class MainWindow(Adw.ApplicationWindow):
                     logger.info(f"open_file: Selected file: {file_path}")
 
                     file_type_lowered = file_type.lower()
-                    self.selected_files[file_type_lowered] = file_path
+                    # self.selected_files[file_type_lowered] = file_path
+                    self.selected_files[file_type] = file_path
+                    print(self.selected_files)
                     file_button = getattr(self, f"{file_type}_button")
                     button_label = file_button.get_label()
                     button_row_box = file_button.get_parent()
@@ -840,14 +855,15 @@ class MainWindow(Adw.ApplicationWindow):
     def remove_file(self, close_button, file_type):
         logger.debug("remove_file is running")
         file_type_lowered = file_type.lower()
-        self.selected_files.pop(file_type_lowered)
+        # self.selected_files.pop(file_type_lowered)
+        self.selected_files.pop(file_type)
         logger.info(f"remove_file: Removing {file_type} file")
         button_row_box = close_button.get_parent()
         close_button = button_row_box.get_last_child()
         file_button = button_row_box.get_first_child()
         button_row_box.remove(close_button)
         button_label = file_button.get_label()
-        #file_type = button_label.split(': ', 1)[0]
+        # file_type = button_label.split(': ', 1)[0]
         file_button.set_label(file_type)
 
     def create_label(
@@ -1393,7 +1409,9 @@ class MainWindow(Adw.ApplicationWindow):
                     file = obj.open_finish(result)
                     if file:
                         file_path = file.get_path()
-                        logger.info(f"on_action_row_file_button_clicked: Selected {name} executable: {file_path}")
+                        logger.info(
+                            f"on_action_row_file_button_clicked: Selected {name} executable: {file_path}"
+                        )
                         self.set_setting(f"{value}_file", file_path)
                         action_row.set_activatable_widget(action_row.check_button)
                         action_row.set_subtitle(file_path)

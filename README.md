@@ -15,48 +15,48 @@ A GUI for Samsung flash-tools.
   Start Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-start-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-start-dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-start-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-start-page-dark.png">
     <img src="assets/screenshots/galaxy-flasher-start-dark.png" alt="Screenshot of the Start Page">
   </picture>
   <br>
   Select Files Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-select-files-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-select-files-dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-select-files-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-select-files-page-dark.png">
     <img src="assets/screenshots/galaxy-flasher-select-files-dark.png" alt="Screenshot of the Select Files Page">
   </picture>
   <br>
   Select Partitions Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-select-partitions-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-select-partitions-dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-select-partitions-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-select-partitions-page-dark.png">
     <img src="assets/screenshots/galaxy-flasher-select-partitions-dark.png" alt="Screenshot of the Select Partitions Page">
   </picture>
   <br>
   Verify Flash Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-verify-flash-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-verify-flash-dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-verify-flash-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-verify-flash-page-dark.png">
     <img src="assets/screenshots/galaxy-flasher-verify-flash-dark.png" alt="Screenshot of the Verify Flash Page">
   </picture>
   <br>
   Flash Progress Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-flash-progress-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-flash-progress-dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-flash-progress-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-flash-progress-page-dark.png">
     <img src="assets/screenshots/galaxy-flasher-flash-progress-dark.png" alt="Screenshot of the Flash Progress Page">
   </picture>
   <br>
   Flash Successful Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-flash-complete-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-flash-complete-dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-flash-complete-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-flash-complete-page-dark.png">
     <img src="assets/screenshots/galaxy-flasher-flash-complete-dark.png" alt="Screenshot of the Flash Successful Page">
   </picture>
 </details>

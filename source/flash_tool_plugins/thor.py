@@ -15,7 +15,6 @@ class Thor(FlashToolPlugin):
     def __init__(self, main):
         super().__init__(main)
         self.glib = main.glib
-        self.time = main.time
         self.shared_utils = main.shared_utils
         self.gtk = main.gtk
         self.re = main.re
@@ -79,6 +78,32 @@ class Thor(FlashToolPlugin):
         logger.debug("setup_flash_tool is running")
         main.child.expect("shell>")
         main.set_widget_state(main.start_page.button0, state=True)
+
+    def check_files(self, main, selected_files):
+        logger.debug("check_files is running")
+        files = []
+        paths = {}
+        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
+            slot_lowered = slot.lower()
+            # file_path = main.selected_files[slot_lowered]
+            # if slot_lowered in selected_files:
+            if slot in selected_files:
+                # file_path = selected_files[slot_lowered]
+                file_path = selected_files[slot]
+                if file_path:
+                    file_name = os.path.basename(file_path)
+                    files.append(file_name)
+                    paths[slot] = os.path.dirname(file_path)
+        if len(paths) == 0:
+            logger.info(f'check_files: {main.strings["no_files_selected2"]}')
+            main.create_alert_dialog(
+                "Invalid files", main.strings["no_files_selected2"]
+            )
+        elif len(set(paths.values())) > 1:
+            logger.info("check_files: The files NEED to be in the same dir...")
+            main.create_alert_dialog("Invalid files", main.strings["invalid_files"])
+        else:
+            self.on_selected_files(main, files, paths)
 
     def on_selected_files(self, main, selected_files, paths):
         logger.debug("on_selected_files is running")
@@ -434,25 +459,33 @@ class Thor(FlashToolPlugin):
                             logger.info(
                                 f"get_progress_and_wait_for_end: Flashed {component}"
                             )
-                            self.glib.idle_add(main.update_flash_progress, f"Flashed {component}")
+                            self.glib.idle_add(
+                                main.update_flash_progress, f"Flashed {component}"
+                            )
                             # main.update_flash_progress(f"Flashed {component}")
                             flashed_components.append(component)
-                    time.sleep(
-                        0.2
-                    )
+                    time.sleep(0.2)
                 elif result == 1:
                     logger.info(f"get_progress_and_wait_for_end: {flashed_components=}")
-                    self.glib.idle_add(main.update_flash_progress, 'Ending Odin Session...')
+                    self.glib.idle_add(
+                        main.update_flash_progress, "Ending Odin Session..."
+                    )
                     ended = self.end_odin_session(main, go_to_done_page=True)
                     if ended:
-                        self.glib.idle_add(main.update_flash_progress, 'Disconnecting the device...')
+                        self.glib.idle_add(
+                            main.update_flash_progress, "Disconnecting the device..."
+                        )
                         disconnected = self.disconnect(main)
                         if disconnected:
                             main.display_done_flashing()
                         else:
-                            logger.error("get_progress_and_wait_for_end: Failed to disconnect the device!")
+                            logger.error(
+                                "get_progress_and_wait_for_end: Failed to disconnect the device!"
+                            )
                     else:
-                        logger.error("get_progress_and_wait_for_end: Failed to end the Odin session!")
+                        logger.error(
+                            "get_progress_and_wait_for_end: Failed to end the Odin session!"
+                        )
                     break
                 elif result == 2:
                     logger.error("get_progress_and_wait_for_end: Timeout.")
@@ -539,4 +572,3 @@ class Thor(FlashToolPlugin):
             # If the end phrase is not found, take the whole substring.
             file = substring
         return file
-

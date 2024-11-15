@@ -16,7 +16,7 @@ check_for_command "desktop-file-validate"
 check_for_command "flatpak-builder"
 
 echo "INFO: Installing org.gnome.Sdk//47 and org.gnome.Platform//47, if needed."
-flatpak install flathub org.gnome.Sdk//47 org.gnome.Platform//47
+flatpak install -y flathub org.gnome.Sdk//47 org.gnome.Platform//47
 
 echo "INFO: Compiling resources.gresource."
 glib-compile-resources ./resources.gresource.xml --target=resources.gresource
