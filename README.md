@@ -75,10 +75,11 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 ## TODO
 
-- Re-implement support for Odin4.
+- Update the docs for v0.6.0.
+- Improve the flash progress updates. [Odin4]
+- Use the Verify Flash Page for Odin4.
 - Add a CONTRIBUTING.md file.
 - Display the partitions to be flashed in the Verify Flash Window.
-- Update the docs for v0.6.0.
 - Make Galaxy Flasher easier to install.
 
 ## Supported platforms

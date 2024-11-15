@@ -79,7 +79,6 @@ class Odin4(FlashToolPlugin):
                     # print("Found top of device list.")
                     break
                 devices.append(line)
-            print("devices: ", devices)
             logger.debug(f"{devices=}")
             # For testing.
             # devices = ["device 1", "device 2"]
