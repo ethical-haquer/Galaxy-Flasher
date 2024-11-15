@@ -92,7 +92,7 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 ## Supported flash-tools
 
 - Thor
-- ~Odin4~ (needs to be re-implemented)
+- Odin4
 
 ## Installation and Usage
 
