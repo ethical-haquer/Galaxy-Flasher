@@ -77,7 +77,6 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 - Update the docs for v0.6.0.
 - Improve the flash progress updates. [Odin4]
-- Use the Verify Flash Page for Odin4.
 - Add a CONTRIBUTING.md file.
 - Display the partitions to be flashed in the Verify Flash Window.
 - Make Galaxy Flasher easier to install.
@@ -85,7 +84,7 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 ## Supported platforms
 
 - [x] Linux x64
-- [ ] Linux arm64 (WIP, only Thor can be used, untested)
+- [ ] Linux arm64 (WIP, only Thor can be used)
 - [ ] Windows
 - [ ] macOS
 
@@ -96,7 +95,7 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 ## Installation and Usage
 
-For how to install and use Galaxy Flasher, refer to the [Galaxy Flasher documentation](https://galaxy-flasher-docs.readthedocs.io/en/latest/).
+For how to install and use Galaxy Flasher, refer to the [Galaxy Flasher documentation](https://galaxy-flasher-docs.readthedocs.io/en/v0.6.0/).
 
 ## How you can help
 
