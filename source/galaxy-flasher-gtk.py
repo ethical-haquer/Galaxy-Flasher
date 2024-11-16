@@ -72,7 +72,6 @@ class MainWindow(Adw.ApplicationWindow):
         self.strings = shared_utils.load_strings(locale_file)
         # Load settings
         self.settings = shared_utils.load_settings(settings_file)
-        self.flashtool = self.settings.get("flash_tool", "thor")
         # Load resources.gresource file.
         resource = Gio.resource_load(
             os.path.join(f"{swd}/share/resources/", "resources.gresource")
@@ -87,7 +86,10 @@ class MainWindow(Adw.ApplicationWindow):
         )
         print(icon_theme.get_resource_path())
         # Load plug-ins
-        self.load_plugins()
+        self.available_plugins = self.get_available_plugins()
+        #self.load_plugins()
+        self.flashtool = self.settings.get("flash_tool", "thor")
+        self.ft_plugin = self.load_plugin(self.flashtool)
         self.ft_plugin.test()
         self.window_title = Adw.WindowTitle.new("Galaxy Flasher", f"{version}")
 
@@ -225,6 +227,7 @@ class MainWindow(Adw.ApplicationWindow):
         """
         )
 
+    """
     def load_plugins(self):
         logger.debug("load_plugins is running")
         try:
@@ -249,6 +252,44 @@ class MainWindow(Adw.ApplicationWindow):
 
         except Exception as e:
             logger.error(f"load_plugins: Error: {e}")
+            """
+            
+    def get_available_plugins(self):
+        logger.debug("get_available_plugins is running")
+        try:
+            plugins = load_plugins(self)  # Assuming load_plugins is defined elsewhere
+            if not plugins:
+                logger.error("get_available_plugins: No flash-tool plugins found.")
+                return []
+            
+            # Log available plugins and append them to flash_tool_options
+            for plugin in plugins:
+                logger.info(f"get_available_plugins: Available flash-tool plugin: {plugin.name}")
+                self.flash_tool_options.append(
+                    {"name": plugin.displayed_name, "value": plugin.name}
+                )
+            
+            return plugins
+        except Exception as e:
+            logger.error(f"get_available_plugins: Error: {e}")
+            return []
+
+    def load_plugin(self, plugin_name):
+        logger.debug(f"load_plugin is running")
+        logger.debug(f"load_plugin: {plugin_name=}")
+        
+        plugins = self.available_plugins
+        if not plugins:
+            return None
+
+        for plugin in plugins:
+            if plugin.__class__.__name__.lower() == plugin_name.lower():
+                self.ft_plugin = plugin
+                logger.info(f"load_plugin: Loaded plug-in {plugin_name}")
+                return plugin
+        else:
+            logger.error(f"load_plugin: Plug-in {plugin_name} not found")
+            return None
 
     def verify_supported_os(self):
         logger.debug("verify_supported_os is running")
@@ -351,7 +392,7 @@ class MainWindow(Adw.ApplicationWindow):
             nav_buttons = [
                 {
                     "title": "Select Files",
-                    "command": lambda _: self.display_files(),
+                    "command": lambda _: self.display_select_files_page(),
                     "add_css_classes": ["suggested-action"],
                 },
             ]
@@ -366,8 +407,8 @@ class MainWindow(Adw.ApplicationWindow):
             self.set_widget_state(self.start_page.button0, state=False)
         self.stack.set_visible_child_name("start")
 
-    def display_files(self):
-        logger.debug("display_files is running")
+    def display_select_files_page(self):
+        logger.debug("display_select_files_page is running")
         if not self.stack.get_child_by_name("files"):
             grid = Gtk.Grid.new()
             grid.set_column_spacing(10)
@@ -445,8 +486,8 @@ class MainWindow(Adw.ApplicationWindow):
             self.ft_plugin.on_selected_files(self, files, paths)
             """
 
-    def display_devices(self, devices):
-        logger.debug("display_devices is running")
+    def display_select_device_page(self, devices):
+        logger.debug("display_select_device_page is running")
 
         def set_selected_device(btn, device):
             if btn.get_active:
@@ -500,8 +541,8 @@ class MainWindow(Adw.ApplicationWindow):
         )
         self.stack.set_visible_child_name("devices")
 
-    def display_partitions(self, file, partitions, function):
-        logger.debug("display_partitions is running")
+    def display_select_partitions_page(self, file, partitions, function):
+        logger.debug("display_select_partitions_page is running")
         selected_partitions = []
 
         def partition_toggled(button, row):
@@ -559,7 +600,7 @@ class MainWindow(Adw.ApplicationWindow):
         )
         self.stack.set_visible_child_name("partitions")
 
-    def display_verify_flash(self, auto, num_partitions, function):
+    def display_verify_flash(self, text, function):
         logger.debug("display_verify_flash is running")
 
         verify_flash_page = self.stack.get_child_by_name("verify")
@@ -580,10 +621,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         secondary_label = Gtk.Label.new()
         secondary_label.set_wrap(True)
-        noun = "The computer" if auto else "You"
-        secondary_label.set_label(
-            f"{noun} selected {num_partitions} partitions in total. Are you absolutely sure you want to flash them?"
-        )
+        secondary_label.set_label(text)
 
         label_box.append(main_label)
         label_box.append(secondary_label)
@@ -766,9 +804,21 @@ class MainWindow(Adw.ApplicationWindow):
         logger.debug("set_setting is running")
         if setting == "theme":
             self.set_theme(value)
+        elif setting == "flash_tool":
+            current_flashtool = self.flashtool
         self.settings[setting] = value
         logger.info(f"set_setting: {setting} set to: '{value}'")
         shared_utils.save_settings(self.settings, settings_file)
+        if setting == "flash_tool":
+            selected_flashtool = self.settings.get("flash_tool")
+            if current_flashtool != selected_flashtool:
+                self.flashtool = self.settings.get("flash_tool")
+                if self.child:
+                    self.set_widget_state(self.start_page.button0, state=False)
+                    self.child.terminate()
+                self.ft_plugin = self.load_plugin(selected_flashtool)
+                self.ft_plugin.test()
+                self.setup_flash_tool()
 
     def set_theme(self, theme):
         logger.debug("set_theme is running")

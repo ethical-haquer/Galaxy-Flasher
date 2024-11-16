@@ -36,7 +36,8 @@ class Odin4(FlashToolPlugin):
         }
 
     def test(self):
-        print(f"This is a test of the {self.name} plugin.")
+        logger.debug("test is running")
+        logger.debug(f"test: This is a test of the {self.name} plugin.")
 
     def setup_flash_tool(self, main):
         logger.debug("setup_flash_tool is running")
@@ -93,7 +94,7 @@ class Odin4(FlashToolPlugin):
                 main.on_no_devices_found()
             else:
                 # Have the user select a device.
-                main.display_devices(devices)
+                main.display_select_device_page(devices)
 
         else:
             output = main.remove_ansi_escape_sequences(
@@ -162,7 +163,8 @@ class Odin4(FlashToolPlugin):
             self.device = None
         else:
             self.device = device
-            self.flash(main)
+            # self.flash(main)
+            self.verify_flash(main)
 
     def flash(self, main):
         logger.debug("flash is running")
@@ -192,3 +194,18 @@ class Odin4(FlashToolPlugin):
 
     def select_partitions(self, main, files, base_dir, auto):
         print("Odin4 has no working select_partitions function.")
+
+    def verify_flash(self, main):
+        logger.debug("verify_flash is running")
+        num_files = len(self.selected_files)
+        files_noun = "files" if num_files > 1 else "file"
+        pronoun = "them" if num_files > 1 else "it"
+        text = f"You selected {num_files} {files_noun}. Are you absolutely sure you want to flash {pronoun}?"
+        main.display_verify_flash(text, self.on_verified_flash)
+
+    def on_verified_flash(self, main, continue_flashing):
+        if continue_flashing:
+            self.flash(main)
+        else:
+            logger.debug(f"on_verified_flash: Canceling the flash.")
+            main.cancel_flash("start")

@@ -149,7 +149,7 @@ class Thor(FlashToolPlugin):
                 self.selected_device(main, device_number, num_devices)
             else:
                 # Have the user select a device.
-                main.display_devices(devices)
+                main.display_select_device_page(devices)
 
         # If no devices were found.
         elif result == 1:
@@ -324,7 +324,7 @@ class Thor(FlashToolPlugin):
                         self.send_selected_partitions(main, selected_partitions)
                     else:
                         # Have the user select the partitions to flash.
-                        main.display_partitions(
+                        main.display_select_partitions_page(
                             file, partitions, self.send_selected_partitions
                         )
                 else:
@@ -425,9 +425,15 @@ class Thor(FlashToolPlugin):
         logger.debug("verify_flash is running")
         output = main.child.before.decode("utf-8")
         cleaned_output = main.remove_ansi_escape_sequences(output)
+        num_files = len(self.selected_files)
         num_partitions = self.get_num_partitions(cleaned_output)
         if not num_partitions == None:
-            main.display_verify_flash(self.auto, num_partitions, self.on_verified_flash)
+            noun = "the computer" if self.auto else "you"
+            files_noun = "files" if num_files > 1 else "file"
+            partitions_noun = "partitions" if num_partitions > 1 else "partition"
+            pronoun = "them" if num_partitions > 1 else "it"
+            text = f"You selected {num_files} {files_noun}, and {noun} selected {num_partitions} {partitions_noun} to flash. Are you absolutely sure you want to flash {pronoun}?"
+            main.display_verify_flash(text, self.on_verified_flash)
         else:
             logger.error(
                 f"verify_flash: {num_partitions=}, {repr(cleaned_output)}\n\n\n"
@@ -470,7 +476,7 @@ class Thor(FlashToolPlugin):
                     self.glib.idle_add(
                         main.update_flash_progress, "Ending Odin Session..."
                     )
-                    ended = self.end_odin_session(main, go_to_done_page=True)
+                    ended = self.end_odin_session(main)
                     if ended:
                         self.glib.idle_add(
                             main.update_flash_progress, "Disconnecting the device..."
@@ -497,7 +503,7 @@ class Thor(FlashToolPlugin):
         check_for_output(main)
 
     # Returns True if able to end, False otherwise.
-    def end_odin_session(self, main, go_to_done_page=False):
+    def end_odin_session(self, main):
         logger.debug("end_odin_session is running")
         logger.debug('end_odin_session: Running "end".')
         main.child.sendline("end")
@@ -531,17 +537,16 @@ class Thor(FlashToolPlugin):
             )
             thread.start()
         else:
-            logger.debug(f"verified_flash: Canceling the flash.")
-            logger.debug('verified_flash: Sending "n".')
+            logger.debug(f"on_verified_flash: Canceling the flash.")
+            logger.debug('on_verified_flash: Sending "n".')
             main.child.send("n")
-            logger.debug('verified_flash: Sending "Enter".')
+            logger.debug('on_verified_flash: Sending "Enter".')
             main.child.send("\n")
-            # TODO: Display a "Cancel Successful" page.
-            ended = self.end_odin_session(main, go_to_done_page=True)
+            ended = self.end_odin_session(main)
             if ended:
                 disconnected = self.disconnect(main)
                 if disconnected:
-                    main.display_done_flashing()
+                    main.cancel_flash("start")
                 else:
                     logger.error("on_verified_flash: Failed to disconnect the device!")
             else:
