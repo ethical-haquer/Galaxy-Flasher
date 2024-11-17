@@ -118,8 +118,8 @@ class MainWindow(Adw.ApplicationWindow):
         # Check if the OS is supported by Galaxy Flasher.
         self.verify_supported_os()
 
-        # Preferences dialog layout
-        self.preferences_dialog_layout = [
+        # Settings dialog layout
+        self.settings_dialog_layout = [
             {
                 "title": "General",
                 "rows": [
@@ -165,10 +165,10 @@ class MainWindow(Adw.ApplicationWindow):
             },
         ]
 
-        # Create preferences action
-        preferences_action = Gio.SimpleAction.new("preferences", None)
-        preferences_action.connect("activate", self.create_preferences_dialog)
-        self.add_action(preferences_action)
+        # Create settings action
+        setting_action = Gio.SimpleAction.new("settings", None)
+        setting_action.connect("activate", self.create_settings_dialog)
+        self.add_action(setting_action)
 
         # Set the style_manager
         self.style_manager = Adw.StyleManager.get_default()
@@ -377,7 +377,7 @@ class MainWindow(Adw.ApplicationWindow):
 
             # Create menu
             menu = Gio.Menu.new()
-            menu.append("Preferences", "win.preferences")
+            menu.append("Settings", "win.settings")
             menu.append("About Galaxy Flasher", "win.about")
 
             # Create popover with menu
@@ -1187,7 +1187,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         return action_row
 
-    def create_preferences_dialog(self, *_):
+    def create_settings_dialog(self, *_):
         """
         Creates a preferences dialog based on the provided main_preferences_list.
 
@@ -1233,9 +1233,10 @@ class MainWindow(Adw.ApplicationWindow):
         Returns:
             None
         """
-        logger.debug("create_preferences_dialog is running")
-        main_preferences_list = self.preferences_dialog_layout
+        logger.debug("create_settings_dialog is running")
+        main_preferences_list = self.settings_dialog_layout
         preferences_dialog = Adw.PreferencesDialog.new()
+        preferences_dialog.set_title("Settings")
         preferences_page = Adw.PreferencesPage.new()
         preferences_page.set_hexpand(True)
         preferences_dialog.add(preferences_page)
@@ -1263,12 +1264,12 @@ class MainWindow(Adw.ApplicationWindow):
                 row_setting = row.get("setting")
                 if not row_type:
                     logger.error(
-                        'create_preferences_dialog: The "type" arg must be specified.'
+                        'create_settings_dialog: The "type" arg must be specified.'
                     )
                     break
                 if not row_setting:
                     logger.error(
-                        'create_preferences_dialog: The "setting" arg must be specified.'
+                        'create_settings_dialog: The "setting" arg must be specified.'
                     )
                     break
                 if row_type == "switch":
@@ -1436,7 +1437,7 @@ class MainWindow(Adw.ApplicationWindow):
                     preferences_group.add(expander_row)
                 else:
                     logger.error(
-                        f'create_preferences_dialog: "{row_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
+                        f'create_settings_dialog: "{row_type}" is not a valid type. Valid types are "switch", "combo", and "expander".'
                     )
         preferences_dialog.present(self)
 
