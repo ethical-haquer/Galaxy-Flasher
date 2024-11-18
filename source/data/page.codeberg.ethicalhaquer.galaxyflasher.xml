@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>page.codeberg.ethicalhaquer.galaxyflasher</id>
+  
+  <name>Galaxy Flasher</name>
+  <summary>A GUI for Samsung flash-tools.</summary>
+  
+  <metadata_license>CC-BY-SA-4.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  
+  <description>
+    <p>
+      TODO.
+    </p>
+  </description>
+  
+  <launchable type="desktop-id">page.codeberg.ethicalhaquer.galaxyflasher.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/main/images/galaxy-flasher-dark-light.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/main/images/galaxy-flasher-dark-light.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/main/images/galaxy-flasher-dark-light.png</image>
+    </screenshot>
+  </screenshots>
+  
+  <icon type="stock">galaxyflasher</icon>
+  
+  <categories>
+    <category>Utility</category>
+    <category>GNOME</category>
+  </categories>
+  
+  <provides>
+    <binary>galaxy-flasher.sh</binary>
+  </provides>
+</component>

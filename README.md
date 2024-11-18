@@ -1,72 +1,63 @@
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-dark-light.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-light-dark.png">
-    <img src="images/galaxy-flasher-dark-light.png" alt="Screenshot of Galaxy Flasher" width="500">
-  </picture>
-</div>
-<div align="center">
-
-Have any ideas for the icon? Let me know on [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues/21), [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher/issues/21), or [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/page-4#post-89701721).
-
+<img src="./assets/page.codeberg.ethicalhaquer.galaxyflasher.svg?raw=true" width="256" height="256" alt="Galaxy Flasher icon.">
 </div>
 <h1 align="center">Galaxy Flasher</h1>
 <div align="center">
 
 A GUI for Samsung flash-tools.
 
-[Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [GitHub](https://github.com/ethical-haquer/Galaxy-Flasher) | [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/)
+[Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/)
 
 </div>
 <details>
   <summary><b>Screenshots</b></summary>
   <br>
-  Options Tab:
+  Start Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-options-tab-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-options-tab-light.png">
-    <img src="images/galaxy-flasher-options-tab-dark.png" alt="Screenshot of the Options Tab">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-start-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-start-page-dark.png">
+    <img src="assets/screenshots/galaxy-flasher-start-page-dark.png" alt="Screenshot of the Start Page">
   </picture>
   <br>
-  Pit Tab:
+  Select Files Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-pit-tab-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-pit-tab-light.png">
-    <img src="images/galaxy-flasher-pit-tab-dark.png" alt="Screenshot of the Pit Tab">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-select-files-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-select-files-page-dark.png">
+    <img src="assets/screenshots/galaxy-flasher-select-files-page-dark.png" alt="Screenshot of the Select Files Page">
   </picture>
   <br>
-  Settings Tab:
+  Select Partitions Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-settings-tab-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-settings-tab-light.png">
-    <img src="images/galaxy-flasher-settings-tab-dark.png" alt="Screenshot of the Settings Tab">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-select-partitions-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-select-partitions-page-dark.png">
+    <img src="assets/screenshots/galaxy-flasher-select-partitions-page-dark.png" alt="Screenshot of the Select Partitions Page">
   </picture>
   <br>
-  About Dialog:
+  Verify Flash Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-about-dialog-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-about-dialog-light.png">
-    <img src="images/galaxy-flasher-about-dialog-dark.png" alt="Screenshot of the About Dialog">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-verify-flash-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-verify-flash-page-dark.png">
+    <img src="assets/screenshots/galaxy-flasher-verify-flash-page-dark.png" alt="Screenshot of the Verify Flash Page">
   </picture>
   <br>
-  Select Partitions Window:
+  Flash Progress Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-select-partitions-window-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-select-partitions-window-light.png">
-    <img src="images/galaxy-flasher-select-partitions-window-dark.png" alt="Screenshot of the Select Partitions Window">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-flash-progress-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-flash-progress-page-dark.png">
+    <img src="assets/screenshots/galaxy-flasher-flash-progress-page-dark.png" alt="Screenshot of the Flash Progress Page">
   </picture>
   <br>
-  Verify Flash Dialog:
+  Flash Successful Page:
   <br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/images/galaxy-flasher-verify-flash-dialog-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="/images/galaxy-flasher-verify-flash-dialog-light.png">
-    <img src="images/galaxy-flasher-verify-flash-dialog-dark.png" alt="Screenshot of the Verify Flash Dialog">
+    <source media="(prefers-color-scheme: dark)" srcset="/assets/screenshots/galaxy-flasher-flash-complete-page-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="/assets/screenshots/galaxy-flasher-flash-complete-page-dark.png">
+    <img src="assets/screenshots/galaxy-flasher-flash-complete-page-dark.png" alt="Screenshot of the Flash Successful Page">
   </picture>
 </details>
 
@@ -76,24 +67,24 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bugs. A list of missing features and know bugs in the **soon-to-be Alpha v0.6.0 release** can be found below.
 
 ## Known Bugs
 
-- Setting options through the Options Tab is buggy.
+- build-python.sh is broken.
 
 ## TODO
 
-- Improve the Options Tab for Thor
-- Display the partitions to be flashed in the Verify Flash Window
-- Use an Adw.Dialog for the Select Partitions Window
-- Hide Thor-specific settings if the current flash-tool is not Thor
-- Publish Galaxy Flasher on FlatHub
+- Update the docs for v0.6.0.
+- Improve the flash progress updates. [Odin4]
+- Add a CONTRIBUTING.md file.
+- Display the partitions to be flashed in the Verify Flash Window.
+- Make Galaxy Flasher easier to install.
 
 ## Supported platforms
 
 - [x] Linux x64
-- [ ] Linux arm64 (WIP, only Thor can be used, untested)
+- [ ] Linux arm64 (WIP, only Thor can be used)
 - [ ] Windows
 - [ ] macOS
 
@@ -101,20 +92,18 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and probably un
 
 - Thor
 - Odin4
-- PyThor (in development)
 
 ## Installation and Usage
 
-For how to install and use Galaxy Flasher, refer to the [Galaxy Flasher documentation](https://galaxy-flasher-docs.readthedocs.io/en/latest/).
+For how to install and use Galaxy Flasher, refer to the [Galaxy Flasher documentation](https://galaxy-flasher-docs.readthedocs.io/en/v0.6.0/).
 
 ## How you can help
 
-Here are some ways you can help me improve/finish Thor GUI:
-+ Galaxy Flasher needs a logo! If you would be interested in making one, please open a new issue.
-+ Find and report bugs. If you find an issue that isn't listed as a [known bug](https://github.com/ethical-haquer/Galaxy-Flasher?tab=readme-ov-file#tabs), and isn't listed [here](https://github.com/ethical-haquer/Galaxy-Flasher/issues), please let me know!
-+ ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://github.com/ethical-haquer/Galaxy-Flasher/blob/main/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
+Here are some ways you can help me improve/finish Galaxy Flasher:
++ Find and report bugs. If you find an issue that isn't listed as a [known bug](https://codeberg.org/ethical_haquer/Galaxy-Flasher#known-bugs), and isn't listed [here](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues), please let me know!
++ ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/separate-gui/source/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
-+ Suggest an improvement by opening up a [feature request](https://github.com/ethical-haquer/Galaxy-Flasher/issues/new/choose)!
++ Suggest an improvement by opening up a [feature request](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues/new/choose)!
 
 ## Credits
 
@@ -124,7 +113,7 @@ Here are some ways you can help me improve/finish Thor GUI:
 
 [Not_Rich@XDA](https://xdaforums.com/m/not_rich.8463826/) for continuing to test out new versions and suggest improvements.
 
-[ethical_haquer](https://github.com/ethical-haquer) for Galaxy Flasher.
+[ethical_haquer](https://codeberg.org/ethical_haquer/) for Galaxy Flasher.
 
 ## License
 

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Galaxy Flasher
+Comment=A GUI for Samsung flash-tools.
+Icon=page.codeberg.ethicalhaquer.galaxyflasher
+Exec=galaxy-flasher
+Categories=Utility;GNOME

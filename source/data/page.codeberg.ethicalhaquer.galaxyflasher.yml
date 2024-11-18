@@ -1,0 +1,47 @@
+app-id: page.codeberg.ethicalhaquer.galaxyflasher
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: galaxy-flasher
+finish-args:
+  - --share=network
+  - --socket=fallback-x11
+  - --share=ipc
+  - --filesystem=host
+  - --device=all # Needed for accessing Samsung devices.
+  - --socket=wayland
+modules:
+  - python3-requirements.json
+  - name: Galaxy-Flasher
+    buildsystem: simple
+    build-commands:
+      - cp -r locales /app/locales/
+      - cp -r flash_tool_plugins /app/flash_tool_plugins/
+      - cp -r odin4-wrapper.sh /app/odin4-wrapper.sh
+      - install -D usb.ids /app/usb.ids
+      - install -D galaxy-flasher-gtk.py /app/galaxy-flasher-gtk.py
+      - install -D shared_utils.py /app/shared_utils.py
+      - install -D galaxy-flasher.sh /app/bin/galaxy-flasher
+      - install -D resources.gresource /app/share/resources/resources.gresource
+      - install -D page.codeberg.ethicalhaquer.galaxyflasher.svg /app/share/icons/hicolor/scalable/apps/page.codeberg.ethicalhaquer.galaxyflasher.svg
+      - install -D page.codeberg.ethicalhaquer.galaxyflasher.desktop /app/share/applications/page.codeberg.ethicalhaquer.galaxyflasher.desktop
+    sources:
+      - type: file
+        path: ../usb.ids
+      - type: file
+        path: ../galaxy-flasher-gtk.py
+      - type: file
+        path: ../shared_utils.py
+      - type: file
+        path: galaxy-flasher.sh
+      - type: file
+        path: page.codeberg.ethicalhaquer.galaxyflasher.desktop
+      - type: file
+        path: ../odin4-wrapper.sh
+      - type: file
+        path: resources.gresource
+      - type: file
+        path: ./icons/page.codeberg.ethicalhaquer.galaxyflasher.svg
+      - type: dir
+        path: include
+
