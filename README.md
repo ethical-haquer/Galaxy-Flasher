@@ -67,15 +67,14 @@ After witnessing a new Linux user, who had just switched over from Windows, stru
 
 ## Disclaimer
 
-Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bugs. A list of missing features and know bugs in the **soon-to-be Alpha v0.6.0 release** can be found below.
+Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bugs. A list of missing features and know bugs in the **latest release** can be found below.
 
 ## Known Bugs
 
-- build-python.sh is broken.
+- build-python.sh is broken, don't use it.
 
 ## TODO
 
-- Update the docs for v0.6.0.
 - Improve the flash progress updates. [Odin4]
 - Add a CONTRIBUTING.md file.
 - Display the partitions to be flashed in the Verify Flash Window.
@@ -90,18 +89,18 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 ## Supported flash-tools
 
-- Thor
 - Odin4
+- Thor
 
 ## Installation and Usage
 
-For how to install and use Galaxy Flasher, refer to the [Galaxy Flasher documentation](https://galaxy-flasher-docs.readthedocs.io/en/v0.6.0/).
+For how to install and use Galaxy Flasher, refer to the [Galaxy Flasher documentation](https://galaxy-flasher-docs.readthedocs.io/en/latest/).
 
 ## How you can help
 
 Here are some ways you can help me improve/finish Galaxy Flasher:
 + Find and report bugs. If you find an issue that isn't listed as a [known bug](https://codeberg.org/ethical_haquer/Galaxy-Flasher#known-bugs), and isn't listed [here](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues), please let me know!
-+ ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/separate-gui/source/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
++ ~Help translate Galaxy Flasher into your language. Refer to [this readme](https://codeberg.org/ethical_haquer/Galaxy-Flasher/src/branch/main/source/locales/README.md) for more info~. NOTE: Currently, the en.json file is in dire need of updating after the re-write, so please don't add other translations until it is updated. Thanks!
 + Improve the code. Pull requests are always welcome!
 + Suggest an improvement by opening up a [feature request](https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues/new/choose)!
 
