@@ -8,6 +8,10 @@ check_for_command() {
   fi
 }
 
+# Disable this script, as it's currently broken.
+echo "This script (build-python.sh) is currently broken. Please use build-flatpak.sh for now."
+exit 1
+
 # Check if the required commands are available
 check_for_command "flatpak"
 check_for_command "glib-compile-resources"
