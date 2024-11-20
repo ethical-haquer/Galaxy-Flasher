@@ -114,9 +114,7 @@ Here are some ways you can help me improve/finish Galaxy Flasher:
 
 [justaCasualCoder](https://github.com/justaCasualCoder) for his contributions, and for starting the port to GTK4 on his own.
 
-[piero-e@XDA](https://xdaforums.com/m/piero-e.12055017/), [piero@/e/OS](https://community.e.foundation/u/piero/summary) for his support of the app, and for helping out users.
-
-[Not_Rich@XDA](https://xdaforums.com/m/not_rich.8463826/) for continuing to test out new versions and suggest improvements.
+[piero-e@XDA](https://xdaforums.com/m/piero-e.12055017/), [piero@/e/OS](https://community.e.foundation/u/piero/summary) for supporting the app, and helping out users.
 
 [ethical_haquer](https://codeberg.org/ethical_haquer/) for Galaxy Flasher.
 
