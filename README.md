@@ -71,12 +71,16 @@ Currently, Galaxy Flasher is in an Alpha stage. There are known (and unknown) bu
 
 ## Known Bugs
 
+- The docs need to be updated to tell users that they need to edit the udev rules before using GF, see [here](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/page-5#post-89813072).
+- You have to restart Galaxy Flasher after changing a flash-tool executable for it to apply, see [here](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/page-5#post-89813766).
 - build-python.sh is broken, don't use it.
 
 ## TODO
 
 - Improve the flash progress updates. [Odin4]
 - Add a CONTRIBUTING.md file.
+- Add support for Heimdall.
+- Fully support Linux arm64.
 - Display the partitions to be flashed in the Verify Flash Window.
 - Make Galaxy Flasher easier to install.
 
