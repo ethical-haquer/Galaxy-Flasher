@@ -79,7 +79,7 @@ class MainWindow(Adw.ApplicationWindow):
         Gio.Resource._register(resource)
         icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
         print(
-            f'icon theme has "checkmark-symbolic" icon: {icon_theme.has_icon("checkmark-symbolic")}'
+            f'icon theme has "checkmark-symbolic" icon: {icon_theme.has_icon("document-open-symbolic")}'
         )
         print(
             f'icon theme has "page.codeberg.ethicalhaquer.galaxyflasher" icon: {icon_theme.has_icon("page.codeberg.ethicalhaquer.galaxyflasher")}'
@@ -226,33 +226,6 @@ class MainWindow(Adw.ApplicationWindow):
                           {version}
         """
         )
-
-    """
-    def load_plugins(self):
-        logger.debug("load_plugins is running")
-        try:
-            plugins = load_plugins(self)
-            if not plugins:
-                logger.error("load_plugins: No flash-tool plugins found.")
-                return
-
-            for plugin in plugins:
-                logger.info(f"load_plugins: Available flash-tool plugin: {plugin.name}")
-                self.flash_tool_options.append(
-                    {"name": plugin.displayed_name, "value": plugin.name}
-                )
-
-            plugin_name = self.flashtool
-            for plugin in plugins:
-                if plugin.__class__.__name__.lower() == plugin_name.lower():
-                    self.ft_plugin = plugin
-                    break
-            else:
-                logger.error(f"load_plugins: Plugin {plugin_name} not found")
-
-        except Exception as e:
-            logger.error(f"load_plugins: Error: {e}")
-            """
             
     def get_available_plugins(self):
         logger.debug("get_available_plugins is running")
@@ -387,7 +360,7 @@ class MainWindow(Adw.ApplicationWindow):
             # Create hamburger menu button
             hamburger = Gtk.MenuButton()
             hamburger.set_popover(popover)
-            hamburger.set_icon_name("open-menu-symbolic")
+            hamburger.set_icon_name("menu-large-symbolic")
 
             nav_buttons = [
                 {
@@ -461,30 +434,6 @@ class MainWindow(Adw.ApplicationWindow):
 
     def check_files(self):
         self.ft_plugin.check_files(self, self.selected_files)
-        """
-        logger.debug("check_files is running")
-        files = []
-        paths = {}
-        for slot in ["BL", "AP", "CP", "CSC", "USERDATA"]:
-            slot_lowered = slot.lower()
-            # file_path = main.selected_files[slot_lowered]
-            if slot_lowered in self.selected_files:
-                file_path = self.selected_files[slot_lowered]
-                if file_path:
-                    file_name = os.path.basename(file_path)
-                    files.append(file_name)
-                    paths[slot] = os.path.dirname(file_path)
-        if len(paths) == 0:
-            logger.info(f'check_files: {self.strings["no_files_selected2"]}')
-            self.create_alert_dialog(
-                "Invalid files", self.strings["no_files_selected2"]
-            )
-        elif len(set(paths.values())) > 1:
-            logger.info("check_files: The files NEED to be in the same dir...")
-            self.create_alert_dialog("Invalid files", self.strings["invalid_files"])
-        else:
-            self.ft_plugin.on_selected_files(self, files, paths)
-            """
 
     def display_select_device_page(self, devices):
         logger.debug("display_select_device_page is running")
@@ -868,7 +817,7 @@ class MainWindow(Adw.ApplicationWindow):
                         new_label = f'{button_label}: "{file_name}"'
                         file_button.set_label(new_label)
 
-                        close_button = Gtk.Button.new_from_icon_name("window-close")
+                        close_button = Gtk.Button.new_from_icon_name("cross-small-symbolic")
                         close_button.set_halign(Gtk.Align.CENTER)
                         close_button.set_valign(Gtk.Align.CENTER)
                         # close_button.set_hexpand(True)
@@ -1402,7 +1351,7 @@ class MainWindow(Adw.ApplicationWindow):
                             label="", icon_name="document-open-symbolic"
                         )
                         info_button_content = Adw.ButtonContent(
-                            label="", icon_name="help-about-symbolic"
+                            label="", icon_name="info-outline-symbolic"
                         )
                         file_chooser_button.set_child(file_chooser_button_content)
                         info_button.set_child(info_button_content)

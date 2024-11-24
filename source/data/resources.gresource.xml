@@ -2,5 +2,9 @@
 <gresources>
   <gresource prefix="/page/codeberg/ethicalhaquer/galaxyflasher">
     <file compressed="true" alias="icons/scalable/actions/checkmark-symbolic.svg">icons/checkmark-symbolic.svg</file>
+    <file compressed="true" alias="icons/scalable/actions/info-outline-symbolic.svg">icons/info-outline-symbolic.svg</file>
+    <file compressed="true" alias="icons/scalable/actions/document-open-symbolic.svg">icons/document-open-symbolic.svg</file>
+    <file compressed="true" alias="icons/scalable/actions/menu-large-symbolic.svg">icons/menu-large-symbolic.svg</file>
+    <file compressed="true" alias="icons/scalable/actions/cross-small-symbolic.svg">icons/cross-small-symbolic.svg</file>
   </gresource>
 </gresources>
