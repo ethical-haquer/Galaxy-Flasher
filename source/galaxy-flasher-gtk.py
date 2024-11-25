@@ -740,6 +740,14 @@ class MainWindow(Adw.ApplicationWindow):
         logger.debug("remove_newlines is running")
         cleaned_string = self.shared_utils.remove_newlines(string)
         return cleaned_string
+    
+    def clean_output(self, output):
+        cleaned_output = self.shared_utils.clean_output(output)
+        return cleaned_output
+    
+    def list_to_string(self, input_list, separator=""):
+        string = self.shared_utils.list_to_string(input_list, separator)
+        return string
 
     def on_width_breakpoint_applied(self, breakpoint):
         logger.debug("on_width_breakpoint_applied is running")

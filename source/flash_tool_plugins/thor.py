@@ -290,20 +290,21 @@ class Thor(FlashToolPlugin):
             if result == 0:
                 logger.debug("cycle: Found end of partitions.")
                 output = main.child.before.decode("utf-8")
-                cleaned_output = main.remove_ansi_escape_sequences(output)
-                output_lines = cleaned_output.splitlines()
+                cleaned_lines = main.clean_output(output)
+                cleaned_string = main.list_to_string(cleaned_lines, separator="")
+                logger.debug(f'cycle: {cleaned_lines=}')
                 file = None
                 buffer = None
                 partitions = []
-                for line in reversed(output_lines):
+                for line in reversed(cleaned_lines):
                     line = line.strip()
                     if line.endswith(":"):
                         break
                     elif line.startswith("> [ ]") or line.startswith("[ ]"):
                         partition = self.clean_partition_name(line)
                         partitions.insert(0, partition)
-                file = self.get_file(cleaned_output)
-                logger.debug(f'cycle: FILE: "{file}"')
+                file = self.get_file(cleaned_string)
+                logger.debug(f'cycle: FILE: {repr(file)}')
                 logger.debug(f"cycle: SELECTED_FILES: {self.selected_files}")
                 logger.debug(f"cycle: PARTITIONS: {partitions}")
                 if file == self.last_file:
@@ -318,7 +319,7 @@ class Thor(FlashToolPlugin):
                     main.child.interact()
                 self.last_file = file
                 if file in self.selected_files:
-                    logger.debug(f"cycle: File was selected: {file=}")
+                    logger.debug(f"cycle: File was selected. {file=}")
                     if self.auto:
                         selected_partitions = [True] * len(partitions)
                         self.send_selected_partitions(main, selected_partitions)
@@ -328,7 +329,7 @@ class Thor(FlashToolPlugin):
                             file, partitions, self.send_selected_partitions
                         )
                 else:
-                    logger.info(f"cycle: File wasn't selected, skipping: {file=}")
+                    logger.info(f"cycle: File wasn't selected, skipping. {file=}")
                     logger.debug('cycle: Sending "Enter".')
                     main.child.send("\n")
                     self.expect_output(
@@ -424,14 +425,17 @@ class Thor(FlashToolPlugin):
     def verify_flash(self, main):
         logger.debug("verify_flash is running")
         output = main.child.before.decode("utf-8")
-        cleaned_output = main.remove_ansi_escape_sequences(output)
+        #cleaned_output = main.remove_ansi_escape_sequences(output)
+        cleaned_lines = main.clean_output(output)
+        cleaned_string = main.list_to_string(cleaned_lines, separator=" ")
         num_files = len(self.selected_files)
-        num_partitions = self.get_num_partitions(cleaned_output)
+        #num_partitions = self.get_num_partitions(cleaned_output)
+        num_partitions = self.get_num_partitions(cleaned_string)
         if not num_partitions == None:
             noun = "the computer" if self.auto else "you"
-            files_noun = "files" if num_files > 1 else "file"
-            partitions_noun = "partitions" if num_partitions > 1 else "partition"
-            pronoun = "them" if num_partitions > 1 else "it"
+            files_noun = "file" if num_files == 1 else "files"
+            partitions_noun = "partition" if num_partitions == 1 else "partitions"
+            pronoun = "it" if num_partitions == 1 else "them"
             text = f"You selected {num_files} {files_noun}, and {noun} selected {num_partitions} {partitions_noun} to flash. Are you absolutely sure you want to flash {pronoun}?"
             main.display_verify_flash(text, self.on_verified_flash)
         else:
@@ -557,23 +561,31 @@ class Thor(FlashToolPlugin):
         # Remove '> [ ] ' or '[ ] ' from the beginning of the string
         cleaned_string = re.sub(r"^(> \[ \] |\[ \] )", "", string)
         return cleaned_string
-
+    
     def get_file(self, text):
         logger.debug("get_file is running")
+        
         # Find the last occurrence of ":"
         colon_index = text.rfind(":")
-        # If no colon is found or it's the first character, return False.
+        
+        # If no colon is found or it's the first character, return None.
         if colon_index == -1 or colon_index == 0:
             return None
+        
         # Extract the substring before the colon.
         substring = text[:colon_index].strip()
+        
         # Find the start phrase
         start_phrase = "Choose what partitions to flash from"
         start_index = substring.find(start_phrase)
-        # If the start index is found, extract everything after it.
+        
+        # If the start phrase is found, extract everything after it.
         if start_index != -1:
-            file = substring[start_index + len(start_phrase) :].strip()
+            file = substring[start_index + len(start_phrase):].strip()
         else:
-            # If the end phrase is not found, take the whole substring.
+            # If the start phrase is not found, take the whole substring.
             file = substring
+
+        logger.debug(f"get_file: Extracted file: {repr(file)}")
         return file
+

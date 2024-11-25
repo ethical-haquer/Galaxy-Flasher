@@ -135,9 +135,37 @@ def remove_ansi_escape_sequences(string):
 
 
 def remove_newlines(string):
-    cleaned_string = " ".join(string.split())
+    cleaned_string = "".join(string.split())
     return cleaned_string
 
+
+def clean_output(output):
+    """
+    Given (very) messy output, returns a list of cleaned output. Here's an example:
+    Input: "\x1b[0m                                 \r\x1b[2K\x1b[1A\x1b[2K\x1b[1
+    A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2
+    K\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[?25h\x1b[?25l\x1b[38;5;2mChoo
+    se what partitions to flash from \x1b[0m
+    \r\n\x1b[38;5;2mCP_G900AUCS4DPH4_CL8903521_QB11143142_REV00_user_low_ship_MUL
+    TI_CERT.tar.md5:\x1b[0m\r\n\r\n\x1b[38;5;12m> [ ] modem.bin (MODEM)\x1b[0m
+    \r\n
+    \r\n\x1b[38;5;8m"
+
+    Output: ['', 'Choose what partitions to flash from', 'CP_G900AUCS4DPH4_CL8903
+    521_QB11143142_REV00_user_low_ship_MULTI_CERT.tar.md5:', '', '> [ ] modem.bin (MODEM)', '']
+    """
+    #logger.debug(f'cycle: output: "{repr(output)}"')
+    cleaned_output = remove_ansi_escape_sequences(output)
+    #logger.debug(f'cycle: semi_cleaned: "{repr(cleaned_output)}"')
+    output_lines = cleaned_output.splitlines()
+    #logger.debug(f'cycle: output_lines: "{repr(output_lines)}"')
+    stripped_lines = [line.strip() for line in output_lines]
+    #logger.debug(f'cycle: stripped_lines: "{repr(stripped_lines)}"')
+    return stripped_lines
+
+def list_to_string(input_list, separator=""):
+    string = separator.join(input_list)
+    return string
 
 def get_current_year():
     """Returns the current year.
