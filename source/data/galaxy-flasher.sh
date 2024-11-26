@@ -1,4 +1,4 @@
 #!/bin/bash
 cd /app || exit 1
 
-./galaxy-flasher-gtk.py
+./galaxy_flasher_gtk.py

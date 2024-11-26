@@ -1,4 +1,6 @@
+#!/usr/bin/env python3
 # flash_tool_plugins/thor.py
+
 from flash_tool_plugins import FlashToolPlugin
 import os
 import re
@@ -6,9 +8,11 @@ import logging
 import pexpect
 import threading
 import time
+import shared_utils
 
-logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
-logger = logging.getLogger(__name__)
+# logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
+# logger = logging.getLogger(__name__)
+logger = shared_utils.setup_logger("thor")
 
 
 class Thor(FlashToolPlugin):
@@ -125,7 +129,7 @@ class Thor(FlashToolPlugin):
         # If at least one device is detected.
         if result == 0:
             output = main.child.before.decode("utf-8")
-            cleaned_output = main.remove_ansi_escape_sequences(output)
+            cleaned_output = shared_utils.remove_ansi_escape_sequences(output)
             devices = []
             for line in reversed(
                 [line for line in map(str.strip, cleaned_output.splitlines()) if line]
@@ -158,7 +162,7 @@ class Thor(FlashToolPlugin):
         elif result == 2:
             logger.info("connect: Already connected to a device!")
         else:
-            output = main.remove_ansi_escape_sequences(
+            output = shared_utils.remove_ansi_escape_sequences(
                 main.child.before.decode("utf-8")
             )
             logger.error(f"connect: Unexpected output:\n{output=}")
@@ -197,7 +201,7 @@ class Thor(FlashToolPlugin):
                 "selected_device: Failed to claim interface: Device or resource busy (16)."
             )
         else:
-            output = main.remove_ansi_escape_sequences(
+            output = shared_utils.remove_ansi_escape_sequences(
                 main.child.before.decode("utf-8")
             )
             logger.error(f"selected_device: Failed to connect:\n{output=}")
@@ -250,7 +254,7 @@ class Thor(FlashToolPlugin):
             # print(main.child.before)
             # main.child.interact()
         else:
-            output = main.remove_ansi_escape_sequences(
+            output = shared_utils.remove_ansi_escape_sequences(
                 main.child.before.decode("utf-8")
             )
             logger.error(
@@ -271,7 +275,7 @@ class Thor(FlashToolPlugin):
             logger.info("disconnect: Successfully disconnected the device!")
             return True
         else:
-            output = main.remove_ansi_escape_sequences(
+            output = shared_utils.remove_ansi_escape_sequences(
                 main.child.before.decode("utf-8")
             )
             logger.error(f"disconnect: Failed to disconnect the device:\n{output=}")
@@ -290,9 +294,11 @@ class Thor(FlashToolPlugin):
             if result == 0:
                 logger.debug("cycle: Found end of partitions.")
                 output = main.child.before.decode("utf-8")
-                cleaned_lines = main.clean_output(output)
-                cleaned_string = main.list_to_string(cleaned_lines, separator="")
-                logger.debug(f'cycle: {cleaned_lines=}')
+                cleaned_lines = shared_utils.clean_output(output)
+                cleaned_string = shared_utils.list_to_string(
+                    cleaned_lines, separator=""
+                )
+                logger.debug(f"cycle: {cleaned_lines=}")
                 file = None
                 buffer = None
                 partitions = []
@@ -304,7 +310,7 @@ class Thor(FlashToolPlugin):
                         partition = self.clean_partition_name(line)
                         partitions.insert(0, partition)
                 file = self.get_file(cleaned_string)
-                logger.debug(f'cycle: FILE: {repr(file)}')
+                logger.debug(f"cycle: FILE: {repr(file)}")
                 logger.debug(f"cycle: SELECTED_FILES: {self.selected_files}")
                 logger.debug(f"cycle: PARTITIONS: {partitions}")
                 if file == self.last_file:
@@ -345,7 +351,7 @@ class Thor(FlashToolPlugin):
         except pexpect.TIMEOUT:
             logger.error("cycle: Timeout waiting for output.")
             output = main.child.before.decode("utf-8")
-            cleaned_output = main.remove_ansi_escape_sequences(output)
+            cleaned_output = shared_utils.remove_ansi_escape_sequences(output)
             print(cleaned_output)
             main.child.interact()
 
@@ -409,7 +415,7 @@ class Thor(FlashToolPlugin):
                 f"expect_output: Timed-out.\nexpected_end_output: {expected_end_output}\n\n\n"
             )
             output = main.child.before.decode("utf-8")
-            cleaned_output = main.remove_ansi_escape_sequences(output)
+            cleaned_output = shared_utils.remove_ansi_escape_sequences(output)
             print(cleaned_output)
             main.child.interact()
 
@@ -425,11 +431,11 @@ class Thor(FlashToolPlugin):
     def verify_flash(self, main):
         logger.debug("verify_flash is running")
         output = main.child.before.decode("utf-8")
-        #cleaned_output = main.remove_ansi_escape_sequences(output)
-        cleaned_lines = main.clean_output(output)
-        cleaned_string = main.list_to_string(cleaned_lines, separator=" ")
+        # cleaned_output = shared_utils.remove_ansi_escape_sequences(output)
+        cleaned_lines = shared_utils.clean_output(output)
+        cleaned_string = shared_utils.list_to_string(cleaned_lines, separator=" ")
         num_files = len(self.selected_files)
-        #num_partitions = self.get_num_partitions(cleaned_output)
+        # num_partitions = self.get_num_partitions(cleaned_output)
         num_partitions = self.get_num_partitions(cleaned_string)
         if not num_partitions == None:
             noun = "the computer" if self.auto else "you"
@@ -561,31 +567,30 @@ class Thor(FlashToolPlugin):
         # Remove '> [ ] ' or '[ ] ' from the beginning of the string
         cleaned_string = re.sub(r"^(> \[ \] |\[ \] )", "", string)
         return cleaned_string
-    
+
     def get_file(self, text):
         logger.debug("get_file is running")
-        
+
         # Find the last occurrence of ":"
         colon_index = text.rfind(":")
-        
+
         # If no colon is found or it's the first character, return None.
         if colon_index == -1 or colon_index == 0:
             return None
-        
+
         # Extract the substring before the colon.
         substring = text[:colon_index].strip()
-        
+
         # Find the start phrase
         start_phrase = "Choose what partitions to flash from"
         start_index = substring.find(start_phrase)
-        
+
         # If the start phrase is found, extract everything after it.
         if start_index != -1:
-            file = substring[start_index + len(start_phrase):].strip()
+            file = substring[start_index + len(start_phrase) :].strip()
         else:
             # If the start phrase is not found, take the whole substring.
             file = substring
 
         logger.debug(f"get_file: Extracted file: {repr(file)}")
         return file
-

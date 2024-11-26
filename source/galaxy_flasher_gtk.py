@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# galaxy_flasher_gtk.py
 
 """
 Galaxy Flasher - A GUI for Samsung Flash Tools
@@ -36,7 +37,7 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
-version = "Alpha v0.6.0"
+version = "Alpha v0.6.1"
 year = shared_utils.get_current_year()
 copyright = f"© {year} ethical_haquer"
 config_dir = GLib.get_user_config_dir()
@@ -46,8 +47,7 @@ if not os.path.exists(app_config_dir):
     os.makedirs(app_config_dir)
 settings_file = os.path.join(app_config_dir, "settings.json")
 swd = os.path.dirname(os.path.realpath(__file__))
-logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s", level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = shared_utils.setup_logger("galaxy_flasher_gtk")
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -78,16 +78,21 @@ class MainWindow(Adw.ApplicationWindow):
         )
         Gio.Resource._register(resource)
         icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
-        print(
-            f'icon theme has "checkmark-symbolic" icon: {icon_theme.has_icon("document-open-symbolic")}'
-        )
-        print(
-            f'icon theme has "page.codeberg.ethicalhaquer.galaxyflasher" icon: {icon_theme.has_icon("page.codeberg.ethicalhaquer.galaxyflasher")}'
-        )
-        print(icon_theme.get_resource_path())
+        icon_list = [
+            "page.codeberg.ethicalhaquer.galaxyflasher",
+            "menu-large-symbolic",
+            "checkmark-symbolic",
+            "cross-small-symbolic",
+            "document-open-symbolic",
+            "info-outline-symbolic",
+        ]
+        for icon_name in icon_list:
+            logger.debug(
+                f'icon theme has "{icon_name}" icon: {icon_theme.has_icon(icon_name)}'
+            )
         # Load plug-ins
         self.available_plugins = self.get_available_plugins()
-        #self.load_plugins()
+        # self.load_plugins()
         self.flashtool = self.settings.get("flash_tool", "thor")
         self.ft_plugin = self.load_plugin(self.flashtool)
         self.ft_plugin.test()
@@ -226,7 +231,7 @@ class MainWindow(Adw.ApplicationWindow):
                           {version}
         """
         )
-            
+
     def get_available_plugins(self):
         logger.debug("get_available_plugins is running")
         try:
@@ -234,14 +239,16 @@ class MainWindow(Adw.ApplicationWindow):
             if not plugins:
                 logger.error("get_available_plugins: No flash-tool plugins found.")
                 return []
-            
+
             # Log available plugins and append them to flash_tool_options
             for plugin in plugins:
-                logger.info(f"get_available_plugins: Available flash-tool plugin: {plugin.name}")
+                logger.info(
+                    f"get_available_plugins: Available flash-tool plugin: {plugin.name}"
+                )
                 self.flash_tool_options.append(
                     {"name": plugin.displayed_name, "value": plugin.name}
                 )
-            
+
             return plugins
         except Exception as e:
             logger.error(f"get_available_plugins: Error: {e}")
@@ -250,7 +257,7 @@ class MainWindow(Adw.ApplicationWindow):
     def load_plugin(self, plugin_name):
         logger.debug(f"load_plugin is running")
         logger.debug(f"load_plugin: {plugin_name=}")
-        
+
         plugins = self.available_plugins
         if not plugins:
             return None
@@ -731,24 +738,6 @@ class MainWindow(Adw.ApplicationWindow):
         setattr(toolbar_view, "content", content)
         setattr(toolbar_view, "header_bar", header_bar)
 
-    def remove_ansi_escape_sequences(self, string):
-        logger.debug("remove_ansi_escape_sequences is running")
-        cleaned_string = self.shared_utils.remove_ansi_escape_sequences(string)
-        return cleaned_string
-
-    def remove_newlines(self, string):
-        logger.debug("remove_newlines is running")
-        cleaned_string = self.shared_utils.remove_newlines(string)
-        return cleaned_string
-    
-    def clean_output(self, output):
-        cleaned_output = self.shared_utils.clean_output(output)
-        return cleaned_output
-    
-    def list_to_string(self, input_list, separator=""):
-        string = self.shared_utils.list_to_string(input_list, separator)
-        return string
-
     def on_width_breakpoint_applied(self, breakpoint):
         logger.debug("on_width_breakpoint_applied is running")
         self.header_bar.set_title_widget(self.window_title)
@@ -825,7 +814,9 @@ class MainWindow(Adw.ApplicationWindow):
                         new_label = f'{button_label}: "{file_name}"'
                         file_button.set_label(new_label)
 
-                        close_button = Gtk.Button.new_from_icon_name("cross-small-symbolic")
+                        close_button = Gtk.Button.new_from_icon_name(
+                            "cross-small-symbolic"
+                        )
                         close_button.set_halign(Gtk.Align.CENTER)
                         close_button.set_valign(Gtk.Align.CENTER)
                         # close_button.set_hexpand(True)
@@ -1619,7 +1610,9 @@ title="https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux
 
     def create_about_dialog(self, *_):
         logger.debug("create_about_dialog is running")
-        about_dialog = Adw.AboutDialog.new()
+        #about_dialog = Adw.AboutDialog.new()
+        about_dialog = Adw.AboutDialog.new_from_appdata(f"{swd}/share/resources/metainfo.xml", version)
+        """
         about_dialog.set_application_name("Galaxy Flasher")
         about_dialog.set_developer_name("ethical_haquer")
         about_dialog.set_version(version)
@@ -1645,6 +1638,21 @@ title="https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux
         )
         about_dialog.set_copyright(copyright)
         about_dialog.set_license_type(Gtk.License.GPL_3_0)
+        """
+        about_dialog.present(self)
+        
+    def create_about_dialog(self, *_):
+        logger.debug("create_about_dialog is running")
+        about_dialog = Adw.AboutDialog.new_from_appdata("/page/codeberg/ethicalhaquer/galaxyflasher/data/resources/metainfo.xml", version)
+        about_dialog.set_developers(
+            [
+                "ethical_haquer https://codeberg.org/ethical_haquer/",
+                "justaCasualCoder https://github.com/justaCasualCoder",
+            ]
+        )
+        about_dialog.add_credit_section(
+            "Thor by", ["TheAirBlow https://github.com/TheAirBlow"]
+        )
         about_dialog.present(self)
 
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# shared_utils.py
 
 import json
 import os
@@ -6,12 +7,16 @@ import datetime
 import pathlib
 import locale
 import re
+import logging
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 
 from gi.repository import Gtk  # noqa: E402
+
+logging.basicConfig(format="%(levelname)s: %(name)s: %(message)s", level=logging.DEBUG)
+logger = logging.getLogger("shared_utils")
 
 
 def load_strings(locale_file):
@@ -23,6 +28,7 @@ def load_strings(locale_file):
     Returns:
         dict: The strings contained in the file.
     """
+    logger.debug("load_strings is running")
     with open(locale_file) as json_string:
         strings = json.load(json_string)
     return strings
@@ -38,6 +44,7 @@ def get_locale_file(swd, lang):
     Returns:
         str: The path to the locale file, which may or may not exist.
     """
+    logger.debug("get_locale_file is running")
     locale_file = f"{swd}/locales/{lang}.json"
     if file_exists(locale_file):
         return locale_file
@@ -55,6 +62,7 @@ def file_exists(file):
     Returns:
         bool: Whether the file exists or not.
     """
+    logger.debug("file_exists is running")
     file_path = pathlib.Path(file)
     return file_path.is_file()
 
@@ -68,6 +76,7 @@ def load_settings(settings_file):
     Returns:
         dict: The settings contained in the file.
     """
+    logger.debug("load_settings is running")
     settings = {}
     if os.path.exists(settings_file):
         with open(settings_file, "r") as file:
@@ -82,6 +91,7 @@ def save_settings(settings, settings_file):
         settings (dict): The settings to save.
         settings_file (str): The JSON file to save the settings to.
     """
+    logger.debug("save_settings is running")
     with open(settings_file, "w") as file:
         json.dump(settings, file)
 
@@ -96,6 +106,7 @@ def shorten_string(string, length):
     Returns:
         str: The shortened string.
     """
+    logger.debug("shorten_string is running")
     current_length = len(string)
     if current_length > length:
         shortened_string = string[: length - 3] + "..."
@@ -113,6 +124,7 @@ def remove_blank_lines(string):
     Returns:
         str: The string, without blank lines.
     """
+    logger.debug("remove_blank_lines is running")
     lines = string.splitlines()
     filtered_lines = [line for line in lines if line.strip()]
     new_string = "\n".join(filtered_lines)
@@ -128,6 +140,7 @@ def remove_ansi_escape_sequences(string):
     Returns:
         str: The input string with ANSI escape sequences removed.
     """
+    logger.debug("remove_ansi_escape_sequences is running")
     # pattern = re.compile(r'\x1B\[\d+(;\d+){0,2}m')
     pattern = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
     cleaned_string = pattern.sub("", string)
@@ -135,6 +148,7 @@ def remove_ansi_escape_sequences(string):
 
 
 def remove_newlines(string):
+    logger.debug("remove_newlines is running")
     cleaned_string = "".join(string.split())
     return cleaned_string
 
@@ -154,18 +168,23 @@ def clean_output(output):
     Output: ['', 'Choose what partitions to flash from', 'CP_G900AUCS4DPH4_CL8903
     521_QB11143142_REV00_user_low_ship_MULTI_CERT.tar.md5:', '', '> [ ] modem.bin (MODEM)', '']
     """
-    #logger.debug(f'cycle: output: "{repr(output)}"')
+    logger.debug("clean_output is running")
+    # logger.debug(f'cycle: output: "{repr(output)}"')
     cleaned_output = remove_ansi_escape_sequences(output)
-    #logger.debug(f'cycle: semi_cleaned: "{repr(cleaned_output)}"')
+    # logger.debug(f'cycle: semi_cleaned: "{repr(cleaned_output)}"')
     output_lines = cleaned_output.splitlines()
-    #logger.debug(f'cycle: output_lines: "{repr(output_lines)}"')
-    stripped_lines = [line.strip() for line in output_lines]
-    #logger.debug(f'cycle: stripped_lines: "{repr(stripped_lines)}"')
+    # logger.debug(f'cycle: output_lines: "{repr(output_lines)}"')
+    # Only include lines that aren't an empty string.
+    stripped_lines = [line.strip() for line in output_lines if line.strip()]
+    # logger.debug(f'cycle: stripped_lines: "{repr(stripped_lines)}"')
     return stripped_lines
 
+
 def list_to_string(input_list, separator=""):
+    logger.debug("list_to_string is running")
     string = separator.join(input_list)
     return string
+
 
 def get_current_year():
     """Returns the current year.
@@ -173,6 +192,7 @@ def get_current_year():
     Returns:
         str: The current year.
     """
+    logger.debug("get_current_year is running")
     return datetime.date.today().year
 
 
@@ -182,6 +202,7 @@ def open_link(link):
     Args:
         link (str): The link to open.
     """
+    logger.debug("open_link is running")
     launcher = Gtk.UriLauncher.new(link)
     launcher.launch()
 
@@ -192,6 +213,7 @@ def get_system_lang():
     Returns:
         str: The lowercase, two-letter abbreviation code of the system language.
     """
+    logger.debug("get_system_lang is running")
     locale.setlocale(locale.LC_ALL, "")
     system_locale = locale.getlocale(locale.LC_MESSAGES)[0]
     separator = "_"
@@ -200,5 +222,14 @@ def get_system_lang():
 
 
 def get_is_flatpak():
+    logger.debug("get_is_flatpak is running")
     is_flatpak = "FLATPAK_ID" in os.environ or "FLATPAK_APP_ID" in os.environ
     return is_flatpak
+
+
+def setup_logger(name):
+    logging.basicConfig(
+        format="%(levelname)s: %(name)s: %(message)s", level=logging.DEBUG
+    )
+    logger = logging.getLogger(name)
+    return logger

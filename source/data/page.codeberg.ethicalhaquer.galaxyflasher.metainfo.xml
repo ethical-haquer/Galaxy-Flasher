@@ -14,6 +14,10 @@
     </p>
   </description>
   
+  <url type="homepage">https://codeberg.org/ethical_haquer/Galaxy-Flasher</url>
+  <url type="bugtracker">https://codeberg.org/ethical_haquer/Galaxy-Flasher/issues</url>
+  <url type="help">https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/</url>
+  
   <launchable type="desktop-id">page.codeberg.ethicalhaquer.galaxyflasher.desktop</launchable>
   <screenshots>
     <screenshot type="default">
@@ -37,4 +41,15 @@
   <provides>
     <binary>galaxy-flasher</binary>
   </provides>
+  
+  <releases>
+    <release version="Alpha v0.6.1" date="to-be-determined">
+      <description>
+        <p>Minor release.</p>
+        <ul>
+          <li>TODO.</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
 </component>

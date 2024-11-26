@@ -5,9 +5,11 @@ import logging
 import pexpect
 import threading
 import time
+import shared_utils
 
-logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
-logger = logging.getLogger(__name__)
+# logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
+# logger = logging.getLogger(__name__)
+logger = shared_utils.setup_logger("odin4")
 
 
 class Odin4(FlashToolPlugin):
@@ -69,7 +71,7 @@ class Odin4(FlashToolPlugin):
         )
         if result == 0:
             output = main.child.before.decode("utf-8")
-            cleaned_output = main.remove_ansi_escape_sequences(output)
+            cleaned_output = shared_utils.remove_ansi_escape_sequences(output)
             devices = []
             for line in reversed(
                 [line for line in map(str.strip, cleaned_output.splitlines()) if line]
@@ -97,7 +99,7 @@ class Odin4(FlashToolPlugin):
                 main.display_select_device_page(devices)
 
         else:
-            output = main.remove_ansi_escape_sequences(
+            output = shared_utils.remove_ansi_escape_sequences(
                 main.child.before.decode("utf-8")
             )
             logger.error(f"connect: Unexpected output:\n{output=}")

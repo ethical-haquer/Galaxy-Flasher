@@ -20,6 +20,7 @@ flatpak install -y flathub org.gnome.Sdk//47 org.gnome.Platform//47
 
 echo "INFO: Compiling resources.gresource."
 glib-compile-resources ./resources.gresource.xml --target=resources.gresource
+cp resources.gresource ../share/resources
 
 echo "INFO: Creating desktop file."
 appstreamcli make-desktop-file page.codeberg.ethicalhaquer.galaxyflasher.metainfo.xml page.codeberg.ethicalhaquer.galaxyflasher.desktop

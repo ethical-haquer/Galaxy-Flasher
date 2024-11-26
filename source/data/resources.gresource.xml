@@ -6,5 +6,6 @@
     <file compressed="true" alias="icons/scalable/actions/document-open-symbolic.svg">icons/document-open-symbolic.svg</file>
     <file compressed="true" alias="icons/scalable/actions/menu-large-symbolic.svg">icons/menu-large-symbolic.svg</file>
     <file compressed="true" alias="icons/scalable/actions/cross-small-symbolic.svg">icons/cross-small-symbolic.svg</file>
+    <file compressed="true" alias="data/resources/metainfo.xml">page.codeberg.ethicalhaquer.galaxyflasher.metainfo.xml</file>
   </gresource>
 </gresources>
