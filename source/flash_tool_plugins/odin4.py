@@ -1,4 +1,6 @@
+#!/usr/bin/env python3
 # flash_tool_plugins/odin4.py
+
 from flash_tool_plugins import FlashToolPlugin
 import os
 import logging
@@ -6,16 +8,16 @@ import pexpect
 import threading
 import time
 import shared_utils
+import gi
 
-# logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
-# logger = logging.getLogger(__name__)
+from gi.repository import GLib
+
 logger = shared_utils.setup_logger("odin4")
 
 
 class Odin4(FlashToolPlugin):
     def __init__(self, main):
         super().__init__(main)
-        self.glib = main.glib
         self.name = "odin4"
         self.displayed_name = "Odin4"
         self.prompt = ">> "
@@ -128,23 +130,21 @@ class Odin4(FlashToolPlugin):
                 )
                 if result == 0:
                     output = main.child.before.decode("utf-8")
-                    self.glib.idle_add(main.update_flash_progress, "Checking files...")
+                    GLib.idle_add(main.update_flash_progress, "Checking files...")
                 elif result == 1:
-                    self.glib.idle_add(main.update_flash_progress, "Setup Connection")
+                    GLib.idle_add(main.update_flash_progress, "Setup Connection")
                 elif result == 2:
-                    self.glib.idle_add(
-                        main.update_flash_progress, "initializeConnection"
-                    )
+                    GLib.idle_add(main.update_flash_progress, "initializeConnection")
                 elif result == 3:
-                    self.glib.idle_add(main.update_flash_progress, "Set Partition")
+                    GLib.idle_add(main.update_flash_progress, "Set Partition")
                 elif result == 4:
-                    self.glib.idle_add(main.update_flash_progress, "Receive PIT Info")
+                    GLib.idle_add(main.update_flash_progress, "Receive PIT Info")
                 elif result == 5:
-                    self.glib.idle_add(main.update_flash_progress, "success getpit")
+                    GLib.idle_add(main.update_flash_progress, "success getpit")
                 elif result == 6:
-                    self.glib.idle_add(main.update_flash_progress, "Upload Binaries")
+                    GLib.idle_add(main.update_flash_progress, "Upload Binaries")
                 elif result == 7:
-                    self.glib.idle_add(main.update_flash_progress, "Close Connection")
+                    GLib.idle_add(main.update_flash_progress, "Close Connection")
                 elif result == 8:
                     main.display_done_flashing()
                     break

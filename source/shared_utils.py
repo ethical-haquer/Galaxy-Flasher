@@ -13,17 +13,93 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 
-from gi.repository import Gtk  # noqa: E402
+from gi.repository import Gtk, GObject, Gio  # noqa: E402
 
 logging.basicConfig(format="%(levelname)s: %(name)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("shared_utils")
+
+
+# Huge thanks to https://discourse.gnome.org/t/how-do-you-run-a-blocking-method-asynchronously-with-gio-task-in-a-python-gtk-app/10651
+class AsyncWorker(GObject.Object):
+    """A class for performing asynchronous operations using Gio.Task."""
+
+    def __init__(
+        self,
+        async_operation=None,
+        operation_inputs=(),
+        operation_callback=None,
+        operation_callback_inputs=(),
+        cancellable=None,
+    ):
+        super().__init__()
+        self.async_operation = async_operation
+        self.operation_inputs = operation_inputs
+        self.operation_callback = operation_callback
+        self.operation_callback_inputs = operation_callback_inputs
+        self.cancellable = cancellable
+
+        self.task_pool = {}
+
+    def start(self) -> None:
+        """Start the asynchronous operation."""
+        logger.info("Starting asynchronous operation...")
+        task = Gio.Task.new(
+            self,
+            self.cancellable,
+            self.operation_callback,
+            self.operation_callback_inputs,
+        )
+        if self.cancellable is None:
+            task.set_return_on_cancel(False)
+
+        data_id = id(self.operation_inputs)
+        self.task_pool[data_id] = self.operation_inputs
+        task.set_task_data(data_id, lambda key: self.task_pool.pop(data_id))
+
+        task.run_in_thread(self._thread_callback)
+
+    def _thread_callback(
+        self,
+        task: Gio.Task,
+        source_object: GObject.Object,
+        task_data,
+        cancellable: Gio.Cancellable,
+    ) -> None:
+        """A callback function run in a separate thread."""
+        logger.debug("Running blocking operation in worker thread")
+        try:
+            data_id = task.get_task_data()
+            data = self.task_pool.get(data_id)
+
+            if self.async_operation is None:
+                outcome = self.work(*data)
+            else:
+                outcome = self.async_operation(*data)
+
+            task.return_value(outcome)
+        except Exception as e:
+            logger.error(f"Error occurred in worker thread: {e}")
+
+    def return_value(self, result: Gio.Task):
+        """Return the value of the asynchronous operation."""
+        logger.debug("Returning value of the asynchronous operation")
+        value = None
+
+        if Gio.Task.is_valid(result, self):
+            value = result.propagate_value().value
+        else:
+            error = "Gio.Task.is_valid returned False."
+            value = {"AsyncWorkerError": error}
+            logger.error(f"Error: {error}")
+
+        return value
 
 
 def load_strings(locale_file):
     """Load strings from a specified JSON file.
 
     Args:
-        locale_file (str): The JSON file to load the stringgs from.
+        locale_file (str): The JSON file to load the strings from.
 
     Returns:
         dict: The strings contained in the file.

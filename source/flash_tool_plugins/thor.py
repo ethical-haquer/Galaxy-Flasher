@@ -2,29 +2,25 @@
 # flash_tool_plugins/thor.py
 
 from flash_tool_plugins import FlashToolPlugin
+
 import os
 import re
 import logging
 import pexpect
-import threading
 import time
 import shared_utils
+import gi
 
-# logging.basicConfig(format="%(levelname)s:%(name)s:%(message)s")
-# logger = logging.getLogger(__name__)
+from gi.repository import GLib, Gio
+
 logger = shared_utils.setup_logger("thor")
 
 
 class Thor(FlashToolPlugin):
     def __init__(self, main):
         super().__init__(main)
-        self.glib = main.glib
-        self.shared_utils = main.shared_utils
-        self.gtk = main.gtk
-        self.re = main.re
         self.name = "thor"
         self.displayed_name = "Thor"
-        self.tabs = ["Log", "Options", "Files"]
         self.buttons = [
             {
                 "name": "flash_button",
@@ -452,11 +448,13 @@ class Thor(FlashToolPlugin):
             main.child.interact()
 
     def get_progress_and_wait_for_end(self, main):
+        result = None
         flashed_components = []
         logger.debug("get_progress_and_wait_for_end is running")
         main.display_flash_progress()
 
         def check_for_output(main):
+            nonlocal result
             while True:
                 result = main.child.expect(
                     [
@@ -475,42 +473,46 @@ class Thor(FlashToolPlugin):
                             logger.info(
                                 f"get_progress_and_wait_for_end: Flashed {component}"
                             )
-                            self.glib.idle_add(
+                            GLib.idle_add(
                                 main.update_flash_progress, f"Flashed {component}"
                             )
-                            # main.update_flash_progress(f"Flashed {component}")
                             flashed_components.append(component)
                     time.sleep(0.2)
                 elif result == 1:
                     logger.info(f"get_progress_and_wait_for_end: {flashed_components=}")
-                    self.glib.idle_add(
-                        main.update_flash_progress, "Ending Odin Session..."
-                    )
+                    GLib.idle_add(main.update_flash_progress, "Ending Odin Session...")
                     ended = self.end_odin_session(main)
                     if ended:
-                        self.glib.idle_add(
+                        GLib.idle_add(
                             main.update_flash_progress, "Disconnecting the device..."
                         )
                         disconnected = self.disconnect(main)
                         if disconnected:
                             main.display_done_flashing()
+                            result = "success"
+                            logger.debug("get_progress_and_wait_for_end: Returning...")
                         else:
+                            result = "failed to disconnect"
                             logger.error(
                                 "get_progress_and_wait_for_end: Failed to disconnect the device!"
                             )
                     else:
+                        result = "failed to end"
                         logger.error(
                             "get_progress_and_wait_for_end: Failed to end the Odin session!"
                         )
                     break
                 elif result == 2:
+                    result = "timeout"
                     logger.error("get_progress_and_wait_for_end: Timeout.")
                     break
                 elif result == 3:
+                    result = "eof"
                     logger.error("get_progress_and_wait_for_end: EOF.")
                     break
 
         check_for_output(main)
+        return result
 
     # Returns True if able to end, False otherwise.
     def end_odin_session(self, main):
@@ -542,10 +544,12 @@ class Thor(FlashToolPlugin):
             main.child.send("y")
             logger.debug('on_verified_flash: Sending "Enter".')
             main.child.send("\n")
-            thread = threading.Thread(
-                target=self.get_progress_and_wait_for_end, args=(main,)
+            async_worker = shared_utils.AsyncWorker(
+                async_operation=self.get_progress_and_wait_for_end,
+                operation_inputs=(main,),
+                operation_callback=self.on_wait_finished,
             )
-            thread.start()
+            async_worker.start()
         else:
             logger.debug(f"on_verified_flash: Canceling the flash.")
             logger.debug('on_verified_flash: Sending "n".')
@@ -561,6 +565,11 @@ class Thor(FlashToolPlugin):
                     logger.error("on_verified_flash: Failed to disconnect the device!")
             else:
                 logger.error("on_verified_flash: Failed to end the Odin session!")
+
+    def on_wait_finished(self, worker, result, handler_data):
+        logger.debug("on_wait_finished is running")
+        outcome = worker.return_value(result)
+        logger.info(f"on_wait_finished: {outcome=}")
 
     def clean_partition_name(self, string):
         logger.debug("clean_partition_name is running")

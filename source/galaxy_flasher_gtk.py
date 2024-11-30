@@ -35,7 +35,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 # gi.require_version("Vte", "3.91")
 
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango, GObject  # noqa: E402
 
 version = "Alpha v0.6.1"
 year = shared_utils.get_current_year()
@@ -54,11 +54,6 @@ class MainWindow(Adw.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.last_output = ""
-        self.glib = GLib
-        self.time = time
-        self.shared_utils = shared_utils
-        self.gtk = Gtk
-        self.re = re
         self.selected_files = {}
         self.child = None
         self.flash_tool_options = []
@@ -188,37 +183,9 @@ class MainWindow(Adw.ApplicationWindow):
         options_list = self.ft_plugin.options_list
         if options_list:
             self.create_preferences(options_list, self.options_grid)
-
-        # Create the File Tab widgets.
-        row = 0
-        padding = (10, 0, 0, 0)
-        entry_padding = (0, 10, 0, 0)
-        slots = ["BL", "AP", "CP", "CSC", "USERDATA"]
-        for slot in slots:
-            if slot is slots[-1]:
-                padding = (10, 0, 0, 10)
-                entry_padding = (0, 10, 0, 10)
-            button = self.create_button(
-                slot,
-                1,
-                row,
-                self.files_grid,
-                lambda _, x=slot: self.open_file(x),
-                padding,
-            )
-            width = 1
-            entry = self.create_entry(
-                2, row, self.files_grid, entry_padding, width, 1, True
-            )
-            setattr(self, f"{slot}_button", button)
-            setattr(self, f"{slot}_entry", entry)
-            if self.flashtool == "pythor":
-                button.set_sensitive(False)
-                entry.set_sensitive(False)
-            row += 1
         """
 
-        # Print out the ASCII text "Galaxy Flasher", created with figlet.
+        # Print out "Galaxy Flasher", created with figlet.
         print(
             rf"""
   ____       _                    _____ _           _
@@ -801,7 +768,6 @@ class MainWindow(Adw.ApplicationWindow):
                     file_type_lowered = file_type.lower()
                     # self.selected_files[file_type_lowered] = file_path
                     self.selected_files[file_type] = file_path
-                    print(self.selected_files)
                     file_button = getattr(self, f"{file_type}_button")
                     button_label = file_button.get_label()
                     button_row_box = file_button.get_parent()
@@ -1610,8 +1576,10 @@ title="https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux
 
     def create_about_dialog(self, *_):
         logger.debug("create_about_dialog is running")
-        #about_dialog = Adw.AboutDialog.new()
-        about_dialog = Adw.AboutDialog.new_from_appdata(f"{swd}/share/resources/metainfo.xml", version)
+        # about_dialog = Adw.AboutDialog.new()
+        about_dialog = Adw.AboutDialog.new_from_appdata(
+            f"{swd}/share/resources/metainfo.xml", version
+        )
         """
         about_dialog.set_application_name("Galaxy Flasher")
         about_dialog.set_developer_name("ethical_haquer")
@@ -1640,10 +1608,13 @@ title="https://xdaforums.com/t/official-samsung-odin-v4-1-2-1-dc05e3ea-for-linux
         about_dialog.set_license_type(Gtk.License.GPL_3_0)
         """
         about_dialog.present(self)
-        
+
     def create_about_dialog(self, *_):
         logger.debug("create_about_dialog is running")
-        about_dialog = Adw.AboutDialog.new_from_appdata("/page/codeberg/ethicalhaquer/galaxyflasher/data/resources/metainfo.xml", version)
+        about_dialog = Adw.AboutDialog.new_from_appdata(
+            "/page/codeberg/ethicalhaquer/galaxyflasher/data/resources/metainfo.xml",
+            version,
+        )
         about_dialog.set_developers(
             [
                 "ethical_haquer https://codeberg.org/ethical_haquer/",
