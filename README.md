@@ -1,10 +1,16 @@
 <div align="center">
+
+> # ⚠️ Migrating to Codeberg
+>
+> This project is [migrating to Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher).
+
 <img src="./assets/page.codeberg.ethicalhaquer.galaxyflasher.svg?raw=true" width="256" height="256" alt="Galaxy Flasher icon.">
 </div>
 <h1 align="center">Galaxy Flasher</h1>
-<div align="center">
 
 A GUI for Samsung flash-tools.
+
+<div align="center">
 
 [Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher) | [XDA](https://xdaforums.com/t/linux-galaxy-flasher-a-gui-for-samsung-flash-tools.4636402/)
 
