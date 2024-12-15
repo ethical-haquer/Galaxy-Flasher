@@ -1,8 +1,8 @@
 <div align="center">
 
-> # ⚠️ Migrating to Codeberg
+> # ⚠️ Migrated to Codeberg
 >
-> This project is [migrating to Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher).
+> This project has [migrated to Codeberg](https://codeberg.org/ethical_haquer/Galaxy-Flasher).
 
 <img src="./assets/page.codeberg.ethicalhaquer.galaxyflasher.svg?raw=true" width="256" height="256" alt="Galaxy Flasher icon.">
 </div>
